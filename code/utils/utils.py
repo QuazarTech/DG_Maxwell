@@ -1,0 +1,27 @@
+import arrayfire as af
+
+def add(a, b):
+	'''
+	'''
+	return a + b
+
+def divide(a, b):
+	'''
+	'''
+	return a / b
+
+def multiply(a, b):
+	'''
+	'''
+	return a * b
+
+def linspace(start, end, number_of_points):
+	'''
+	Linspace implementation using arrayfire.
+	'''
+	X = af.range(number_of_points)
+	d = (end - start) / (number_of_points - 1)
+	X = af.broadcast(multiply, X, d)
+	X = af.broadcast(add, X, start)
+	
+	return X
