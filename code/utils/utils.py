@@ -21,7 +21,7 @@ def linspace(start, end, number_of_points):
 	'''
 	X = af.range(number_of_points)
 	d = (end - start) / (number_of_points - 1)
-	X = af.broadcast(multiply, X, d)
-	X = af.broadcast(add, X, start)
+	X = X * d
+	X = X + start
 	
 	return X
