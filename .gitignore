@@ -100,5 +100,8 @@ ENV/
 # mypy
 .mypy_cache/
 
+# Jupyter Notebooks
+*ipynb
+
 #Temporary files
 *~

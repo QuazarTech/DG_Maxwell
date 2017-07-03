@@ -1,5 +1,7 @@
 import numpy as np
 import arrayfire as af
+from app import lagrange
+
 
 LGL_list = [ \
 [-1.0,1.0],                                                               \
@@ -36,7 +38,12 @@ LGL_list = [ \
 0.101326273522,0.299830468901,0.486059421887,0.652388702882,              \
 0.792008291863,0.899200533092,0.969568046272,0.999999999999]]
 
+
 for idx in np.arange(len(LGL_list)):
-	LGL_list[idx] = af.Array(LGL_list[idx])
+	LGL_list[idx] = af.arith.cast(af.Array(LGL_list[idx]), af.Dtype.f64)
 	pass
+
+N_LGL       = 16
+xi_LGL      = None
+lBasisArray = None
 
