@@ -107,25 +107,7 @@ def lagrange_basis(i, x):
 	power_tile  = af.tile(power, 1, x.shape[0])
 	x_pow       = af.arith.pow(x_tile, power_tile)
 	
-	print(gvar.lBasisArray[i])
-	print(x_pow)
 	lagrange    = af.blas.matmul(gvar.lBasisArray[i], x_pow)
 	
 	return lagrange
 
-
-
-#def lagrange_basis(X, i, x):
-	#'''
-	#X = X nodes
-	#i = i_{th} Lagrange Basis
-	#x = coordinate at which the i_{th}
-		#Lagrange polynomials are to be evaluated.
-	#'''
-	#lx = 1.
-
-	#for m in range(X.shape[0]):
-		#if m != i:
-			#lx *= (x - X[m]) / (X[i] - X[m])
-
-	#return lx
