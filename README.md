@@ -14,6 +14,12 @@ cd DG_Maxwell
 * Numpy
 * Matplotlib
 
+## Usage:
+```
+cd DG_Maxwell/code
+python3 main.py
+```
+
 ## Authors
 
 * **Balavarun P** - [GitHub Profile](https://github.com/Balavarun5)
