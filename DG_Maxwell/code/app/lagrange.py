@@ -102,15 +102,12 @@ def lagrange_basis(i, x):
 	'''
 	
 	x_tile      = af.transpose(af.tile(x, 1, gvar.N_LGL))
-	#power       = utils.linspace(gvar.N_LGL, 0, gvar.N_LGL)
-	#power_tile  = af.tile(power)
-	#power_tile  = af.flip(af.range(d0 = gvar.N_LGL, d1 = gvar.N_LGL))
+	power       = utils.linspace((gvar.N_LGL-1), 0, gvar.N_LGL)
+	power_tile  = af.tile(power, 1, x.shape[0])
 	x_pow       = af.arith.pow(x_tile, power_tile)
 	lagrange    = af.blas.matmul(gvar.lBasisArray[i], x_pow)
 	
-	print(x_tile, power_tile)
-	
-	return 
+	return (lagrange)
 	
 
 

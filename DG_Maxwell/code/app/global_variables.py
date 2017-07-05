@@ -1,6 +1,6 @@
 import numpy as np
 import arrayfire as af
-af.set_backend('opencl')
+
 from app import lagrange
 
 
@@ -47,4 +47,3 @@ for idx in np.arange(len(LGL_list)):
 N_LGL       = 16
 xi_LGL      = None
 lBasisArray = None
-af.info()
