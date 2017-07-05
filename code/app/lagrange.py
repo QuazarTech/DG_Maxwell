@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 import numpy as np
 import arrayfire as af
-af.set_backend('opencl')
+
 from utils import utils
 from scipy import special as sp
 

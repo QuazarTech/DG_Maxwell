@@ -3,6 +3,7 @@
 import arrayfire as af
 import math
 import numpy as np
+
 from matplotlib import pyplot as plt
 from app import lagrange
 from utils import utils
@@ -65,12 +66,10 @@ def lagrangePolynomialTest():
 if __name__ == '__main__':
 	'''
 	'''
-	af.set_backend('opencl')
+	af.set_backend('cuda')
 	af.info()
 	
 	populateGlobalVariables(16)
-	
-	test()
 	
 	lagrangePolynomialTest()
 	
