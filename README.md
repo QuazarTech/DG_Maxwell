@@ -25,3 +25,6 @@ python3 main.py
 * **Balavarun P** - [GitHub Profile](https://github.com/Balavarun5)
 * **Aman Abhishek Tiwari** - [GitHub Profile](https://github.com/amanabt)
 * **Mani Chandra** - [GitHub Profile](https://github.com/mchandra)
+
+## Note for developers:
+* Use tab spaces for indentation.
