@@ -47,3 +47,25 @@ for idx in np.arange(len(LGL_list)):
 N_LGL       = 16
 xi_LGL      = None
 lBasisArray = None
+
+def populateGlobalVariables(N = 16):
+	'''
+	Initialize the global variables
+	
+	Parameters
+	----------
+	N : int
+		Number of LGL points.
+	'''
+	
+	global N_LGL
+	global xi_LGL
+	global lBasisArray
+	
+	N_LGL       = N
+	xi_LGL      = lagrange.LGL_points(N_LGL)
+	
+	lBasisArray = af.interop.np_to_af_array( \
+		lagrange.lagrange_basis_coeffs(xi_LGL))
+	
+	return
