@@ -1,6 +1,6 @@
 import numpy as np
 import arrayfire as af
-
+from scipy import special as sp
 from app import lagrange
 
 
@@ -48,24 +48,52 @@ N_LGL       = 16
 xi_LGL      = None
 lBasisArray = None
 
+
 def populateGlobalVariables(N = 16):
 	'''
 	Initialize the global variables
-	
+
 	Parameters
 	----------
 	N : int
 		Number of LGL points.
 	'''
-	
+
 	global N_LGL
 	global xi_LGL
 	global lBasisArray
-	
+
 	N_LGL       = N
 	xi_LGL      = lagrange.LGL_points(N_LGL)
-	
+
 	lBasisArray = af.interop.np_to_af_array( \
 		lagrange.lagrange_basis_coeffs(xi_LGL))
-	
+
+
+
+	Weight_function = lobatto_weight_function(N_LGL, xi_LGL)
+	print(Weight_function)
+
 	return
+
+
+def lobatto_weight_function(n, x):
+	'''
+	Calculates and returns the weight function for an index n
+	and points x
+	
+	Parameters
+	----------
+	n : int
+		Index for which lobatto weight function
+	
+	x : arrayfire.Array
+		1D array of points where weight function is to be calculated.
+	
+	.. lobatto weight function - https://en.wikipedia.org/wiki/Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules	
+	'''
+	P = sp.legendre(n - 1)
+	return (2 / (n * (n - 1)) / (P(x))**2)
+
+
+
