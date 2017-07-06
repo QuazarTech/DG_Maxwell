@@ -5,7 +5,7 @@ Solution of Wave equation using Discontinuous Galerkin method.
 
 Clone the repository
 ```
-git clone git@github.com:Balavarun5/DG_Maxwell.git
+git clone git@github.com:QuazarTech/DG_Maxwell.git
 cd DG_Maxwell
 ```
 
