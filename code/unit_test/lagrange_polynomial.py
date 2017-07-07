@@ -53,7 +53,6 @@ def lagrangePolynomialTest():
 		Basis_array   = lagrange.lagrange_basis(index, x_random)
 		y_interpolate = af.transpose(af.blas.matmul(af.transpose(y_LGL),\
 										Basis_array))
-		
 		y_analytical  =  af.arith.sin(2 * math.pi * x_random)
 		error         = y_interpolate - y_analytical
 		
@@ -62,13 +61,16 @@ def lagrangePolynomialTest():
 	number_LGL_Nodes = utils.linspace(2, 16, 15)
 	
 	
+	
+	
+	
 	plt.title(r'$L_1$ norm of error vs N')
 	plt.xlabel(r'$N_{LGL}$')
 	plt.ylabel(r'$L_1$ Norm.')
 	
 	plt.loglog(number_LGL_Nodes, L1_norm, basex = 2)
-	plt.loglog(number_LGL_Nodes , (number_LGL_Nodes / 9.2) ** (-number_LGL_Nodes * 1.1),
-				basex = 2)
+	plt.loglog(number_LGL_Nodes , (number_LGL_Nodes / 9.2) **\
+		(-number_LGL_Nodes * 1.1),basex = 2)
 	plt.legend(['L_1 norm', r'$(\frac{N}{9.3})^{-1.1N}$'])
 	
 	plt.show()
