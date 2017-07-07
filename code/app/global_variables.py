@@ -44,10 +44,10 @@ for idx in np.arange(len(LGL_list)):
 	LGL_list[idx] = af.arith.cast(af.Array(LGL_list[idx]), af.Dtype.f64)
 	pass
 
+x_nodes     = af.interop.np_to_af_array(np.array([[-1., 1.]]))
 N_LGL       = 16
 xi_LGL      = None
 lBasisArray = None
-
 
 def populateGlobalVariables(N = 16):
 	'''
@@ -72,7 +72,6 @@ def populateGlobalVariables(N = 16):
 
 
 	Weight_function = lobatto_weight_function(N_LGL, xi_LGL)
-	print(Weight_function)
 
 	return
 
