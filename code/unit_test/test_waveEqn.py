@@ -3,9 +3,14 @@ import arrayfire as af
 af.set_backend('opencl')
 from app import lagrange
 from app import global_variables as gvar
-from scipy import special as sp
+from app import wave_equation
+
 
 def test_lobatto_weight_function():
+	'''
+	Test function to check the lobatto weights for known LGL points
+	'''
+		
 	threshold = 1e-14
 	
 	check_n3 =  np.sum(np.abs(gvar.lobatto_weight_function(3, \
@@ -19,8 +24,42 @@ def test_lobatto_weight_function():
 			threshold 
 	
 	assert check_n3 & check_n4 & check_n5
+
+
+def test_Li_Lp_xi():
+	'''
+	'''
 	
+	gvar.populateGlobalVariables()
 	
+	threshold = 1e-14
+	a = np.zeros([3,3,3])
+	a[0] = np.array([[1,2,3],[8,10,12],[21,24,27]])
+	a[1] = np.array([[4,8,12],[20,25,30],[42,48,54]])
+	a[2] = np.array([[7,14,21],[32,40,48],[63,72,81]])
 	
+	analytical_product = af.interop.np_to_af_array(a)
 	
+	test_array = af.interop.np_to_af_array(np.array([[1, 2, 3],  \
+													 [4, 5, 6],  \
+													 [7, 8, 9]], \
+										   dtype = np.float64))
+	
+	test_array1 = af.reorder(test_array, 2, 0, 1)
+	
+	print(wave_equation.Li_Lp_xi(test_array, test_array1))
+	
+	check_order3 = af.sum(af.abs(wave_equation.Li_Lp_xi(test_array, test_array1)
+							  - analytical_product)) <= threshold
+		
+	assert check_order3
+
+def test_dx_dxi():
+	'''
+	'''
+	threshold = 1e-5
+	test_nodes = af.Array([7, 10])
+	analytical_dx_dxi = 1.5
+	check_dx_dxi = af.sum(af.abs(wave_equation.dx_dxi(test_nodes, gvar.xi_LGL) - 1.5)) <= threshold
+	assert check_dx_dxi
 	

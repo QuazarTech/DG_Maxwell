@@ -3,7 +3,6 @@ import numpy as np
 import arrayfire as af
 
 from utils import utils
-from scipy import special as sp
 
 from app import global_variables as gvar
 
@@ -29,7 +28,7 @@ def LGL_points(N):
 	if N > 16 or N < 2:
 		print('Skipping! This function can only return from ',
 			  '2 to 16 LGL points.')
-		pass
+	
 	
 	n = N - 2
 
@@ -74,7 +73,7 @@ def lagrange_basis_coeffs(X):
 				lagrange_basis_j *= np.poly1d([1, -X[m]]) \
 									/ (X[j] - X[m])
 		lagrange_basis_poly[j] = lagrange_basis_j.c
-		pass
+	
 	
 	return lagrange_basis_poly
 
@@ -106,14 +105,7 @@ def lagrange_basis(i, x):
 	power_tile  = af.tile(power, 1, x.shape[0])
 	x_pow       = af.arith.pow(x_tile, power_tile)
 	
-	lagrange    = af.blas.matmul(gvar.lBasisArray[i], x_pow)
+	l_xi_j    = af.blas.matmul(gvar.lBasisArray[i], x_pow)
 	
-	return (lagrange)
+	return (l_xi_j)
 	
-
-
-
-
-
-
-
