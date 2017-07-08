@@ -80,18 +80,19 @@ def lobatto_weight_function(n, x):
 	'''
 	Calculates and returns the weight function for an index n
 	and points x
-	
+
 	Parameters
 	----------
 	n : int
 		Index for which lobatto weight function
-	
+
 	x : arrayfire.Array
 		1D array of points where weight function is to be calculated.
-	
-	.. lobatto weight function - https://en.wikipedia.org/wiki/Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules	
+
+	.. lobatto weight function - https://en.wikipedia.org/wiki/Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules
 	'''
 	P = sp.legendre(n - 1)
+	
 	return (2 / (n * (n - 1)) / (P(x))**2)
 
 

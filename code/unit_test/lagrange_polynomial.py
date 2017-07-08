@@ -7,31 +7,31 @@ from matplotlib import pyplot as plt
 
 from app import global_variables as gvar
 
-plt.rcParams['figure.figsize'] = 9.6, 6. 
-plt.rcParams['figure.dpi'] = 100 
-plt.rcParams['image.cmap'] = 'jet' 
-plt.rcParams['lines.linewidth'] = 1.5 
-plt.rcParams['font.family'] = 'serif' 
-plt.rcParams['font.weight'] = 'bold' 
-plt.rcParams['font.size'] = 20 
-plt.rcParams['font.sans-serif'] = 'serif' 
-plt.rcParams['text.usetex'] = False 
-plt.rcParams['axes.linewidth'] = 1.5 
-plt.rcParams['axes.titlesize'] = 'medium' 
-plt.rcParams['axes.labelsize'] = 'medium' 
-plt.rcParams['xtick.major.size'] = 8 
-plt.rcParams['xtick.minor.size'] = 4 
-plt.rcParams['xtick.major.pad'] = 8 
-plt.rcParams['xtick.minor.pad'] = 8 
-plt.rcParams['xtick.color'] = 'k' 
-plt.rcParams['xtick.labelsize'] = 'medium' 
-plt.rcParams['xtick.direction'] = 'in' 
-plt.rcParams['ytick.major.size'] = 8 
-plt.rcParams['ytick.minor.size'] = 4 
-plt.rcParams['ytick.major.pad'] = 8 
-plt.rcParams['ytick.minor.pad'] = 8 
-plt.rcParams['ytick.color'] = 'k' 
-plt.rcParams['ytick.labelsize'] = 'medium' 
+plt.rcParams['figure.figsize'] = 9.6, 6.
+plt.rcParams['figure.dpi'] = 100
+plt.rcParams['image.cmap'] = 'jet'
+plt.rcParams['lines.linewidth'] = 1.5
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['font.size'] = 20
+plt.rcParams['font.sans-serif'] = 'serif'
+plt.rcParams['text.usetex'] = False
+plt.rcParams['axes.linewidth'] = 1.5
+plt.rcParams['axes.titlesize'] = 'medium'
+plt.rcParams['axes.labelsize'] = 'medium'
+plt.rcParams['xtick.major.size'] = 8
+plt.rcParams['xtick.minor.size'] = 4
+plt.rcParams['xtick.major.pad'] = 8
+plt.rcParams['xtick.minor.pad'] = 8
+plt.rcParams['xtick.color'] = 'k'
+plt.rcParams['xtick.labelsize'] = 'medium'
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.major.size'] = 8
+plt.rcParams['ytick.minor.size'] = 4
+plt.rcParams['ytick.major.pad'] = 8
+plt.rcParams['ytick.minor.pad'] = 8
+plt.rcParams['ytick.color'] = 'k'
+plt.rcParams['ytick.labelsize'] = 'medium'
 plt.rcParams['ytick.direction'] = 'in'
 
 def lagrangePolynomialTest():

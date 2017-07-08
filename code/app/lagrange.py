@@ -3,7 +3,6 @@ import numpy as np
 import arrayfire as af
 
 from utils import utils
-from scipy import special as sp
 
 from app import global_variables as gvar
 

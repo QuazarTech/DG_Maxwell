@@ -1,11 +1,7 @@
 #! /usr/bin/env python3
 
 import arrayfire as af
-af.set_backend('opencl')
-import math
-import numpy as np
 
-from matplotlib import pyplot as plt
 from app import lagrange
 from utils import utils
 from app import global_variables as gvar
@@ -13,13 +9,9 @@ from app import global_variables as gvar
 def Li_Lp_xi(L_xi_j, L_xi_p):
 	'''
 	'''
-	index  = af.range(gvar.N_LGL)
-	L_xi_j = lagrange.lagrange_basis(index, gvar.xi_LGL)
-	L_xi_p = af.reorder(L_xi_j, 2, 0, 1)
-	
 	Li_Lp_xi = af.bcast.broadcast(utils.multiply, L_xi_j, L_xi_p)
 	
-	return(Li_Lp_xi)
+	return Li_Lp_xi
 
 
 def mappingXiToX(x_nodes, xi):
@@ -28,15 +20,8 @@ def mappingXiToX(x_nodes, xi):
 	N_0 = (1. - xi) / 2
 	N_1 = (xi + 1.) / 2
 	
-	#print(N_0)
-	#print(N_1)
-	
 	N0_x0 = af.bcast.broadcast(utils.multiply, N_0, x_nodes[0])
 	N1_x1 = af.bcast.broadcast(utils.multiply, N_1, x_nodes[1])
-	
-	#x = x_nodes[0] * N_0 + x_nodes[1] * N_1
-	
-	#return x
 	
 	return N0_x0 + N1_x1
 
