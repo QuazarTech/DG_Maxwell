@@ -1,6 +1,6 @@
 import numpy as np
 import arrayfire as af
-
+af.set_backend('opencl')
 from app import lagrange
 from app import global_variables as gvar
 from app import wave_equation
@@ -8,6 +8,7 @@ from app import wave_equation
 
 def test_lobatto_weight_function():
 	'''
+	Test function to check the lobatto weights for known LGL points
 	'''
 		
 	threshold = 1e-14
@@ -48,7 +49,17 @@ def test_Li_Lp_xi():
 	
 	print(wave_equation.Li_Lp_xi(test_array, test_array1))
 	
-	check_order3 = af.sum(af.abs(wave_equation.Li_Lp_xi(test_array, test_array1) - analytical_product)) <= threshold
+	check_order3 = af.sum(af.abs(wave_equation.Li_Lp_xi(test_array, test_array1)
+							  - analytical_product)) <= threshold
 		
 	assert check_order3
 
+def test_dx_dxi():
+	'''
+	'''
+	threshold = 1e-5
+	test_nodes = af.Array([7, 10])
+	analytical_dx_dxi = 1.5
+	check_dx_dxi = af.sum(af.abs(wave_equation.dx_dxi(test_nodes, gvar.xi_LGL) - 1.5)) <= threshold
+	assert check_dx_dxi
+	

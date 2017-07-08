@@ -42,7 +42,7 @@ LGL_list = [ \
 
 for idx in np.arange(len(LGL_list)):
 	LGL_list[idx] = af.arith.cast(af.Array(LGL_list[idx]), af.Dtype.f64)
-	pass
+
 
 x_nodes     = af.interop.np_to_af_array(np.array([[-1., 1.]]))
 N_LGL       = 16
@@ -51,12 +51,14 @@ lBasisArray = None
 
 def populateGlobalVariables(N = 16):
 	'''
-	Initialize the global variables
+	Initialize the global variables.
 
 	Parameters
 	----------
 	N : int
 		Number of LGL points.
+	
+	Declares the number and the value of 
 	'''
 
 	global N_LGL
@@ -68,10 +70,6 @@ def populateGlobalVariables(N = 16):
 
 	lBasisArray = af.interop.np_to_af_array( \
 		lagrange.lagrange_basis_coeffs(xi_LGL))
-
-
-
-	Weight_function = lobatto_weight_function(N_LGL, xi_LGL)
 
 	return
 
@@ -94,6 +92,8 @@ def lobatto_weight_function(n, x):
 	P = sp.legendre(n - 1)
 	
 	return (2 / (n * (n - 1)) / (P(x))**2)
+
+
 
 
 

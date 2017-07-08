@@ -28,7 +28,7 @@ def LGL_points(N):
 	if N > 16 or N < 2:
 		print('Skipping! This function can only return from ',
 			  '2 to 16 LGL points.')
-		pass
+	
 	
 	n = N - 2
 
@@ -73,7 +73,7 @@ def lagrange_basis_coeffs(X):
 				lagrange_basis_j *= np.poly1d([1, -X[m]]) \
 									/ (X[j] - X[m])
 		lagrange_basis_poly[j] = lagrange_basis_j.c
-		pass
+	
 	
 	return lagrange_basis_poly
 
