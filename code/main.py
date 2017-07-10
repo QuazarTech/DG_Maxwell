@@ -2,6 +2,7 @@
 
 import arrayfire as af
 af.set_backend('opencl')
+import numpy as np
 #from matplotlib import pyplot as plt
 from app import global_variables as gvar
 
@@ -14,4 +15,3 @@ if __name__ == '__main__':
 	Can be used to obtain results from other modules.
 	'''
 	gvar.populateGlobalVariables()
-	

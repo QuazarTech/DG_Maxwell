@@ -218,7 +218,7 @@ def dx_dxi(x_nodes, xi):
 	-------
 	Numerical value of differential of X w.r.t the given xi 
 	'''
-	dxi = 1e-8
+	dxi = 1e-7
 	x2 = mappingXiToX(x_nodes, xi + dxi)
 	x1 = mappingXiToX(x_nodes, xi - dxi)
 	

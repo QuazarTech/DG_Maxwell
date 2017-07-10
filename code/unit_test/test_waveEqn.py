@@ -60,9 +60,9 @@ def test_dx_dxi():
 	'''
 	A Test function to check the dx_xi function in wave_equation module by 
 	passing nodes of an element and using the LGL points. Analytically, the 
-	differential would be a constant. The check has a tolerance 1e-5.
+	differential would be a constant. The check has a tolerance 1e-7.
 	'''
-	threshold = 1e-5
+	threshold = 1e-7
 	nodes = np.array([7, 10], dtype = np.dtype('d'))
 	test_nodes = af.interop.np_to_af_array(nodes)
 	analytical_dx_dxi = 1.5
