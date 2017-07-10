@@ -5,168 +5,23 @@ import arrayfire as af
 from app import lagrange
 from utils import utils
 from app import global_variables as gvar
+
 def Li_Lp_xi(L_xi_i, L_xi_p):
 	'''
-	LaTex strings      # / used instead of \
-	-------------
-	To calculate $L_{p}(/xi) L_{i}(/xi)$ for N Lagrange-Gaussian-Lobatto points 
-	in a $/xi$ space [-1, 1] and indices i and p ranging from 0 to N - 1, We 
-	need to start by creating a 1 X N x N matrix of $L_{p}(/xi)$.
-	
-	/begin{align}
-	L_{p}(/xi) = /begin{pmatrix}
-	L_{0}(/xi_{0}) & L_{1}(/xi_{0}) & /cdots & L_{N - 1}(/xi_{0}) //
-	L_{0}(/xi_{1}) & L_{1}(/xi_{1}) & /cdots & L_{N - 1}(/xi_{1}) //
-	/vdots  & /vdots  & /ddots & /vdots  //
-	L_{0}(/xi_{N - 1}) & L_{1}(/xi_{N - 1}) & /cdots & L_{N - 1}(/xi_{N - 1}) 
-	/end{pmatrix}_{1 X N X N }
-	/end{align}
-	
-	Now, we need to get a $L_{i}(/xi)$ matrix which is the transpose of $L_{p}
-	(/xi)$ and reordered as /newline(1, 0, 2), where (0, 1, 2) is the normal 
-	ordering (x, y, z)
-	
-	/begin{align}
-	L_{i}(/xi) = /begin{pmatrix}
-	L_{0}(/xi_{0}) & L_{0}(/xi_{1}) & /cdots & L_{0}(/xi_{N - 1}) //
-	L_{1}(/xi_{0}) & L_{1}(/xi_{1}) & /cdots & L_{1}(/xi_{N - 1}) //
-	/vdots  & /vdots  & /ddots & /vdots  //
-	L_{N - 1}(/xi_{0}) & L_{N - 1}(/xi_{1}) & /cdots & L_{N - 1}(/xi_{N - 1}) 
-	/end{pmatrix}_{N X 1 X N}
-	/end{align}
-	
-	Now, the $L_{i}(/xi)$ array is broadcasted across the dimension 0 N times.
-	The result is an/newline N X N X N matrix with elements repeating N times 
-	in dimension 0.
-	/begin{tikzpicture}[every node/.style={anchor=north east,fill=white, 
-	minimum width=1.4cm, minimum height=7mm}]
-	/matrix (mA) [draw,matrix of math nodes]
-	{
-	L_{0}(/xi_{N - 1}) & L_{1}(/xi_{N - 1}) & ... & L_{N - 1}(/xi_{N - 1}) //
-	L_{0}(/xi_{N - 1}) & L_{1}(/xi_{N - 1}) & ... & L_{N - 1}(/xi_{N - 1}) //
-	. & . & ... & . //
-	L_{0}(/xi_{N - 1}) & L_{1}(/xi_{N - 1}) & ... & L_{N - 1}(/xi_{N - 1}) //
-	};
-	/matrix (mB) [draw,matrix of math nodes] at ($(mA.south west)+(2,0.7)$)
-	{
-	L_{0}(/xi_{i}) & L_{1}(/xi_{i}) & ... & L_{N - 1}(/xi_{i}) //
-	L_{0}(/xi_{i}) & L_{1}(/xi_{i}) & ... & L_{N - 1}(/xi_{i}) //
-	. & . & ... & . //
-	L_{0}(/xi_{i}) & L_{1}(/xi_{i}) & ... & L_{N - 1}(/xi_{i}) //
-	};
-	/matrix (mC) [draw,matrix of math nodes] at ($(mB.south west)+(2,0.7)$)
-	{
-	L_{0}(/xi_{0}) & L_{1}(/xi_{0}) & ... & L_{N - 1}(/xi_{0}) //
-	L_{0}(/xi_{0}) & L_{1}(/xi_{0}) & ... & L_{N - 1}(/xi_{0}) //
-	. & . & ... & . //
-	L_{0}(/xi_{0}) & L_{1}(/xi_{0}) & ... & L_{N - 1}(/xi_{0}) //
-	};
-
-	/draw[dashed](mA.north east)--(mC.north east);
-	/draw[dashed](mA.north west)--(mC.north west);
-	/draw[dashed](mA.south east)--(mC.south east);
-	/end{tikzpicture}
-
-	Now doing the same for $L_{i}(/xi)$, i.e., broadcasting it in dimension 1 
-	N times. Another /newline N X N X N array would be obtained which can be 
-	multipled with the previous N X N X N array which would give the required
-	$L_{p}(/xi) L_{i}(/xi)$ matrix
-
-
-
-
-	/begin{tikzpicture}[every node/.style={anchor=north east,fill=white, 
-	minimum width=1.4cm,minimum 		height=7mm}]
-	/matrix (mA) [draw,matrix of math nodes]
-	{
-	L_{0}(/xi_{N -1}) & L_{0}(/xi_{N -1}) & ... & L_{0}(/xi_{N -1}) //
-	L_{1}(/xi_{N -1}) & L_{1}(/xi_{N -1}) & ... & L_{1}(/xi_{N -1}) //
-	. & . & ... & . //
-	L_{N - 1}(/xi_{N -1}) & L_{N - 1}(/xi_{N -1}) & ... & L_{N - 1}(/xi_{N -1})
-	//
-	};
-
-	/matrix (mB) [draw,matrix of math nodes] at ($(mA.south west)+(2,0.7)$)
-	{
-	L_{0}(/xi_{i}) & L_{0}(/xi_{i}) & ... & L_{0}(/xi_{i}) //
-	L_{1}(/xi_{i}) & L_{1}(/xi_{i}) & ... & L_{1}(/xi_{i}) //
-	. & . & ... & . //
-	L_{N - 1}(/xi_{i}) & L_{N - 1}(/xi_{i}) & ... & L_{N - 1}(/xi_{i}) //
-	};
-
-	/matrix (mC) [draw,matrix of math nodes] at ($(mB.south west)+(2,0.7)$)
-	{
-	L_{0}(/xi_{0}) & L_{0}(/xi_{0}) & ... & L_{0}(/xi_{0}) //
-	L_{1}(/xi_{0}) & L_{1}(/xi_{0}) & ... & L_{1}(/xi_{0}) //
-	. & . & ... & . //
-	L_{N - 1}(/xi_{0}) & L_{N - 1}(/xi_{0}) & ... & L_{N - 1}(/xi_{0}) //
-	};
-
-	/draw[dashed](mA.north east)--(mC.north east);
-	/draw[dashed](mA.north west)--(mC.north west);
-	/draw[dashed](mA.south east)--(mC.south east);
-	/end{tikzpicture}
-
-
-	/begin{tikzpicture}[every node/.style={anchor=north east,fill=white, 
-	minimum width=1.4cm,minimum height=10mm}]
-	/matrix (mA) [draw,matrix of math nodes]
-	{
-	L_{0}(/xi_{N - 1})L_{0}(/xi_{N - 1}) & L_{0}(/xi_{N - 1})L_{1}
-	(/xi_{N - 1}) & ... & L_{0}(/xi_{N - 1})L_{N - 1}(/xi_{N - 1}) //
-	L_{1}(/xi_{N - 1})L_{0}(/xi_{N - 1}) & L_{1}(/xi_{N - 1})L_{1}
-	(/xi_{N - 1}) & ... & L_{1}(/xi_{N - 1})L_{N - 1}(/xi_{N - 1}) //
-	. & . & ... & . //
-	L_{N - 1}(/xi_{N - 1})L_{0}(/xi_{N - 1}) & L_{N - 1}
-	(/xi_{N - 1})L_{1}(/xi_{N - 1}) & ... & L_{N - 1}(/xi_{N - 1})L_{N - 1}
-	(/xi_{N - 1}) //
-	};
-
-	/matrix (mB) [draw,matrix of math nodes] at ($(mA.south west)+(1.5,0.7)$)
-	{
-	L_{0}(/xi_{i})L_{0}(/xi_{i}) & L_{0}(/xi_{i})L_{1}(/xi_{i}) & ... & L_{0}
-	(/xi_{i})L_{N - 1}(/xi_{i}) //
-	L_{1}(/xi_{i})L_{0}(/xi_{i}) & L_{1}(/xi_{i})L_{1}(/xi_{i}) & ... & L_{1}
-	(/xi_{i})L_{N - 1}(/xi_{i}) //
-	. & . & ... & . //
-	L_{N - 1}(/xi_{i})L_{i}(/xi_{i}) & L_{N - 1}(/xi_{i})L_{1}(/xi_{i}) & ... 
-	& L_{N - 1}(/xi_{i})L_{N - 1}(/xi_{i}) //
-	};
-
-	/matrix (mC) [draw,matrix of math nodes] at ($(mB.south west)+(1.5,0.7)$)
-	{
-	L_{0}(/xi_{0})L_{0}(/xi_{0}) & L_{0}(/xi_{0})L_{1}(/xi_{0}) & ... & L_{0}
-	(/xi_{0})L_{N - 1}(/xi_{0}) //
-	L_{1}(/xi_{0})L_{0}(/xi_{0}) & L_{1}(/xi_{0})L_{1}(/xi_{0}) & ... & L_{1}
-	(/xi_{0})L_{N - 1}(/xi_{0}) //
-	. & . & ... & . //
-	L_{N - 1}(/xi_{0})L_{0}(/xi_{0}) & L_{N - 1}(/xi_{0})L_{1}(/xi_{0}) & 
-	... & L_{N - 1}(/xi_{0})L_{N - 1}(/xi_{0}) //
-	};
-	/draw[dashed](mA.north east)--(mC.north east);
-	/draw[dashed](mA.north west)--(mC.north west);
-	/draw[dashed](mA.south east)--(mC.south east);
-	/end{tikzpicture}
-	-----------------
 	Parameters
 	----------
-	
 	L_xi_i : arrayfire.Array [1 N N 1]
-	
-	L_xi_i is a 1 x N x N x 1 matrix which is the transpose of L_xi_i reordered
-	as (2, 0, 1, 3)
+			 A 2D array :math:`L_i` calculated at all the
+			 LGL points :math:`\\xi_j`
 	
 	L_xi_p : arrayfire.Array [N 1 N 1]
-	
-	L_xi_p is an N x 1 x N x 1 matrix of lagrange basis functions of N LGL 
-	points with indices from 0 to N-1
+			 A 2D array :math:`L_p` calculated at all the
+			 LGL points :math:`\\xi_j`
 	
 	Returns
 	-------
-	
 	Li_Lp_xi : arrayfire.Array [N N N 1]
-			   An N x N x N x 1 matrix with elements L_xi_i * L_xi_p, where i,
-			   p, xi all range from 0 to N-1.
+			   Matrix of :math:`L_p(\\xi)L_i(\\xi)`
 	
 	'''
 	
@@ -180,10 +35,10 @@ def mappingXiToX(x_nodes, xi):
 	Parameters
 	----------
 	
-	x_nodes : arrayfire.Array 
-			  Contains the nodes of the elements
+	x_nodes : arrayfire.Array
+			  Element nodes.
 	
-	xi		: float
+	xi      : np.float64
 			  Value of xi in domain (-1, 1) which returns the corresponding 
 			  x value in the
 	

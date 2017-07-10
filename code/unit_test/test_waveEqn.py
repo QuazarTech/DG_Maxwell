@@ -11,7 +11,7 @@ def test_lobatto_weight_function():
 	'''
 	Test function to check the lobatto weights for known LGL points.
 	'''
-		
+	
 	threshold = 1e-14
 	
 	check_n3 =  np.sum(np.abs(gvar.lobatto_weight_function(3, \
@@ -57,6 +57,7 @@ def test_Li_Lp_xi():
 	
 	assert check_order3
 
+
 def test_dx_dxi():
 	'''
 	A Test function to check the dx_xi function in wave_equation module by 
@@ -73,6 +74,7 @@ def test_dx_dxi():
 	
 	assert check_dx_dxi
 
+
 def test_dx_dxi_analytical():
 	'''
 	Test to check the dx_dxi_analytical in wave equation module for an element
@@ -80,11 +82,11 @@ def test_dx_dxi_analytical():
 	'''
 	threshold = 1e-14
 	nodes = af.Array([2,6])
-	analytical_dx_dxi = 2
 	check_analytical_dx_dxi = af.sum(af.abs(wave_equation.dx_dxi_analytical
 										 (nodes, 0) - 2)) <= threshold
 	assert check_analytical_dx_dxi
-	
+
+
 def test_A_matrix():
 	'''
 	Test function to check the A_matrix function in wave_equation module.
