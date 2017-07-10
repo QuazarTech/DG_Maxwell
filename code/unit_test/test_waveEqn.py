@@ -8,7 +8,7 @@ from app import wave_equation
 
 def test_lobatto_weight_function():
 	'''
-	Test function to check the lobatto weights for known LGL points
+	Test function to check the lobatto weights for known LGL points.
 	'''
 		
 	threshold = 1e-14
@@ -28,17 +28,14 @@ def test_lobatto_weight_function():
 
 def test_Li_Lp_xi():
 	'''
+	A Test function to check the Li_Lp_xi function in wave_equation module by 
+	passing two test arrays and comparing the analytical product with the
+	numerically calculated one with a tolerance of 1e-14.
 	'''
 	
 	gvar.populateGlobalVariables()
 	
 	threshold = 1e-14
-	a = np.zeros([3,3,3])
-	a[0] = np.array([[1,2,3],[8,10,12],[21,24,27]])
-	a[1] = np.array([[4,8,12],[20,25,30],[42,48,54]])
-	a[2] = np.array([[7,14,21],[32,40,48],[63,72,81]])
-	
-	analytical_product = af.interop.np_to_af_array(a)
 	
 	test_array = af.interop.np_to_af_array(np.array([[1, 2, 3],  \
 													 [4, 5, 6],  \
@@ -47,19 +44,29 @@ def test_Li_Lp_xi():
 	
 	test_array1 = af.reorder(test_array, 2, 0, 1)
 	
-	print(wave_equation.Li_Lp_xi(test_array, test_array1))
+	product = np.zeros([3,3,3])
+	product[0] = np.array([[1,2,3],[8,10,12],[21,24,27]])
+	product[1] = np.array([[4,8,12],[20,25,30],[42,48,54]])
+	product[2] = np.array([[7,14,21],[32,40,48],[63,72,81]])
+	
+	analytical_product = af.interop.np_to_af_array(product)
 	
 	check_order3 = af.sum(af.abs(wave_equation.Li_Lp_xi(test_array, test_array1)
 							  - analytical_product)) <= threshold
-		
+	
 	assert check_order3
 
 def test_dx_dxi():
 	'''
+	A Test function to check the dx_xi function in wave_equation module by 
+	passing nodes of an element and using the LGL points. Analytically, the 
+	differential would be a constant. The check has a tolerance 1e-5.
 	'''
 	threshold = 1e-5
-	test_nodes = af.Array([7, 10])
+	nodes = np.array([7, 10], dtype = np.dtype('d'))
+	test_nodes = af.interop.np_to_af_array(nodes)
 	analytical_dx_dxi = 1.5
-	check_dx_dxi = af.sum(af.abs(wave_equation.dx_dxi(test_nodes, gvar.xi_LGL) - 1.5)) <= threshold
-	assert check_dx_dxi
+	check_dx_dxi = af.sum(af.abs(wave_equation.dx_dxi(test_nodes, gvar.xi_LGL)
+							  - analytical_dx_dxi)) <= threshold
 	
+	assert check_dx_dxi
