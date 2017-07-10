@@ -2,9 +2,9 @@
 
 import arrayfire as af
 
-#from app import lagrange
+from app import lagrange
 from utils import utils
-#from app import global_variables as gvar
+from app import global_variables as gvar
 def Li_Lp_xi(L_xi_i, L_xi_p):
 	'''
 	LaTex strings      # / used instead of \
@@ -151,15 +151,15 @@ def Li_Lp_xi(L_xi_i, L_xi_p):
 	Parameters
 	----------
 	
-	L_xi_i : arrayfire.Array [N N 1 1]
+	L_xi_i : arrayfire.Array [1 N N 1]
 	
-	L_xi_i is an N x N x 1 x 1 matrix of lagrange basis functions of N LGL 
-	points with indices from 0 to N-1
-	
-	L_xi_p : arrayfire.Array [1 N N 1]
-	
-	L_xi_p is a 1 x N x N x 1 matrix which is the transpose of L_xi_i reordered
+	L_xi_i is a 1 x N x N x 1 matrix which is the transpose of L_xi_i reordered
 	as (2, 0, 1, 3)
+	
+	L_xi_p : arrayfire.Array [N 1 N 1]
+	
+	L_xi_p is an N x 1 x N x 1 matrix of lagrange basis functions of N LGL 
+	points with indices from 0 to N-1
 	
 	Returns
 	-------
@@ -200,7 +200,7 @@ def mappingXiToX(x_nodes, xi):
 	return N0_x0 + N1_x1
 
 
-def dx_dxi(x_nodes, xi):
+def dx_dxi_numerical(x_nodes, xi):
 	'''
 	Differential calculated by central differential method about xi using the
 	mappingXiToX function.
@@ -213,7 +213,7 @@ def dx_dxi(x_nodes, xi):
 	
 	xi		: float
 			  Value of xi
-	  
+	
 	Returns
 	-------
 	Numerical value of differential of X w.r.t the given xi 
@@ -223,3 +223,57 @@ def dx_dxi(x_nodes, xi):
 	x1 = mappingXiToX(x_nodes, xi - dxi)
 	
 	return (x2 - x1) / (2 * dxi)
+
+
+def dx_dxi_analytical(x_nodes, xi):
+	'''
+	
+	Parameters
+	----------
+	x_nodes : arrayfire.Array
+			  An array containing the nodes of an element.
+	
+	Returns
+	-------
+	The analytical solution to the dx/dxi for an element.
+	
+	'''
+	return((x_nodes[1] - x_nodes[0]) / 2)
+
+
+def A_matrix():
+	'''
+	
+	:math::'''
+		#A_matrix = \Sigma L_{i}(\xi) L_{p}(\xi) w_{j} \frac{dx}{d \xi}
+	'''
+	The A matrix depends on the product of lagrange basis functions at two  
+	different indices for xi LGL points, The differential of x w.r.t xi at the
+	LGL points. Taking the sum of the resultant array along dimension 2 gives
+	the required A matrix.
+	
+	Returns
+	-------
+	The A matrix.
+	
+	'''
+	lobatto_weights = af.interop.np_to_af_array(gvar.lobatto_weight_function
+											 (gvar.N_LGL, gvar.xi_LGL))
+	
+	index = af.range(gvar.N_LGL)
+	L_xi_i = lagrange.lagrange_basis(index, gvar.xi_LGL)
+	L_xi_p = af.reorder(L_xi_i, 1, 2, 0)
+	L_xi_i = af.reorder(L_xi_i, 2, 0, 1)
+	
+	Li_Lp_xi_array = Li_Lp_xi(L_xi_i, L_xi_p)
+	
+	lobatto_weights_tile = af.tile(af.reorder(lobatto_weights, 1, 2, 0),
+							   gvar.N_LGL, gvar.N_LGL)
+	
+	x_nodes     = af.Array([-1, 1])
+	dx_dxi      = dx_dxi_numerical(x_nodes, gvar.xi_LGL)
+	dx_dxi_tile = af.tile(af.reorder(dx_dxi, 1, 2, 0), gvar.N_LGL, gvar.N_LGL)
+	A_matrix    = af.sum(Li_Lp_xi_array * lobatto_weights_tile * dx_dxi_tile,
+				   dim = 2) 
+	
+	return A_matrix

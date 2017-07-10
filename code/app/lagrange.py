@@ -11,13 +11,13 @@ def LGL_points(N):
 	Returns the N Legendre-Gauss-Laguere points which are
 	the roots of the equation
 	:math::
-		#(1 - x^{2})L'_{N} = 0
+		(1 - x^{2})L'_{N} = 0
 	
 	Parameters
 	----------
 	N : int
-		#Number of LGL-points to be generated.
-		#2 < N < 16
+		Number of LGL-points to be generated.
+		2 < N < 16
 	
 	Returns
 	-------
@@ -44,13 +44,13 @@ def lagrange_basis_coeffs(X):
 	This function calculates the Lagrange basis
 	polynomials by this formula:
 	:math::
-		#L_i = \prod_{m = 0, m \notin i}^{N - 1}
-				#\frac{(x - x_m)}{(x_i - x_m)}
+		L_i = \prod_{m = 0, m \notin i}^{N - 1}
+				\frac{(x - x_m)}{(x_i - x_m)}
 
 	Parameters
 	----------
 	X : numpy array
-		#The :math: `x` coordinates.
+		The :math: `x` coordinates.
 
 	Returns
 	-------
@@ -59,8 +59,6 @@ def lagrange_basis_coeffs(X):
 	polynomials such that :math:`i^{th}` lagrange polynomial will be
     the :math:`i^{th}` row of the matrix.
     '''
-
-    
 	
 	X = np.array(X)
 	lagrange_basis_poly = np.zeros([X.shape[0], X.shape[0]])
@@ -86,18 +84,18 @@ def lagrange_basis(i, x):
 	----------
 	
 	i : int
-		#The Lagrange basis which is to be calculated.
+		The Lagrange basis which is to be calculated.
 	
 	x : af.Array
-		#The coordinates at which the `i^{th}` Lagrange polynomial is to be
-		#calculated.
+		The coordinates at which the `i^{th}` Lagrange polynomial is to be
+		calculated.
 	
 	Returns
 	-------
 	
 	lagrange : af.Array
-			   #Array of values of the :math: `i^{th}` Lagrange basis
-			   #calculated at the given `x` coordinates.
+			   Array of values of the :math: `i^{th}` Lagrange basis
+			   calculated at the given `x` coordinates.
 	'''
 	
 	x_tile      = af.transpose(af.tile(x, 1, gvar.N_LGL))
