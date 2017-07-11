@@ -8,6 +8,7 @@ from app import global_variables as gvar
 
 def Li_Lp_xi(L_xi_i, L_xi_p):
 	'''
+	
 	Parameters
 	----------
 	L_xi_i : arrayfire.Array [1 N N 1]
@@ -99,9 +100,9 @@ def dx_dxi_analytical(x_nodes, xi):
 def A_matrix():
 	'''
 	
-	:math::'''
-		#A_matrix = \Sigma L_{i}(\xi) L_{p}(\xi) w_{j} \frac{dx}{d \xi}
-	'''
+	:math::
+		A_matrix = \Sigma L_{i}(\\xi) L_{p}(\\xi) w_{j} \frac{dx}{d s\\xi}
+	
 	The A matrix depends on the product of lagrange basis functions at two  
 	different indices for xi LGL points, The differential of x w.r.t xi at the
 	LGL points. Taking the sum of the resultant array along dimension 2 gives

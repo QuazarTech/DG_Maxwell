@@ -2,6 +2,11 @@
 
 import arrayfire as af
 af.set_backend('opencl')
+from app import lagrange
+from app import wave_equation
+from unit_test import test_waveEqn
+from utils import utils
+from app import global_variables
 
 from app import global_variables as gvar
 

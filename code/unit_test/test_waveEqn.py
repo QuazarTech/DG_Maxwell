@@ -107,3 +107,15 @@ def test_A_matrix():
 	plt.colorbar()
 	plt.show()
 	return
+
+
+def unitTestAMatrix():
+	'''
+	Unit test to check if the test_A_matrix function is returning an identity
+	matrix and comparing it with an identity matrix to a tolerance of 1e-14 
+	'''
+	threshold = 1e-14
+	Identity_Matrix = af.data.identity(gvar.N_LGL, gvar.N_LGL)
+	assert(af.sum(af.abs(Identity_Matrix - test_A_matrix)) <= threshold)
+	
+	

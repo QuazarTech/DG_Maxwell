@@ -57,8 +57,7 @@ def populateGlobalVariables(N = 16):
 	----------
 	N : int
 		Number of LGL points.
-	
-	Declares the number and the value of 
+	Declares the number and the value of
 	'''
 
 	global N_LGL
@@ -79,9 +78,9 @@ def lobatto_weight_function(n, x):
 	Calculates and returns the weight function for an index n
 	and points x
 	
-	#:math::
-		#w_{n} = \frac{2 P(x)^2}{n (n - 1)}, 
-		#Where P(x) is (n - 1)^th index.
+	:math::
+		w_{n} = \frac{2 P(x)^2}{n (n - 1)}, 
+		Where P(x) is (n - 1)^th index.
 	
 	Parameters
 	----------
