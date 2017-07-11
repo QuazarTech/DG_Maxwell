@@ -25,7 +25,6 @@ def Li_Lp_xi(L_xi_i, L_xi_p):
 			   Matrix of :math:`L_p(\\xi)L_i(\\xi)`
 	
 	'''
-	
 	Li_Lp_xi = af.bcast.broadcast(utils.multiply, L_xi_i, L_xi_p)
 	
 	return Li_Lp_xi
@@ -126,8 +125,7 @@ def A_matrix():
 	lobatto_weights_tile = af.tile(af.reorder(lobatto_weights, 1, 2, 0),
 							   gvar.N_LGL, gvar.N_LGL)
 	
-	x_nodes     = af.Array([-1, 1])
-	dx_dxi      = dx_dxi_numerical(x_nodes, gvar.xi_LGL)
+	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes), gvar.xi_LGL)
 	dx_dxi_tile = af.tile(af.reorder(dx_dxi, 1, 2, 0), gvar.N_LGL, gvar.N_LGL)
 	A_matrix    = af.sum(Li_Lp_xi_array * lobatto_weights_tile * dx_dxi_tile,
 				   dim = 2) 

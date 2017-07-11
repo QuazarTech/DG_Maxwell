@@ -24,7 +24,6 @@ def LGL_points(N):
 	lgl : arrayfire.Array
 		  An array of N LGL points.
 	"""
-	
 	if N > 16 or N < 2:
 		print('Skipping! This function can only return from ',
 			  '2 to 16 LGL points.')
@@ -34,6 +33,7 @@ def LGL_points(N):
 
 	lgl = af.Array(gvar.LGL_list[n])
 	return lgl
+
 
 def lagrange_basis_coeffs(X):
     
@@ -59,7 +59,6 @@ def lagrange_basis_coeffs(X):
 	polynomials such that :math:`i^{th}` lagrange polynomial will be
     the :math:`i^{th}` row of the matrix.
     '''
-	
 	X = np.array(X)
 	lagrange_basis_poly = np.zeros([X.shape[0], X.shape[0]])
 	
@@ -71,7 +70,6 @@ def lagrange_basis_coeffs(X):
 				lagrange_basis_j *= np.poly1d([1, -X[m]]) \
 									/ (X[j] - X[m])
 		lagrange_basis_poly[j] = lagrange_basis_j.c
-	
 	
 	return lagrange_basis_poly
 
@@ -97,7 +95,6 @@ def lagrange_basis(i, x):
 			   Array of values of the :math: `i^{th}` Lagrange basis
 			   calculated at the given `x` coordinates.
 	'''
-	
 	x_tile      = af.transpose(af.tile(x, 1, gvar.N_LGL))
 	power       = utils.linspace((gvar.N_LGL-1), 0, gvar.N_LGL)
 	power_tile  = af.tile(power, 1, x.shape[0])

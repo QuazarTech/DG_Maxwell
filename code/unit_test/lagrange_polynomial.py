@@ -36,8 +36,9 @@ plt.rcParams['ytick.direction'] = 'in'
 
 def lagrangePolynomialTest():
 	'''
+	A test function which plots the L1 norm of error against the number of LGL
+	points taken.
 	'''
-	
 	L1_norm = af.interop.np_to_af_array(np.zeros([15]))
 	
 	for n in range (2,16):
@@ -59,10 +60,6 @@ def lagrangePolynomialTest():
 		L1_norm[(n - 2)] = af.sum(af.abs(error))
 	
 	number_LGL_Nodes = utils.linspace(2, 16, 15)
-	
-	
-	
-	
 	
 	plt.title(r'$L_1$ norm of error vs N')
 	plt.xlabel(r'$N_{LGL}$')
