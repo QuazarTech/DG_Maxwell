@@ -7,8 +7,7 @@ from utils import utils
 from app import global_variables as gvar
 
 def Li_Lp_xi(L_xi_i, L_xi_p):
-	'''
-	
+	'''	
 	Parameters
 	----------
 	L_xi_i : arrayfire.Array [1 N N 1]
@@ -39,7 +38,7 @@ def mappingXiToX(x_nodes, xi):
 			  Element nodes.
 	
 	xi      : np.float64
-			  Value of xi in domain (-1, 1) which returns the corresponding 
+			  Value of xi in domain (-1, 1) which returns the corresponding
 			  x value in the
 	
 	Returns
@@ -102,7 +101,7 @@ def A_matrix():
 	:math::
 		A_matrix = \Sigma L_{i}(\\xi) L_{p}(\\xi) w_{j} \frac{dx}{d s\\xi}
 	
-	The A matrix depends on the product of lagrange basis functions at two  
+	The A matrix depends on the product of lagrange basis functions at two
 	different indices for xi LGL points, The differential of x w.r.t xi at the
 	LGL points. Taking the sum of the resultant array along dimension 2 gives
 	the required A matrix.
@@ -128,6 +127,6 @@ def A_matrix():
 	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes), gvar.xi_LGL)
 	dx_dxi_tile = af.tile(af.reorder(dx_dxi, 1, 2, 0), gvar.N_LGL, gvar.N_LGL)
 	A_matrix    = af.sum(Li_Lp_xi_array * lobatto_weights_tile * dx_dxi_tile,
-				   dim = 2) 
+				   dim = 2)
 	
 	return A_matrix

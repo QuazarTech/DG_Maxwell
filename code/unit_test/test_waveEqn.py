@@ -11,7 +11,7 @@ def test_lobatto_weight_function():
 	Test function to check the lobatto weights for known LGL points.
 	'''
 	threshold = 1e-14
-	
+
 	check_n3 =  np.sum(np.abs(gvar.lobatto_weight_function(3, \
 		lagrange.LGL_points(3))-np.array([1/3, 4/3, 1/3]))) <= threshold
 	
@@ -27,7 +27,7 @@ def test_lobatto_weight_function():
 
 def test_Li_Lp_xi():
 	'''
-	A Test function to check the Li_Lp_xi function in wave_equation module by 
+	A Test function to check the Li_Lp_xi function in wave_equation module by
 	passing two test arrays and comparing the analytical product with the
 	numerically calculated one with a tolerance of 1e-14.
 	'''
@@ -58,8 +58,8 @@ def test_Li_Lp_xi():
 
 def test_dx_dxi():
 	'''
-	A Test function to check the dx_xi function in wave_equation module by 
-	passing nodes of an element and using the LGL points. Analytically, the 
+	A Test function to check the dx_xi function in wave_equation module by
+	passing nodes of an element and using the LGL points. Analytically, the
 	differential would be a constant. The check has a tolerance 1e-7.
 	'''
 	threshold = 1e-7
@@ -108,7 +108,7 @@ def test_A_matrix():
 
 def test_lBasisArray():
 	'''
-	Function to test the lBasisArray function in global_variables module by 
+	Function to test the lBasisArray function in global_variables module by
 	passing 8 LGL points and comparing the numerically obtained basis function
 	coefficients to analytically calculated ones.
 	'''
@@ -190,7 +190,7 @@ def test_lBasisArray():
 	
 def test_lobatto_quadrature():
 	'''
-	Test function to check if lobatto quadrature method gives an answer within 
+	Test function to check if lobatto quadrature method gives an answer within
 	a specified tolerance.
 	'''
 	threshold = 1e-10

@@ -77,7 +77,7 @@ def lobatto_weight_function(n, x):
 	and points x
 	
 	:math::
-		w_{n} = \frac{2 P(x)^2}{n (n - 1)}, 
+		w_{n} = \frac{2 P(x)^2}{n (n - 1)},
 		Where P(x) is (n - 1)^th index.
 	
 	Parameters
@@ -88,7 +88,8 @@ def lobatto_weight_function(n, x):
 	x : arrayfire.Array
 		1D array of points where weight function is to be calculated.
 
-	.. lobatto weight function - https://en.wikipedia.org/wiki/Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules
+	.. lobatto weight function -
+	https://en.wikipedia.org/wiki/Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules
 	
 	Returns
 	-------
