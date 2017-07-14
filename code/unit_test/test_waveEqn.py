@@ -205,11 +205,11 @@ def test_lobatto_quadrature():
 		gvar.lobatto_weight_function(gvar.N_LGL, gvar.xi_LGL)))
 	
 	analytical_integral = 2 / 11
-	
-	check_lobatto = (lobatto_integral- analytical_integral) <= threshold
+	check_lobatto       = (lobatto_integral- analytical_integral) <= threshold
 	
 	print(y_LGL, af.interop.np_to_af_array( \
 		gvar.lobatto_weight_function(gvar.N_LGL, gvar.xi_LGL)))
+	
 	assert check_lobatto
 
 
@@ -218,12 +218,18 @@ def test_gaussian_weights():
 	Test function to check the Gaussian_weights function in the global 
 	global_variables
 	module
+	
+	Note
+	----
+	The accuracy of the gaussian weight is only 1e-7. This causes accuracy 
+	errors in the A matrix / Integral_Li_Lp calculation.
 	'''
 	
 	gvar.populateGlobalVariables(5)
 	threshold = 1e-7
 	N = 5
 	gaussian_weights = np.zeros([N])
+	
 	for i in range (0, N):
 		gaussian_weights[i] = gvar.gaussian_weights(N, i)
 	
@@ -247,17 +253,50 @@ def test_gaussQuadLiLp():
 	N = 8
 	gvar.populateGlobalVariables(N)
 	
-	x_tile       = af.transpose(af.tile(gvar.gauss_nodes, 1, gvar.N_LGL))
-	power        = utils.linspace(N - 1, 0, N)
-	power_tile   = af.tile(power, 1, N)
-	x_pow        = af.arith.pow(x_tile, power_tile)
-	L_0          = af.blas.matmul(gvar.lBasisArray[0], x_pow)
+	x_tile           = af.transpose(af.tile(gvar.gauss_nodes, 1, gvar.N_LGL))
+	power            = utils.linspace(N - 1, 0, N)
+	power_tile       = af.tile(power, 1, N)
+	x_pow            = af.arith.pow(x_tile, power_tile)
+	L_1              = af.blas.matmul(gvar.lBasisArray[1], x_pow)
+	L_0              = af.blas.matmul(gvar.lBasisArray[0], x_pow)	
 	gaussian_weights = af.np_to_af_array(np.zeros([N]))
 	
 	for i in range(0, N):
 		gaussian_weights[i] = gvar.gaussian_weights(N, i)
 	
-	Integral_L_0 = af.transpose(gaussian_weights) * L_0 ** 2
-	print(af.sum(Integral_L_0))
+	Integral_L_0_0        = af.transpose(gaussian_weights) * L_0 * L_0
+	gaussian_weights_tile = af.tile(af.reorder(gaussian_weights, 1, 2, 0), N, N)
 	
+	index = af.range(N)
+	L_i   = af.blas.matmul(gvar.lBasisArray[index], x_pow)
+	L_j   = af.reorder(L_i, 0, 2, 1)
+	L_i   = af.reorder(L_i, 2, 0, 1)
+	
+	L_array         = wave_equation.Li_Lp_xi(L_j, L_i)
+	L_element       = (L_array * gaussian_weights_tile)
+	Integral_Li_Lp  = af.sum(L_element, dim = 2)
+	
+	return Integral_Li_Lp
+
+def test_Integral_Li_Lp():
+	'''
+	Test function to check the A_matrix function in wave_equation module.
+	
+	Obtaining the A_matrix from the function and setting the value of
+	all elements above a certain threshold to be 1 and plotting it.
+	'''
+	
+	gvar.populateGlobalVariables(8)
+	threshold          = 1e-5
+	A_matrix_structure = np.zeros([gvar.N_LGL, gvar.N_LGL])
+	non_zero_indices   = np.where(np.array(test_gaussQuadLiLp()) > threshold)
+	
+	A_matrix_structure[non_zero_indices] = 1.
+	
+	plt.gca().invert_yaxis()
+	plt.contourf(A_matrix_structure, 100, cmap = 'Blues')
+	plt.axes().set_aspect('equal')
+	plt.colorbar()
+	plt.show()
+
 	return

@@ -13,3 +13,4 @@ if __name__ == '__main__':
 	'''
 	gvar.populateGlobalVariables(8)
 	test_waveEqn.test_gaussQuadLiLp()
+	test_waveEqn.test_Integral_Li_Lp()
