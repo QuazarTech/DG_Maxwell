@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 import numpy as np
 import arrayfire as af
-
 from utils import utils
 
 from app import global_variables as gvar
@@ -28,10 +27,9 @@ def LGL_points(N):
 		print('Skipping! This function can only return from ',
 			  '2 to 16 LGL points.')
 	
-	
-	n = N - 2
-
+	n   = N - 2
 	lgl = af.Array(gvar.LGL_list[n])
+	
 	return lgl
 
 
@@ -59,7 +57,7 @@ def lagrange_basis_coeffs(X):
 	polynomials such that :math:`i^{th}` lagrange polynomial will be
     the :math:`i^{th}` row of the matrix.
     '''
-	X = np.array(X)
+	X                   = np.array(X)
 	lagrange_basis_poly = np.zeros([X.shape[0], X.shape[0]])
 	
 	for j in np.arange(X.shape[0]):
@@ -69,6 +67,7 @@ def lagrange_basis_coeffs(X):
 			if m != j:
 				lagrange_basis_j *= np.poly1d([1, -X[m]]) \
 									/ (X[j] - X[m])
+		
 		lagrange_basis_poly[j] = lagrange_basis_j.c
 	
 	return lagrange_basis_poly
@@ -103,4 +102,3 @@ def lagrange_basis(i, x):
 	l_xi_j    = af.blas.matmul(gvar.lBasisArray[i], x_pow)
 	
 	return (l_xi_j)
-	

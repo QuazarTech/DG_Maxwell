@@ -84,14 +84,41 @@ def test_dx_dxi_analytical():
 										 (nodes, 0) - 2)) <= threshold
 	assert check_analytical_dx_dxi
 
-
 def test_A_matrix():
+	'''
+	Test to check the function A_matrix in wave_equation module by using 4 LGL
+	points and comparing the result to a numerical one.
+	'''
+	threshold = 1e-12
+	gvar.populateGlobalVariables(4)
+	A_matrix = wave_equation.A_matrix()
+	
+	Analytical_A_matrix = np.array([[0.14285714285714057, 0.053239713749966604,
+								     -0.0532397137500058, 0.023809523809526053],
+									
+									[0.05323971374996660, 0.7142857142857256,
+								     0.11904761904768629, -0.05323971375000583],
+									
+									[-0.0532397137500058, 0.11904761904768629,
+									 0.7142857142857257, 0.05323971374996663],
+									
+									[0.023809523809526053, -0.0532397137500058,
+									 0.05323971374996663, 0.14285714285714063]])
+	
+	print(A_matrix, af.interop.np_to_af_array(Analytical_A_matrix))
+	
+	assert af.sum(af.abs(A_matrix - 
+				af.interop.np_to_af_array(Analytical_A_matrix))) <= threshold
+
+
+def test_diagonal_A_matrix():
 	'''
 	Test function to check the A_matrix function in wave_equation module.
 	
 	Obtaining the A_matrix from the function and setting the value of
 	all elements above a certain threshold to be 1 and plotting it.
 	'''
+	gvar.populateGlobalVariables(8)
 	threshold          = 1e-5
 	A_matrix_structure = np.zeros([gvar.N_LGL, gvar.N_LGL])
 	non_zero_indices   = np.where(np.array(wave_equation.A_matrix()) > threshold)
@@ -103,7 +130,7 @@ def test_A_matrix():
 	plt.axes().set_aspect('equal')
 	plt.colorbar()
 	plt.show()
-
+	
 	return
 
 def test_lBasisArray():
@@ -124,6 +151,7 @@ def test_lBasisArray():
 										1.054687500002225, \
 										0.03906249999993106,\
 										- 0.03906249999993102])
+	
 	basis_array_analytical[1] = np.array([8.140722718246403,\
 										- 7.096594831382852,\
 										- 11.34747768400062,\
@@ -132,6 +160,7 @@ def test_lBasisArray():
 										- 2.904297073479968,\
 										- 0.1248537463649464,\
 										0.1088400233982081])
+	
 	basis_array_analytical[2] = np.array([-10.35813682892759,\
 										6.128911440984293,\
 										18.68335515838398,\
@@ -149,7 +178,7 @@ def test_lBasisArray():
 										- 3.28045297599924,\
 										- 3.030359293396907,\
 										0.6342518300700298])
-
+	
 	basis_array_analytical[4] = np.array([-11.38981374849497,\
 										- 2.383879109609437,\
 										24.03296250200939,\
@@ -158,7 +187,7 @@ def test_lBasisArray():
 										- 3.28045297599924,\
 										3.030359293396907,\
 										0.6342518300700299])
-
+	
 	basis_array_analytical[5] = np.array([10.35813682892759,\
 										6.128911440984293,\
 										-18.68335515838398,\
@@ -167,6 +196,7 @@ def test_lBasisArray():
 										5.130062549476987,\
 										- 0.3448188117404021,\
 										- 0.2040293534683072])
+	
 	basis_array_analytical[6] = np.array([-8.140722718246403,\
 										- 7.096594831382852,\
 										11.34747768400062,\
@@ -175,6 +205,7 @@ def test_lBasisArray():
 										- 2.904297073479968,\
 										0.1248537463649464,\
 										0.1088400233982081])
+	
 	basis_array_analytical[7] = np.array([3.351562500008004,\
 										3.351562500008005, \
 										- 3.867187500010295,\
@@ -183,10 +214,11 @@ def test_lBasisArray():
 										1.054687500002224, \
 										- 0.039062499999931,\
 										- 0.03906249999993102])
-				
+	
 	basis_array_analytical = af.interop.np_to_af_array(basis_array_analytical)
 	
 	assert af.sum(af.abs(basis_array_analytical - gvar.lBasisArray)) < threshold
+	
 	
 def test_lobatto_quadrature():
 	'''
@@ -194,17 +226,29 @@ def test_lobatto_quadrature():
 	a specified tolerance.
 	'''
 	threshold = 1e-10
+	N         = 8
+	gvar.populateGlobalVariables(N)
+	
+	L_0             = lagrange.lagrange_basis(0, gvar.xi_LGL)
+	lobatto_weights = af.transpose(af.interop.np_to_af_array(
+		gvar.lobatto_weight_function(gvar.N_LGL, gvar.xi_LGL)))
+	L_0_integral    = af.sum(L_0 ** 2 * lobatto_weights)
+	
+	print(L_0_integral)
+	
+	return
+	
+	
+def test_Li_Li():
+	'''
+	'''
+	threshold = 1e-10
 	N = 8
 	gvar.populateGlobalVariables(N)
 	
-	y_LGL = (gvar.xi_LGL ** (10))
-	lobatto_integral = af.sum(y_LGL * af.interop.np_to_af_array( \
-		gvar.lobatto_weight_function(gvar.N_LGL, gvar.xi_LGL)))
+	L0_coeff  = gvar.lBasisArray[0]
+	L0_poly   = np.poly1d(np.array(af.transpose(L0_coeff)))
 	
-	analytical_integral = 2 / 11
+	L0_xi_LGL = (L0_poly**2)(gvar.xi_LGL)
 	
-	check_lobatto = (lobatto_integral- analytical_integral) <= threshold
-	
-	print(y_LGL, af.interop.np_to_af_array( \
-		gvar.lobatto_weight_function(gvar.N_LGL, gvar.xi_LGL)))
-	assert check_lobatto
+	return

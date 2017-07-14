@@ -1,13 +1,12 @@
 #! /usr/bin/env python3
 
 import arrayfire as af
-
 from app import lagrange
 from utils import utils
 from app import global_variables as gvar
 
 def Li_Lp_xi(L_xi_i, L_xi_p):
-	'''	
+	'''
 	Parameters
 	----------
 	L_xi_i : arrayfire.Array [1 N N 1]
@@ -70,7 +69,7 @@ def dx_dxi_numerical(x_nodes, xi):
 	
 	Returns
 	-------
-	Numerical value of differential of X w.r.t the given xi 
+	Numerical value of differential of X w.r.t the given xi
 	'''
 	dxi = 1e-7
 	x2 = mappingXiToX(x_nodes, xi + dxi)
@@ -111,9 +110,6 @@ def A_matrix():
 	The A matrix.
 	
 	'''
-	lobatto_weights = af.interop.np_to_af_array(gvar.lobatto_weight_function
-											 (gvar.N_LGL, gvar.xi_LGL))
-	
 	index = af.range(gvar.N_LGL)
 	L_xi_i = lagrange.lagrange_basis(index, gvar.xi_LGL)
 	L_xi_p = af.reorder(L_xi_i, 1, 2, 0)
@@ -121,7 +117,7 @@ def A_matrix():
 	
 	Li_Lp_xi_array = Li_Lp_xi(L_xi_i, L_xi_p)
 	
-	lobatto_weights_tile = af.tile(af.reorder(lobatto_weights, 1, 2, 0),
+	lobatto_weights_tile = af.tile(af.reorder(gvar.lobatto_weights, 1, 2, 0),
 							   gvar.N_LGL, gvar.N_LGL)
 	
 	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes), gvar.xi_LGL)
@@ -130,3 +126,15 @@ def A_matrix():
 				   dim = 2)
 	
 	return A_matrix
+
+def RHSWaveEqn():
+	'''
+	Function to calculate the RHS of the wave equation.
+	:math::
+		\Sigma U^{n+1}_{i} \int
+	'''
+	
+	Sum_U_n_i   = af.sum(gvar.initial_displacement)
+	U_n_i_AMatrix = Sigma_U_n_i * af.sum(A_matrix(), 1)
+	
+	return

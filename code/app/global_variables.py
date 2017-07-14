@@ -44,10 +44,11 @@ for idx in np.arange(len(LGL_list)):
 	LGL_list[idx] = np.array(LGL_list[idx], dtype = np.float64)
 	LGL_list[idx] = af.interop.np_to_af_array(LGL_list[idx])
 
-x_nodes     = af.interop.np_to_af_array(np.array([[-2., 2.]]))
-N_LGL       = 16
-xi_LGL      = None
-lBasisArray = None
+x_nodes         = af.interop.np_to_af_array(np.array([[-1, 1]]))
+N_LGL           = 16
+xi_LGL          = None
+lBasisArray     = None
+lobatto_weights = None
 
 def populateGlobalVariables(N = 16):
 	'''
@@ -62,11 +63,16 @@ def populateGlobalVariables(N = 16):
 	global N_LGL
 	global xi_LGL
 	global lBasisArray
+	global lobatto_weights
 
-	N_LGL       = N
-	xi_LGL      = lagrange.LGL_points(N_LGL)
-	lBasisArray = af.interop.np_to_af_array( \
+	N_LGL           = N
+	xi_LGL          = lagrange.LGL_points(N_LGL)
+	lBasisArray     = af.interop.np_to_af_array( \
 		lagrange.lagrange_basis_coeffs(xi_LGL))
+	
+	lobatto_weights = af.interop.np_to_af_array(
+		lobatto_weight_function(N_LGL,
+								xi_LGL))
 	
 	return
 
@@ -99,3 +105,11 @@ def lobatto_weight_function(n, x):
 	P = sp.legendre(n - 1)
 	
 	return (2 / (n * (n - 1)) / (P(x))**2)
+
+def Initial_displacement():
+	'''
+	Function which returns the initial values of displacement of the wave at the
+	LGL points.
+	'''
+	initial_displacement = sin(gvar.xi_LGL)
+	return initial_displacement

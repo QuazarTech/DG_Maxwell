@@ -67,7 +67,8 @@ def lagrangePolynomialTest():
 	
 	plt.loglog(number_LGL_Nodes, L1_norm, basex = 2)
 	plt.loglog(number_LGL_Nodes , (number_LGL_Nodes / 9.2) **\
-		(-number_LGL_Nodes * 1.1),basex = 2)
+				(-number_LGL_Nodes * 1.1),basex = 2)
+	
 	plt.legend(['L_1 norm', r'$(\frac{N}{9.3})^{-1.1N}$'])
 	
 	plt.show()
