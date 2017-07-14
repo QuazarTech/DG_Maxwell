@@ -4,6 +4,16 @@ from scipy import special as sp
 from app import lagrange
 
 
+gaussianNodesList = [ 
+[ 0.57735027, -0.57735027],\
+[-0.77459667, 0., 0.77459667],\
+[-0.86113631, -0.33998104, 0.33998104, 0.86113631],\
+[-0.90617985, -0.53846931, 0., 0.53846931, 0.90617985],\
+[-0.90617985, -0.53846931, 0., 0.53846931, 0.90617985],\
+[-0.94910791, -0.74153119, -0.40584515, 0, 0.40584515, 0.74153119, 0.94910791],\
+[-0.96028986, -0.79666648, -0.52553241, -0.18343464, 0.18343464, 0.52553241,\
+  0.79666648, 0.96028986]]
+
 LGL_list = [ \
 [-1.0,1.0],                                                               \
 [-1.0,0.0,1.0],                                                           \
@@ -44,7 +54,7 @@ for idx in np.arange(len(LGL_list)):
 	LGL_list[idx] = np.array(LGL_list[idx], dtype = np.float64)
 	LGL_list[idx] = af.interop.np_to_af_array(LGL_list[idx])
 
-x_nodes     = af.interop.np_to_af_array(np.array([[-2., 2.]]))
+x_nodes     = af.interop.np_to_af_array(np.array([[-1., 1.]]))
 N_LGL       = 16
 xi_LGL      = None
 lBasisArray = None
@@ -62,12 +72,12 @@ def populateGlobalVariables(N = 16):
 	global N_LGL
 	global xi_LGL
 	global lBasisArray
-
+	global gauss_nodes
 	N_LGL       = N
 	xi_LGL      = lagrange.LGL_points(N_LGL)
+	gauss_nodes = af.Array(gaussianNodesList[N - 2])
 	lBasisArray = af.interop.np_to_af_array( \
 		lagrange.lagrange_basis_coeffs(xi_LGL))
-	
 	return
 
 
@@ -99,3 +109,27 @@ def lobatto_weight_function(n, x):
 	P = sp.legendre(n - 1)
 	
 	return (2 / (n * (n - 1)) / (P(x))**2)
+
+
+
+def gaussian_weights(N, i):
+	'''
+	Returns the gaussian weights for N Gaussian Nodes at index i.
+	
+	Parameters
+	----------
+	N     : int
+			Number of Gaussian nodes for which the weight is t be calculated.
+			
+	i     : int
+			Index for which the Gaussian weight is required.
+	
+	Returns
+	-------
+	The gaussian weight.
+	'''
+	
+	gaussian_weight  = 2 / ((1 - (gaussianNodesList[N - 2][i]) ** 2) * \
+				(np.polyder(sp.legendre(N))(gaussianNodesList[N - 2][i])) ** 2)
+	
+	return gaussian_weight

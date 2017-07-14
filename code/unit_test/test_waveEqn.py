@@ -5,6 +5,7 @@ from app import lagrange
 from app import global_variables as gvar
 from app import wave_equation
 from matplotlib import pyplot as plt
+from utils import utils
 
 def test_lobatto_weight_function():
 	'''
@@ -32,7 +33,7 @@ def test_Li_Lp_xi():
 	numerically calculated one with a tolerance of 1e-14.
 	'''
 	
-	gvar.populateGlobalVariables()
+	gvar.populateGlobalVariables(3)
 	
 	threshold = 1e-14
 	
@@ -92,6 +93,8 @@ def test_A_matrix():
 	Obtaining the A_matrix from the function and setting the value of
 	all elements above a certain threshold to be 1 and plotting it.
 	'''
+	
+	gvar.populateGlobalVariables(8)
 	threshold          = 1e-5
 	A_matrix_structure = np.zeros([gvar.N_LGL, gvar.N_LGL])
 	non_zero_indices   = np.where(np.array(wave_equation.A_matrix()) > threshold)
@@ -208,3 +211,53 @@ def test_lobatto_quadrature():
 	print(y_LGL, af.interop.np_to_af_array( \
 		gvar.lobatto_weight_function(gvar.N_LGL, gvar.xi_LGL)))
 	assert check_lobatto
+
+
+def test_gaussian_weights():
+	'''
+	Test function to check the Gaussian_weights function in the global 
+	global_variables
+	module
+	'''
+	
+	gvar.populateGlobalVariables(5)
+	threshold = 1e-7
+	N = 5
+	gaussian_weights = np.zeros([N])
+	for i in range (0, N):
+		gaussian_weights[i] = gvar.gaussian_weights(N, i)
+	
+	reference_weights = np.array([0.23692688505618908, 0.47862867049936647,
+					0.5688888888888, 0.47862867049936647, 0.23692688505618908 ])
+	
+	assert np.sum(np.abs(gaussian_weights - reference_weights)) <= threshold
+
+
+def test_gaussQuadLiLp():
+	'''
+	Calculates the value of lagrange basis functions obtained for N_LGL points 
+	at the gaussian nodes.
+	
+	Returns
+	-------
+	The value of integral of product of lagrange basis functions with limits
+	-1 and 1
+	'''
+	
+	N = 8
+	gvar.populateGlobalVariables(N)
+	
+	x_tile       = af.transpose(af.tile(gvar.gauss_nodes, 1, gvar.N_LGL))
+	power        = utils.linspace(N - 1, 0, N)
+	power_tile   = af.tile(power, 1, N)
+	x_pow        = af.arith.pow(x_tile, power_tile)
+	L_0          = af.blas.matmul(gvar.lBasisArray[0], x_pow)
+	gaussian_weights = af.np_to_af_array(np.zeros([N]))
+	
+	for i in range(0, N):
+		gaussian_weights[i] = gvar.gaussian_weights(N, i)
+	
+	Integral_L_0 = af.transpose(gaussian_weights) * L_0 ** 2
+	print(af.sum(Integral_L_0))
+	
+	return
