@@ -8,7 +8,7 @@ from app import global_variables as gvar
 
 def LGL_points(N):
 	"""
-	Returns the N Legendre-Gauss-Laguere points which are
+	Returns the :math: `N` Legendre-Gauss-Laguere points which are
 	the roots of the equation
 	:math::
 		(1 - x^{2})L'_{N} = 0
@@ -22,7 +22,7 @@ def LGL_points(N):
 	Returns
 	-------
 	lgl : arrayfire.Array
-		  An array of N LGL points.
+		  An array of :math: `N` LGL points.
 	"""
 	if N > 16 or N < 2:
 		print('Skipping! This function can only return from ',
@@ -55,10 +55,10 @@ def lagrange_basis_coeffs(X):
 	Returns
 	-------
 	numpy.ndarray
-	A N x N matrix containing the coefficients of the Lagrange basis
-	polynomials such that :math:`i^{th}` lagrange polynomial will be
-    the :math:`i^{th}` row of the matrix.
-    '''
+	A :math: `N` x :math: `N` matrix containing the coefficients of the
+	Lagrange basis polynomials such that :math:`i^{th}` lagrange polynomial 
+	will be the :math:`i^{th}` row of the matrix.
+	'''
 	X = np.array(X)
 	lagrange_basis_poly = np.zeros([X.shape[0], X.shape[0]])
 	
@@ -76,7 +76,7 @@ def lagrange_basis_coeffs(X):
 def lagrange_basis(i, x):
 	'''
 	Calculates the value of the :math: `i^{th}` Lagrange basis (calculated
-	using the gvar.xi_LGL points) at the `x` coordinates.
+	using the gvar.xi_LGL points) at the :math: `x` coordinates.
 	
 	Parameters
 	----------
@@ -93,7 +93,7 @@ def lagrange_basis(i, x):
 	
 	lagrange : af.Array
 			   Array of values of the :math: `i^{th}` Lagrange basis
-			   calculated at the given `x` coordinates.
+			   calculated at the given :math: `x` coordinates.
 	'''
 	x_tile      = af.transpose(af.tile(x, 1, gvar.N_LGL))
 	power       = utils.linspace((gvar.N_LGL-1), 0, gvar.N_LGL)
@@ -103,4 +103,3 @@ def lagrange_basis(i, x):
 	l_xi_j    = af.blas.matmul(gvar.lBasisArray[i], x_pow)
 	
 	return (l_xi_j)
-	

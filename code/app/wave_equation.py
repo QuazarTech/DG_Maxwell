@@ -7,8 +7,8 @@ from utils import utils
 from app import global_variables as gvar
 
 def Li_Lp_xi(L_xi_i, L_xi_p):
-	'''	
-	Parameters
+	'''
+	Parameters    [TODO] : Replace LGL points with gaussian nodes.
 	----------
 	L_xi_i : arrayfire.Array [1 N N 1]
 			 A 2D array :math:`L_i` calculated at all the
@@ -38,12 +38,12 @@ def mappingXiToX(x_nodes, xi):
 			  Element nodes.
 	
 	xi      : np.float64
-			  Value of xi in domain (-1, 1) which returns the corresponding
-			  x value in the
+			  Value of :math: `xi` in domain (-1, 1) which returns the 
+			  corresponding :math: `x` value in the element.
 	
 	Returns
 	-------
-	X value in the element with given nodes and xi.
+	:math: `X` value in the element with given nodes and :math: `xi`.
 	'''
 	N_0 = (1. - xi) / 2
 	N_1 = (xi + 1.) / 2
@@ -56,8 +56,8 @@ def mappingXiToX(x_nodes, xi):
 
 def dx_dxi_numerical(x_nodes, xi):
 	'''
-	Differential calculated by central differential method about xi using the
-	mappingXiToX function.
+	Differential calculated by central differential method about :math: `xi`
+	using the mappingXiToX function.
 	
 	Parameters
 	----------
@@ -70,7 +70,7 @@ def dx_dxi_numerical(x_nodes, xi):
 	
 	Returns
 	-------
-	Numerical value of differential of X w.r.t the given xi 
+	Numerical value of differential of :math: `X` w.r.t the given :math: `xi`. 
 	'''
 	dxi = 1e-7
 	x2 = mappingXiToX(x_nodes, xi + dxi)
@@ -89,7 +89,7 @@ def dx_dxi_analytical(x_nodes, xi):
 	
 	Returns
 	-------
-	The analytical solution to the dx/dxi for an element.
+	The analytical solution to the \\frac{dx}{d\\xi} for an element.
 	
 	'''
 	return((x_nodes[1] - x_nodes[0]) / 2)
@@ -99,12 +99,12 @@ def A_matrix():
 	'''
 	
 	:math::
-		A_matrix = \Sigma L_{i}(\\xi) L_{p}(\\xi) w_{j} \frac{dx}{d s\\xi}
+		A_matrix = \\Sigma L_{i}(\\xi) L_{p}(\\xi) w_{j} \\frac{dx}{d s\\xi}
 	
 	The A matrix depends on the product of lagrange basis functions at two
-	different indices for xi LGL points, The differential of x w.r.t xi at the
-	LGL points. Taking the sum of the resultant array along dimension 2 gives
-	the required A matrix.
+	different indices for xi LGL points, $\\frac{dx}{d\\xi}$ at the LGL points.
+	Taking the sum of the resultant array along dimension 2 gives the required
+	A matrix .
 	
 	Returns
 	-------

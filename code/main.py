@@ -11,6 +11,6 @@ if __name__ == '__main__':
 	Main Function which sets backend and pouplates the global global_variables.
 	Can be used to obtain results from other modules.
 	'''
-	gvar.populateGlobalVariables(8)
-	test_waveEqn.test_gaussQuadLiLp()
-	test_waveEqn.test_Integral_Li_Lp()
+	gvar.populateGlobalVariables(16)
+	test_waveEqn.test_gauss_A_matrix()
+	test_waveEqn.test_gaussian_quadrature()
