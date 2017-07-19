@@ -103,3 +103,21 @@ def lagrange_basis(i, x):
 	l_xi_j    = af.blas.matmul(gvar.lBasisArray[i], x_pow)
 	
 	return (l_xi_j)
+
+
+def d_Lp_x_gauss_xi():
+	'''
+	Function which returns :math: `\\frac {L_p (x_gauss)} {\\xi}` for :math:
+	`N_Gauss` points.[TODO] : Complete.
+	'''
+	differentiation_coeffs = (af.transpose(af.flip(af.tile\
+		(af.range(gvar.N_LGL), 1, gvar.N_LGL))) * gvar.lBasisArray)[:, :-1]
+	
+	xi_tile         = af.transpose(af.tile(gvar.gauss_nodes, 1, gvar.N_LGL - 1))
+	power_tile      = af.flip(af.tile\
+		(af.range(gvar.N_LGL - 1), 1, gvar.N_Gauss))
+	xi_power_tile   = af.pow(xi_tile, power_tile)
+	
+	d_Lp_x_gauss_xi = af.blas.matmul(differentiation_coeffs, xi_power_tile)
+	
+	return d_Lp_x_gauss_xi

@@ -2,7 +2,7 @@ import numpy as np
 import arrayfire as af
 from scipy import special as sp
 from app import lagrange
-
+from utils import utils
 
 gaussianNodesList = [ 
 [ 0.57735027, -0.57735027],\
@@ -136,37 +136,92 @@ for idx in np.arange(len(LGL_list)):
 	LGL_list[idx] = np.array(LGL_list[idx], dtype = np.float64)
 	LGL_list[idx] = af.interop.np_to_af_array(LGL_list[idx])
 
+for idx in np.arange(len(gaussianNodesList)):
+	gaussianNodesList[idx] = np.array(gaussianNodesList[idx], \
+										dtype = np.float64)
+	gaussianNodesList[idx] = af.interop.np_to_af_array(gaussianNodesList[idx])
+
 x_nodes     = af.interop.np_to_af_array(np.array([[-1., 1.]]))
 N_LGL       = 16
 xi_LGL      = None
 lBasisArray = None
 
-def populateGlobalVariables(N = 16):
+def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9):
 	'''
 	Initialize the global variables.
 	Parameters
 	----------
-	N : int
-		Number of LGL points.
-	Declares the number and the value of
+	N_LGL : int
+			Number of LGL points.
+			Declares the number and the value of
+	
+	N_gauss : int
+			  Number of gaussian nodes required.
+	
 	'''
+	
 	global N_LGL
 	global xi_LGL
 	global lBasisArray
-	global gauss_nodes
-	N_LGL       = N
+	global lobatto_weights
+	N_LGL       = Number_of_LGL_pts
 	xi_LGL      = lagrange.LGL_points(N_LGL)
-	gauss_nodes = af.Array(gaussianNodesList[N - 2])
 	lBasisArray = af.interop.np_to_af_array( \
 		lagrange.lagrange_basis_coeffs(xi_LGL))
+	
+	lobatto_weights = af.interop.np_to_af_array(\
+		lobatto_weight_function(N_LGL, xi_LGL)) 
+	
+	
+	global N_Gauss
+	global gauss_nodes
+	global gauss_weights
+	N_Gauss = Number_of_Gauss_nodes
+	gauss_nodes = af.Array(gaussianNodesList[N_Gauss - 2])
+	gauss_weights = af.interop.np_to_af_array(np.zeros([N_Gauss]))
+	for i in range(0, N_Gauss):
+		gauss_weights[i] = gaussian_weights(N_Gauss, i)
+	
+	global u
+	global time
+	u_init  = np.e ** (-(gauss_nodes) ** 2 / 0.4 ** 2)
+	time    = utils.linspace(0, 2, 1000)
+	u       = af.interop.np_to_af_array(np.zeros([time.shape[0], N_Gauss]))
+	u[0]    = u_init
+	
+	global c
+	c = 1.0
+	
+	#global d_Lp_xi
+	#d_Lp_xi = lagrange.d_Lp_xi
+	
 	return
 
-def populateGaussNodes(N):
+def gaussian_weights(N, i):
 	'''
+	Returns the gaussian weights for :math: `N` Gaussian Nodes at index
+	 :math: `i`.
+	
+	Parameters
+	----------
+	N     : int
+			Number of Gaussian nodes for which the weight is t be calculated.
+			
+	i     : int
+			Index for which the Gaussian weight is required.
+	
+	Returns
+	-------
+	gaussian_weight : double 
+					  The gaussian weight.
+	
 	'''
-	global gauss_nodes
-	gauss_nodes = af.Array(gaussianNodesList[N - 2])
-	return
+	
+	gaussian_weight  = 2 / ((1 - ((af.sum(gaussianNodesList[N - 2][i]))) ** 2) \
+	* (np.polyder(sp.legendre(N))(af.sum(gaussianNodesList[N - 2][i]))) ** 2)
+	
+	
+	return gaussian_weight
 
 def lobatto_weight_function(n, x):
 	'''
@@ -197,30 +252,3 @@ def lobatto_weight_function(n, x):
 	P = sp.legendre(n - 1)
 	
 	return (2 / (n * (n - 1)) / (P(x))**2)
-
-
-
-def gaussian_weights(N, i):
-	'''
-	Returns the gaussian weights for :math: `N` Gaussian Nodes at index
-	 :math: `i`.
-	
-	Parameters
-	----------
-	N     : int
-			Number of Gaussian nodes for which the weight is t be calculated.
-			
-	i     : int
-			Index for which the Gaussian weight is required.
-	
-	Returns
-	-------
-	gaussian_weight : double [TODO] : Check data type. 
-					  The gaussian weight.
-	
-	'''
-	
-	gaussian_weight  = 2 / ((1 - (gaussianNodesList[N - 2][i]) ** 2) * \
-				(np.polyder(sp.legendre(N))(gaussianNodesList[N - 2][i])) ** 2)
-	
-	return gaussian_weight

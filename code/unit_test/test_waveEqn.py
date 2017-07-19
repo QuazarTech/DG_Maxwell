@@ -8,29 +8,10 @@ from matplotlib import pyplot as plt
 from utils import utils
 import math
 
-def test_lobatto_weight_function():
+def test_Li_Lp_x_gauss():
 	'''
-	Test function to check the lobatto weights for known LGL points.
-	'''
-	threshold = 1e-14
-
-	check_n3 =  np.sum(np.abs(gvar.lobatto_weight_function(3, \
-		lagrange.LGL_points(3))-np.array([1/3, 4/3, 1/3]))) <= threshold
-	
-	check_n4 = np.sum(np.abs(gvar.lobatto_weight_function(4, \
-		lagrange.LGL_points(4))-np.array([1/6, 5/6, 5/6, 1/6]))) <= threshold
-	
-	check_n5 = np.sum(np.abs(gvar.lobatto_weight_function(5, \
-		lagrange.LGL_points(5))-np.array([0.1, 49/90, 32/45, 49/90, 0.1]))) <= \
-			threshold
-	
-	assert check_n3 & check_n4 & check_n5
-
-
-def test_Li_Lp_xi():
-	'''
-	A Test function to check the Li_Lp_xi function in wave_equation module by
-	passing two test arrays and comparing the analytical product with the
+	A Test function to check the Li_Lp_x_gauss function in wave_equation module
+	by passing two test arrays and comparing the analytical product with the
 	numerically calculated one with a tolerance of 1e-14.
 	'''
 	
@@ -52,8 +33,8 @@ def test_Li_Lp_xi():
 	
 	analytical_product = af.interop.np_to_af_array(product)
 	
-	check_order3 = af.sum(af.abs(wave_equation.Li_Lp_xi(test_array, test_array1)
-							  - analytical_product)) <= threshold
+	check_order3 = af.sum(af.abs(wave_equation.Li_Lp_x_gauss\
+		(test_array, test_array1) - analytical_product)) <= threshold
 	
 	assert check_order3
 
@@ -86,29 +67,6 @@ def test_dx_dxi_analytical():
 										 (nodes, 0) - 2)) <= threshold
 	assert check_analytical_dx_dxi
 
-
-def test_A_matrix():
-	'''
-	Test function to check the A_matrix function in wave_equation module.
-	
-	Obtaining the A_matrix from the function and setting the value of
-	all elements above a certain threshold to be 1 and plotting it.
-	'''
-	
-	gvar.populateGlobalVariables(8)
-	threshold          = 1e-5
-	A_matrix_structure = np.zeros([gvar.N_LGL, gvar.N_LGL])
-	non_zero_indices   = np.where(np.array(wave_equation.A_matrix()) > threshold)
-	
-	A_matrix_structure[non_zero_indices] = 1.
-	
-	plt.gca().invert_yaxis()
-	plt.contourf(A_matrix_structure, 100, cmap = 'Blues')
-	plt.axes().set_aspect('equal')
-	plt.colorbar()
-	plt.show()
-
-	return
 
 def test_lBasisArray():
 	'''
@@ -191,27 +149,6 @@ def test_lBasisArray():
 	basis_array_analytical = af.interop.np_to_af_array(basis_array_analytical)
 	
 	assert af.sum(af.abs(basis_array_analytical - gvar.lBasisArray)) < threshold
-	
-def test_lobatto_quadrature():
-	'''
-	Test function to check if lobatto quadrature method gives an answer within
-	a specified tolerance.
-	'''
-	threshold = 1e-10
-	N = 8
-	gvar.populateGlobalVariables(N)
-	
-	y_LGL = (gvar.xi_LGL ** (10))
-	lobatto_integral = af.sum(y_LGL * af.interop.np_to_af_array( \
-		gvar.lobatto_weight_function(gvar.N_LGL, gvar.xi_LGL)))
-	
-	analytical_integral = 2 / 11
-	check_lobatto       = (lobatto_integral- analytical_integral) <= threshold
-	
-	print(y_LGL, af.interop.np_to_af_array( \
-		gvar.lobatto_weight_function(gvar.N_LGL, gvar.xi_LGL)))
-	
-	assert check_lobatto
 
 
 def test_gaussian_weights():
@@ -225,63 +162,15 @@ def test_gaussian_weights():
 	The accuracy of the gaussian weight is only 1e-7. This causes accuracy 
 	errors in the A matrix / Integral_Li_Lp calculation.
 	'''
-	
-	gvar.populateGlobalVariables(5)
 	threshold = 1e-7
-	N = 5
-	gaussian_weights = np.zeros([N])
+	gvar.populateGlobalVariables(5, 5)
+	gaussian_weights = gvar.gauss_weights
 	
-	for i in range (0, N):
-		gaussian_weights[i] = gvar.gaussian_weights(N, i)
-	
-	reference_weights = np.array([0.23692688505618908, 0.47862867049936647,
+	reference_weights = af.Array([0.23692688505618908, 0.47862867049936647,
 					0.5688888888888, 0.47862867049936647, 0.23692688505618908 ])
 	
-	assert np.sum(np.abs(gaussian_weights - reference_weights)) <= threshold
+	assert af.max(af.abs(gaussian_weights - reference_weights)) <= threshold
 
-
-def test_gauss_A_matrix():
-	'''
-	Calculates the value of lagrange basis functions obtained for :math: `N_LGL`
-	points at the gaussian nodes.
-	
-	Returns
-	-------
-	The value of integral of product of lagrange basis functions with limits
-	-1 and 1.
-	'''
-	
-	N = 8
-	gvar.populateGlobalVariables(8)
-	
-	x_tile           = af.transpose(af.tile(gvar.gauss_nodes, 1, N))
-	power            = utils.linspace(N - 1, 0, N)
-	power_tile       = af.tile(power, 1, N)
-	x_pow            = af.arith.pow(x_tile, power_tile)
-	L_1              = af.blas.matmul(gvar.lBasisArray[1], x_pow)
-	L_0              = af.blas.matmul(gvar.lBasisArray[0], x_pow)
-	gauss_weights    = af.np_to_af_array(np.zeros([N]))
-	
-	for i in range(0, N):
-		gauss_weights[i] = gvar.gaussian_weights(N, i)
-	
-	Integral_L_0_0        = af.transpose(gauss_weights) * L_0 * L_0
-	gaussian_weights_tile = af.tile(af.reorder(gauss_weights, 1, 2, 0), N, N)
-	
-	index = af.range(N)
-	L_i   = af.blas.matmul(gvar.lBasisArray[index], x_pow)
-	L_j   = af.reorder(L_i, 0, 2, 1)
-	L_i   = af.reorder(L_i, 2, 0, 1)
-	
-	dx_dxi      = wave_equation.dx_dxi_numerical(af.transpose(gvar.x_nodes),\
-																	gvar.xi_LGL)
-	dx_dxi_tile = af.tile(af.reorder(dx_dxi, 1, 2, 0), gvar.N_LGL, gvar.N_LGL)
-	
-	L_array         = wave_equation.Li_Lp_xi(L_j, L_i)
-	L_element       = (L_array * gaussian_weights_tile * dx_dxi_tile)
-	Integral_Li_Lp  = af.sum(L_element, dim = 2)
-	
-	return Integral_Li_Lp
 
 def test_Integral_Li_Lp():
 	'''
@@ -290,11 +179,10 @@ def test_Integral_Li_Lp():
 	Obtaining the A_matrix from the function and setting the value of
 	all elements above a certain threshold to be 1 and plotting it.
 	'''
-	
-	gvar.populateGlobalVariables(8)
 	threshold          = 1e-5
+	gvar.populateGlobalVariables(8, 8)
 	A_matrix_structure = np.zeros([gvar.N_LGL, gvar.N_LGL])
-	non_zero_indices   = np.where(np.array(test_gauss_A_matrix()) > threshold)
+	non_zero_indices  = np.where(np.array(wave_equation.A_matrix()) > threshold)
 	
 	A_matrix_structure[non_zero_indices] = 1.
 	
@@ -306,10 +194,14 @@ def test_Integral_Li_Lp():
 	
 	return
 
-def test_gauss_A_matrix_numerical():
+
+def test_A_matrix():
 	'''
+	Test function to check the A matrix obtained from wave_equation module with
+	one obtained by numerical integral solvers.
 	'''
-	threshold = 1e-7
+	threshold = 1e-8
+	gvar.populateGlobalVariables(8, 8)
 	
 	reference_A_matrix = af.interop.np_to_af_array(np.array([\
 	[0.03333333333332194, 0.005783175201965206, -0.007358427761753982, \
@@ -345,52 +237,94 @@ def test_gauss_A_matrix_numerical():
 	0.0057831752019652065, 0.033333333333321946]
 	]))
 	
-	test_A_matrix = test_gauss_A_matrix()
+	test_A_matrix = wave_equation.A_matrix()
+	print(test_A_matrix.shape, reference_A_matrix.shape)
 	error_array = af.abs(reference_A_matrix - test_A_matrix)
 	
 	assert af.algorithm.max(error_array) < threshold
-	
+
+
 def test_gaussian_quadrature():
 	'''
 	A test function to check the accuracy of gaussian quadrature and plotting
-	the L1 norm of error against the number of gaussian nodes used.
+	the error against the number of gaussian nodes used.
 	'''
-	L1_norm = af.interop.np_to_af_array(np.zeros([29]))
-	
+	error = af.interop.np_to_af_array(np.zeros([29]))
+	gvar.populateGlobalVariables(8)
 	for N in range(2, 30):
-		gvar.populateGaussNodes(N)
+		gvar.populateGlobalVariables(8, N)
 		gaussian_nodes = gvar.gauss_nodes
-		gauss_weights = np.zeros([N])
+		gauss_weights = gvar.gauss_weights
 		
-		for i in range(0,N):
-			gauss_weights[i]  = gvar.gaussian_weights(N, i)
-			pass
+		function_nodes = af.arith.sinh(gaussian_nodes)
 		
-		function_nodes = af.arith.sin(2 * math.pi * gaussian_nodes) + \
-			15 * (gaussian_nodes ** 14)
+		polynomial_L_0          = np.poly1d(np.array(gvar.lBasisArray[0])[0])
+		value_at_gaussian_nodes = af.interop.np_to_af_array\
+			(polynomial_L_0(gaussian_nodes) ** 2 + np.array(function_nodes))
+		Integral_L_0_gaussian   = value_at_gaussian_nodes * gauss_weights
 		
-		# Used a `x ^ 14` term since the product of lagrange basis polynomials
-		# for 8 LGL points produces a `x ^ 14` term.
+		numerical_integral  = np.sum(Integral_L_0_gaussian)
+		reference_integral  = 0.03333333333332194 #zero for :math:`sinh(x)`
 		
-		numerical_integral  = af.sum(af.interop.np_to_af_array(gauss_weights)\
-									* function_nodes)
-		
-		analytical_integral = 2  #Since integral of sin(2 * \\pi * x) is zero 
-								 #and is two for `15 * x ^ 14` over -1 to 1.
-		
-		L1_norm[(N - 2)]    = abs(numerical_integral - analytical_integral)
+		error[(N - 2)]    = abs(numerical_integral - reference_integral)
 		pass
-	
+	af.display(error, 14)
 	number_gaussian_Nodes = utils.linspace(2, 30, 29)
-	plt.title(r'$L_1$ norm of error vs N')
-	plt.xlabel(r'$no.nodes$')
-	plt.ylabel(r'$L_1$ Norm.')
+	plt.title(r'Error vs N')
+	plt.xlabel(r'Number of Gaussian nodes')
+	plt.ylabel(r'Error')
 	
-	plt.loglog(number_gaussian_Nodes, L1_norm, basex = 2)
-	#plt.loglog(number_gaussian_Nodes , (number_gaussian_Nodes / 9.2) **\
-		#(-number_gaussian_Nodes * 1.1),basex = 2)
-	plt.legend(['L_1 norm', r'$(\frac{N}{9.3})^{-1.1N}$'])
+	plt.loglog(number_gaussian_Nodes, error, basex = 2)
+
+	plt.legend(['Error'])
 	
 	plt.show()
+	
+	return
+
+#def test_d_Lp_x_gauss_xi():
+	#'''
+	#Test function to check the d_Lp_x_gauss_xi function in the wave_equation 
+	#module	with a numerically obtained one.
+	#'''
+	#threshold = 1e-13
+	#gvar.populateGlobalVariables(8, 9)
+	#reference_d_Lp_xi = af.interop.np_to_af_array(np.array([\
+	#[-14.0000000000226, -3.20991570302344,0.792476681323880,-0.372150435728984,\
+	#0.243330712724289, -0.203284568901545,0.219957514771985,-0.500000000000000],
+	
+	#[18.9375986071129, 3.31499272476776e-11, -2.80647579473469,1.07894468878725\
+	#,-0.661157350899271,0.537039586158262, -0.573565414940005,1.29768738831567],
+	
+	#[-7.56928981931106, 4.54358506455201, -6.49524878326702e-12, \
+	#-2.37818723350641, 1.13535801687865, -0.845022556506714, 0.869448098330221,\
+	#-1.94165942553537],
+	
+	#[4.29790816425547,-2.11206121431525,2.87551740597844,-1.18896004153157e-11,\
+	#-2.38892435916370, 1.37278583181113, -1.29423205091574, 2.81018898925442],
+	
+	#[-2.81018898925442, 1.29423205091574, -1.37278583181113, 2.38892435916370, \
+	#1.18892673484083e-11,-2.87551740597844, 2.11206121431525,-4.29790816425547],
+	
+	#[1.94165942553537, -0.869448098330221, 0.845022556506714,-1.13535801687865,\
+	#2.37818723350641, 6.49524878326702e-12,-4.54358506455201,7.56928981931106],\
+	
+	#[-1.29768738831567, 0.573565414940005,-0.537039586158262,0.661157350899271,\
+	#-1.07894468878725,2.80647579473469,-3.31498162253752e-11,-18.9375986071129],
+	
+	#[0.500000000000000,-0.219957514771985,0.203284568901545,-0.243330712724289,\
+	#0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
+	#]))
+	
+	#assert(af.max(reference_d_Lp_xi - lagrange.d_Lp_x_gauss_xi())) < threshold
+
+def test_volume_integral_flux():
+	'''
+	A test function to check the volume_integral_flux function in the
+	wave_equation module.
+	'''
+	threshold = 1e-9
+	#print(wave_equation.volume_integral_flux(gvar.u[0]))
+	analytical_flux_integral = 0
 	
 	return

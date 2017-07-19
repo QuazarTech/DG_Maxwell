@@ -1,32 +1,33 @@
 #! /usr/bin/env python3
 
 import arrayfire as af
-
+import numpy as np
 from app import lagrange
 from utils import utils
 from app import global_variables as gvar
 
-def Li_Lp_xi(L_xi_i, L_xi_p):
+def Li_Lp_x_gauss(L_x_gauss_i, L_x_gauss_p):
 	'''
-	Parameters    [TODO] : Replace LGL points with gaussian nodes.
+	Parameters    [TODO] : Impose a condition such that ONLY required arrays can
+						   be passed
 	----------
-	L_xi_i : arrayfire.Array [1 N N 1]
-			 A 2D array :math:`L_i` calculated at all the
-			 LGL points :math:`\\xi_j`
+	L_x_gauss_i : arrayfire.Array [1 N N 1]
+				  A 2D array :math:`L_i` obtained at LGL points calculated at the
+				  gaussian nodes :math:`N_Gauss`.
 	
-	L_xi_p : arrayfire.Array [N 1 N 1]
-			 A 2D array :math:`L_p` calculated at all the
-			 LGL points :math:`\\xi_j`
+	L_x_gauss_p : arrayfire.Array [N 1 N 1]
+				  A 2D array :math:`L_p` obtained at LGL points calculated at the
+				  gaussian nodes :math:`N_Gauss`.
 	
 	Returns
-	-------
-	Li_Lp_xi : arrayfire.Array [N N N 1]
-			   Matrix of :math:`L_p(\\xi)L_i(\\xi)`
+	-------	
+	Li_Lp_x_gauss : arrayfire.Array [N N N 1]
+			   Matrix of :math:`L_p (N_Gauss) L_i (N_Gauss)`.
 	
 	'''
-	Li_Lp_xi = af.bcast.broadcast(utils.multiply, L_xi_i, L_xi_p)
+	Li_Lp_x_gauss = af.bcast.broadcast(utils.multiply, L_x_gauss_i, L_x_gauss_p)
 	
-	return Li_Lp_xi
+	return Li_Lp_x_gauss
 
 
 def mappingXiToX(x_nodes, xi):
@@ -37,7 +38,7 @@ def mappingXiToX(x_nodes, xi):
 	x_nodes : arrayfire.Array
 			  Element nodes.
 	
-	xi      : np.float64
+	xi      : numpy.float64
 			  Value of :math: `xi` in domain (-1, 1) which returns the 
 			  corresponding :math: `x` value in the element.
 	
@@ -97,36 +98,60 @@ def dx_dxi_analytical(x_nodes, xi):
 
 def A_matrix():
 	'''
-	
-	:math::
-		A_matrix = \\Sigma L_{i}(\\xi) L_{p}(\\xi) w_{j} \\frac{dx}{d s\\xi}
-	
-	The A matrix depends on the product of lagrange basis functions at two
-	different indices for xi LGL points, $\\frac{dx}{d\\xi}$ at the LGL points.
-	Taking the sum of the resultant array along dimension 2 gives the required
-	A matrix .
+	Calculates the value of lagrange basis functions obtained for :math: `N_LGL`
+	points at the gaussian nodes.
 	
 	Returns
 	-------
-	The A matrix.
+	The value of integral of product of lagrange basis functions obtained by LGL
+	points, using gaussian quadrature method using :math: `n_gauss` points. 
+	'''	
 	
-	'''
-	lobatto_weights = af.interop.np_to_af_array(gvar.lobatto_weight_function
-											 (gvar.N_LGL, gvar.xi_LGL))
+	x_tile           = af.transpose(af.tile(gvar.gauss_nodes, 1, gvar.N_LGL))
+	power            = af.flip(af.range(gvar.N_LGL))
+	power_tile       = af.tile(power, 1, gvar.N_Gauss)
+	x_pow            = af.arith.pow(x_tile, power_tile)
+	gauss_weights    = gvar.gauss_weights
+	
+	gaussian_weights_tile = af.tile(af.reorder(gauss_weights, 1, 2, 0),\
+												gvar.N_LGL, gvar.N_LGL)
 	
 	index = af.range(gvar.N_LGL)
-	L_xi_i = lagrange.lagrange_basis(index, gvar.xi_LGL)
-	L_xi_p = af.reorder(L_xi_i, 1, 2, 0)
-	L_xi_i = af.reorder(L_xi_i, 2, 0, 1)
+	L_i   = af.blas.matmul(gvar.lBasisArray[index], x_pow)
+	L_j   = af.reorder(L_i, 0, 2, 1)
+	L_i   = af.reorder(L_i, 2, 0, 1)
 	
-	Li_Lp_xi_array = Li_Lp_xi(L_xi_i, L_xi_p)
-	
-	lobatto_weights_tile = af.tile(af.reorder(lobatto_weights, 1, 2, 0),
-							   gvar.N_LGL, gvar.N_LGL)
-	
-	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes), gvar.xi_LGL)
+	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes),gvar.gauss_nodes)
 	dx_dxi_tile = af.tile(af.reorder(dx_dxi, 1, 2, 0), gvar.N_LGL, gvar.N_LGL)
-	A_matrix    = af.sum(Li_Lp_xi_array * lobatto_weights_tile * dx_dxi_tile,
-				   dim = 2)
 	
+	Li_Lp_array     = Li_Lp_x_gauss(L_j, L_i)
+	L_element       = (Li_Lp_array * gaussian_weights_tile * dx_dxi_tile)
+	A_matrix        = af.sum(L_element, dim = 2)
+	print(A_matrix)
 	return A_matrix
+
+
+def flux_x(u):
+    """
+    """
+    return gvar.c * u
+
+def volume_integral_flux(u):
+	'''
+	'''
+	d_Lp_x_gauss_xi   = af.transpose(lagrange.d_Lp_x_gauss_xi())
+	weight_tile       = af.tile(gvar.gauss_weights, 1, gvar.N_LGL)
+	flux_u_tile       = af.tile(af.transpose(flux_x(u)), 1, gvar.N_LGL)
+	integral          = af.sum(weight_tile * d_Lp_x_gauss_xi * flux_u_tile, 0)
+	print(d_Lp_x_gauss_xi)
+	
+	return integral
+
+
+def b_vector(u_n):
+	'''
+	'''
+	u_previous    = af.blas.matmul(A_matrix, af.transpose(u_n))
+	
+	return
+

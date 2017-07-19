@@ -44,12 +44,8 @@ def lagrangePolynomialTest():
 	for n in range (2,16):
 		gvar.populateGlobalVariables(n)
 		
-		y_LGL = af.arith.sin(2 * math.pi * gvar.xi_LGL)
-		
-		#random = -1 + 2 * af.random.randu(100, dtype = af.Dtype.f64)
-		#x_random = af.algorithm.sort(random)
+		y_LGL         = af.arith.sin(2 * math.pi * gvar.xi_LGL)
 		x_random      = utils.linspace(-1, 1, 50)
-		
 		index         = af.range(gvar.N_LGL)
 		Basis_array   = lagrange.lagrange_basis(index, x_random)
 		y_interpolate = af.transpose(af.blas.matmul(af.transpose(y_LGL),\
