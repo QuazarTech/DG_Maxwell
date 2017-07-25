@@ -8,6 +8,22 @@ from matplotlib import pyplot as plt
 from utils import utils
 import math
 
+
+def test_mappingXiToX():
+	'''
+	'''
+	threshold = 1e-14
+	gvar.populateGlobalVariables()
+	
+	test_element_nodes = af.interop.np_to_af_array(np.array([7, 11]))
+	test_xi            = 0
+	analytical_x_value = 9
+	numerical_x_value  = wave_equation.mappingXiToX(test_element_nodes, test_xi)
+	
+	assert af.abs(analytical_x_value - numerical_x_value) <= threshold
+
+
+
 def test_Li_Lp_x_gauss():
 	'''
 	A Test function to check the Li_Lp_x_gauss function in wave_equation module
@@ -46,12 +62,13 @@ def test_dx_dxi():
 	differential would be a constant. The check has a tolerance 1e-7.
 	'''
 	threshold = 1e-7
+	gvar.populateGlobalVariables(8)
 	nodes = np.array([7, 10], dtype = np.float64)
 	test_nodes = af.interop.np_to_af_array(nodes)
 	analytical_dx_dxi = 1.5
-	check_dx_dxi = af.sum(af.abs(wave_equation.dx_dxi_numerical(test_nodes,
-																gvar.xi_LGL)
-							  - analytical_dx_dxi)) <= threshold
+	
+	check_dx_dxi = (af.statistics.mean(wave_equation.dx_dxi_numerical
+					(test_nodes,gvar.xi_LGL)) - analytical_dx_dxi) <= threshold
 	
 	assert check_dx_dxi
 
@@ -199,47 +216,21 @@ def test_A_matrix():
 	'''
 	Test function to check the A matrix obtained from wave_equation module with
 	one obtained by numerical integral solvers.
+	
+	NOTE
+	----
+	A diagonal A-matrix is used as a reference in this unit test.
+	The A matrix calculated analytically gives a different matrix.
+	
 	'''
 	threshold = 1e-8
 	gvar.populateGlobalVariables(8, 8)
 	
-	reference_A_matrix = af.interop.np_to_af_array(np.array([\
-	[0.03333333333332194, 0.005783175201965206, -0.007358427761753982, \
-	0.008091331778355441, -0.008091331778233877, 0.007358427761705623, \
-	-0.00578317520224949, 0.002380952380963754], \
-	
-	[0.005783175201965206, 0.19665727866729804, 0.017873132323192046,\
-	-0.01965330750343234, 0.019653307503020866, -0.017873132322725152,\
-	0.014046948476303067, -0.005783175202249493], \
-	
-	[-0.007358427761753982, 0.017873132323192046, 0.31838117965137114, \
-	0.025006581762566073, -0.025006581761945083, 0.022741512832051156,\
-	-0.017873132322725152, 0.007358427761705624], \
-	
-	[0.008091331778355441, -0.01965330750343234, 0.025006581762566073, \
-	0.3849615416814164, 0.027497252976343693, -0.025006581761945083, \
-	0.019653307503020863, -0.008091331778233875],  
-	
-	[-0.008091331778233877, 0.019653307503020866, -0.025006581761945083, \
-	0.027497252976343693, 0.3849615416814164, 0.025006581762566073, \
-	-0.019653307503432346, 0.008091331778355443], \
-	
-	[0.007358427761705623, -0.017873132322725152, 0.022741512832051156, \
-	-0.025006581761945083, 0.025006581762566073, 0.31838117965137114, \
-	0.017873132323192046, -0.0073584277617539835], \
-	
-	[-0.005783175202249493, 0.014046948476303067, -0.017873132322725152, \
-	0.019653307503020863, -0.019653307503432346, 0.017873132323192046, \
-	0.19665727866729804, 0.0057831752019652065], \
-	
-	[0.002380952380963754, -0.005783175202249493, 0.007358427761705624, \
-	-0.008091331778233875, 0.008091331778355443, -0.0073584277617539835, \
-	0.0057831752019652065, 0.033333333333321946]
-	]))
+	reference_A_matrix = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)\
+		* af.identity(gvar.N_LGL, gvar.N_LGL, dtype = af.Dtype.f64)
 	
 	test_A_matrix = wave_equation.A_matrix()
-	print(test_A_matrix.shape, reference_A_matrix.shape)
-	error_array = af.abs(reference_A_matrix - test_A_matrix)
+	error_array   = af.abs(reference_A_matrix - test_A_matrix)
 	
 	assert af.algorithm.max(error_array) < threshold
 
@@ -282,49 +273,61 @@ def test_gaussian_quadrature():
 	
 	return
 
-#def test_d_Lp_x_gauss_xi():
-	#'''
-	#Test function to check the d_Lp_x_gauss_xi function in the wave_equation 
-	#module	with a numerically obtained one.
-	#'''
-	#threshold = 1e-13
-	#gvar.populateGlobalVariables(8, 9)
-	#reference_d_Lp_xi = af.interop.np_to_af_array(np.array([\
-	#[-14.0000000000226, -3.20991570302344,0.792476681323880,-0.372150435728984,\
-	#0.243330712724289, -0.203284568901545,0.219957514771985,-0.500000000000000],
+def test_d_Lp_xi():
+	'''
+	Test function to check the d_Lp_xi function in the wave_equation 
+	module	with a numerically obtained one.
+	'''
+	threshold = 1e-13
+	gvar.populateGlobalVariables(8)
+	reference_d_Lp_xi = af.interop.np_to_af_array(np.array([\
+	[-14.0000000000226, -3.20991570302344,0.792476681323880,-0.372150435728984,\
+	0.243330712724289, -0.203284568901545,0.219957514771985,-0.500000000000000],
 	
-	#[18.9375986071129, 3.31499272476776e-11, -2.80647579473469,1.07894468878725\
-	#,-0.661157350899271,0.537039586158262, -0.573565414940005,1.29768738831567],
+	[18.9375986071129, 3.31499272476776e-11, -2.80647579473469,1.07894468878725\
+	,-0.661157350899271,0.537039586158262, -0.573565414940005,1.29768738831567],
 	
-	#[-7.56928981931106, 4.54358506455201, -6.49524878326702e-12, \
-	#-2.37818723350641, 1.13535801687865, -0.845022556506714, 0.869448098330221,\
-	#-1.94165942553537],
+	[-7.56928981931106, 4.54358506455201, -6.49524878326702e-12, \
+	-2.37818723350641, 1.13535801687865, -0.845022556506714, 0.869448098330221,\
+	-1.94165942553537],
 	
-	#[4.29790816425547,-2.11206121431525,2.87551740597844,-1.18896004153157e-11,\
-	#-2.38892435916370, 1.37278583181113, -1.29423205091574, 2.81018898925442],
+	[4.29790816425547,-2.11206121431525,2.87551740597844,-1.18896004153157e-11,\
+	-2.38892435916370, 1.37278583181113, -1.29423205091574, 2.81018898925442],
 	
-	#[-2.81018898925442, 1.29423205091574, -1.37278583181113, 2.38892435916370, \
-	#1.18892673484083e-11,-2.87551740597844, 2.11206121431525,-4.29790816425547],
+	[-2.81018898925442, 1.29423205091574, -1.37278583181113, 2.38892435916370, \
+	1.18892673484083e-11,-2.87551740597844, 2.11206121431525,-4.29790816425547],
 	
-	#[1.94165942553537, -0.869448098330221, 0.845022556506714,-1.13535801687865,\
-	#2.37818723350641, 6.49524878326702e-12,-4.54358506455201,7.56928981931106],\
+	[1.94165942553537, -0.869448098330221, 0.845022556506714,-1.13535801687865,\
+	2.37818723350641, 6.49524878326702e-12,-4.54358506455201,7.56928981931106],\
 	
-	#[-1.29768738831567, 0.573565414940005,-0.537039586158262,0.661157350899271,\
-	#-1.07894468878725,2.80647579473469,-3.31498162253752e-11,-18.9375986071129],
+	[-1.29768738831567, 0.573565414940005,-0.537039586158262,0.661157350899271,\
+	-1.07894468878725,2.80647579473469,-3.31498162253752e-11,-18.9375986071129],
 	
-	#[0.500000000000000,-0.219957514771985,0.203284568901545,-0.243330712724289,\
-	#0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
-	#]))
+	[0.500000000000000,-0.219957514771985,0.203284568901545,-0.243330712724289,\
+	0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
+	]))
 	
-	#assert(af.max(reference_d_Lp_xi - lagrange.d_Lp_x_gauss_xi())) < threshold
+	assert(af.max(reference_d_Lp_xi - lagrange.d_Lp_xi())) < threshold
 
 def test_volume_integral_flux():
 	'''
-	A test function to check the volume_integral_flux function in the
-	wave_equation module.
-	'''
-	threshold = 1e-9
-	#print(wave_equation.volume_integral_flux(gvar.u[0]))
-	analytical_flux_integral = 0
+	A test function to check the volume_integral_flux function in wave_equation
+	module by analytically calculated Gauss-Lobatto quadrature.
 	
-	return
+	NOTE
+	----
+	The analytically obtained flux integral by Gauss-Lobatto quadrature
+	doesn't match result obtained by numerically integrating the flux integral
+	term.
+	'''
+	threshold = 1e-14
+	analytical_flux_integral = af.transpose(af.interop.np_to_af_array(np.array(\
+		[-0.0243250104044395, 0.0445985586016178, -0.412943909240457, \
+			-0.592576678843147, 0.592576678843147, 0.412943909240457,\
+				-0.0445985586016178, 0.0243250104044395])))
+	
+	calculated_flux_integral =\
+		wave_equation.volume_integral_flux(gvar.u[0, 0, :])
+	
+	assert(af.max(af.abs(analytical_flux_integral - calculated_flux_integral)) 
+		< threshold)

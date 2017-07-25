@@ -2,6 +2,7 @@ import numpy as np
 import arrayfire as af
 from scipy import special as sp
 from app import lagrange
+from app import wave_equation
 from utils import utils
 
 gaussianNodesList = [ 
@@ -146,7 +147,8 @@ N_LGL       = 16
 xi_LGL      = None
 lBasisArray = None
 
-def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9):
+def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9,
+							Number_of_elements = 10):
 	'''
 	Initialize the global variables.
 	Parameters
@@ -172,6 +174,21 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9):
 	lobatto_weights = af.interop.np_to_af_array(\
 		lobatto_weight_function(N_LGL, xi_LGL)) 
 	
+	global N_Elements
+	global element_nodes
+	N_Elements       = Number_of_elements
+	element_size     = af.sum((x_nodes[0, 1] - x_nodes[0, 0]) / N_Elements)
+	elements_xi_LGL  = af.interop.np_to_af_array(np.zeros([N_Elements, N_LGL]))
+	elements         = utils.linspace(af.sum(x_nodes[0, 0]), \
+		af.sum(x_nodes[0, 1] - element_size), N_Elements)
+	
+	np_element_array = np.concatenate((af.transpose(elements), 
+						   af.transpose(elements + element_size)))
+	
+	element_array = (af.transpose(af.interop.np_to_af_array(np_element_array)))
+	element_nodes       = af.transpose(wave_equation.mappingXiToX(\
+											af.transpose(element_array), xi_LGL))
+	
 	
 	global N_Gauss
 	global gauss_nodes
@@ -184,16 +201,15 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9):
 	
 	global u
 	global time
-	u_init  = np.e ** (-(gauss_nodes) ** 2 / 0.4 ** 2)
-	time    = utils.linspace(0, 2, 1000)
-	u       = af.interop.np_to_af_array(np.zeros([time.shape[0], N_Gauss]))
-	u[0]    = u_init
+	u_init     = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
+	time       = utils.linspace(0, 2, 20)
+	u          = af.interop.np_to_af_array(np.zeros([(N_Elements), N_LGL,
+												  time.shape[0]]))
+	u[:, :, 0] = u_init
+	
 	
 	global c
 	c = 1.0
-	
-	#global d_Lp_xi
-	#d_Lp_xi = lagrange.d_Lp_xi
 	
 	return
 
@@ -252,3 +268,18 @@ def lobatto_weight_function(n, x):
 	P = sp.legendre(n - 1)
 	
 	return (2 / (n * (n - 1)) / (P(x))**2)
+
+def lagrange_basis_function():
+	'''
+	Funtion which calculates the value of lagrange basis functions over LGL
+	nodes.
+	'''
+	x_tile           = af.transpose(af.tile(xi_LGL, 1, N_LGL))
+	power            = af.flip(af.range(N_LGL))
+	power_tile       = af.tile(power, 1, N_LGL)
+	x_pow            = af.arith.pow(x_tile, power_tile)
+	
+	index = af.range(N_LGL)
+	L_i = af.blas.matmul(lBasisArray[index], x_pow)
+	
+	return L_i 

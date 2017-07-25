@@ -12,6 +12,6 @@ if __name__ == '__main__':
 	Main Function which sets backend and pouplates the global global_variables.
 	Can be used to obtain results from other modules.
 	'''
-	gvar.populateGlobalVariables(8, 12)
-	#wave_equation.A_matrix()
-	print(wave_equation.volume_integral_flux(gvar.u[0]))
+	gvar.populateGlobalVariables(8)
+	element1_x_nodes = gvar.element_nodes[0 : 1]
+	

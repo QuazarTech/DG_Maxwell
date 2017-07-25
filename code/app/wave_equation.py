@@ -46,11 +46,11 @@ def mappingXiToX(x_nodes, xi):
 	-------
 	:math: `X` value in the element with given nodes and :math: `xi`.
 	'''
-	N_0 = (1. - xi) / 2
-	N_1 = (xi + 1.) / 2
+	N_0 = (1 - xi) / 2
+	N_1 = (1 + xi) / 2
 	
-	N0_x0 = af.bcast.broadcast(utils.multiply, N_0, x_nodes[0])
-	N1_x1 = af.bcast.broadcast(utils.multiply, N_1, x_nodes[1])
+	N0_x0 = af.bcast.broadcast(utils.multiply, N_0, x_nodes[0, :])
+	N1_x1 = af.bcast.broadcast(utils.multiply, N_1, x_nodes[1, :])
 	
 	return N0_x0 + N1_x1
 
@@ -107,13 +107,13 @@ def A_matrix():
 	points, using gaussian quadrature method using :math: `n_gauss` points. 
 	'''	
 	
-	x_tile           = af.transpose(af.tile(gvar.gauss_nodes, 1, gvar.N_LGL))
+	x_tile           = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL))
 	power            = af.flip(af.range(gvar.N_LGL))
-	power_tile       = af.tile(power, 1, gvar.N_Gauss)
+	power_tile       = af.tile(power, 1, gvar.N_LGL)
 	x_pow            = af.arith.pow(x_tile, power_tile)
-	gauss_weights    = gvar.gauss_weights
+	lobatto_weights  = gvar.lobatto_weights
 	
-	gaussian_weights_tile = af.tile(af.reorder(gauss_weights, 1, 2, 0),\
+	lobatto_weights_tile = af.tile(af.reorder(lobatto_weights, 1, 2, 0),\
 												gvar.N_LGL, gvar.N_LGL)
 	
 	index = af.range(gvar.N_LGL)
@@ -121,13 +121,13 @@ def A_matrix():
 	L_j   = af.reorder(L_i, 0, 2, 1)
 	L_i   = af.reorder(L_i, 2, 0, 1)
 	
-	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes),gvar.gauss_nodes)
-	dx_dxi_tile = af.tile(af.reorder(dx_dxi, 1, 2, 0), gvar.N_LGL, gvar.N_LGL)
+	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes),gvar.xi_LGL)
+	dx_dxi_tile = af.tile(dx_dxi, 1, gvar.N_LGL, gvar.N_LGL)
 	
 	Li_Lp_array     = Li_Lp_x_gauss(L_j, L_i)
-	L_element       = (Li_Lp_array * gaussian_weights_tile * dx_dxi_tile)
+	L_element       = (Li_Lp_array * lobatto_weights_tile * dx_dxi_tile)
 	A_matrix        = af.sum(L_element, dim = 2)
-	print(A_matrix)
+	
 	return A_matrix
 
 
@@ -139,19 +139,37 @@ def flux_x(u):
 def volume_integral_flux(u):
 	'''
 	'''
-	d_Lp_x_gauss_xi   = af.transpose(lagrange.d_Lp_x_gauss_xi())
-	weight_tile       = af.tile(gvar.gauss_weights, 1, gvar.N_LGL)
-	flux_u_tile       = af.tile(af.transpose(flux_x(u)), 1, gvar.N_LGL)
-	integral          = af.sum(weight_tile * d_Lp_x_gauss_xi * flux_u_tile, 0)
-	print(d_Lp_x_gauss_xi)
+	d_Lp_xi     = af.transpose(lagrange.d_Lp_xi())
+	weight_tile = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)
+	flux        = af.reorder(flux_x(u), 2, 1, 0)
+	flux_u_tile = af.tile(flux, 1, gvar.N_LGL)
+	print(weight_tile, d_Lp_xi, flux_u_tile)
+	integral    = af.sum(weight_tile * d_Lp_xi * flux_u_tile, 0)
 	
 	return integral
+
+def lax_friedrichs_flux(left_state, right_state, c_lax):
+    """
+    Function to calculate the lax friedrichs flux which depends on the flux
+    on either side of the boundary and also has a stability inducing term??
+    
+    Parameters
+    ----------
+    [TODO]
+    """
+    return 0.5*((flux_x(left_state) + flux_x(right_state)) - c_lax * \
+		(right_state - left_state))
+
 
 
 def b_vector(u_n):
 	'''
 	'''
-	u_previous    = af.blas.matmul(A_matrix, af.transpose(u_n))
+	int_u_ni_Lp_Li   = af.blas.matmul(A_matrix(), af.transpose(u_n))
+	int_flux_dLp_dxi = volume_integral_flux(u_n)
+	
+	L_p = gvar.lagrange_basis_function()
+	
+	#surface_term = L_p[-1] * lax_friedrichs_flux(u[n, i, -1], u[n, i + 1, ])
 	
 	return
-
