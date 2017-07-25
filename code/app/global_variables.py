@@ -178,7 +178,7 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9,
 	global element_nodes
 	N_Elements       = Number_of_elements
 	element_size     = af.sum((x_nodes[0, 1] - x_nodes[0, 0]) / N_Elements)
-	elements_xi_LGL  = af.interop.np_to_af_array(np.zeros([N_Elements, N_LGL]))
+	elements_xi_LGL  = af.constant(0, N_Elements, N_LGL)
 	elements         = utils.linspace(af.sum(x_nodes[0, 0]), \
 		af.sum(x_nodes[0, 1] - element_size), N_Elements)
 	
@@ -186,8 +186,8 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9,
 						   af.transpose(elements + element_size)))
 	
 	element_array = (af.transpose(af.interop.np_to_af_array(np_element_array)))
-	element_nodes       = af.transpose(wave_equation.mappingXiToX(\
-											af.transpose(element_array), xi_LGL))
+	element_nodes = af.transpose(wave_equation.mappingXiToX(\
+										af.transpose(element_array), xi_LGL))
 	
 	
 	global N_Gauss
@@ -195,7 +195,7 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9,
 	global gauss_weights
 	N_Gauss = Number_of_Gauss_nodes
 	gauss_nodes = af.Array(gaussianNodesList[N_Gauss - 2])
-	gauss_weights = af.interop.np_to_af_array(np.zeros([N_Gauss]))
+	gauss_weights = af.constant(0, N_Gauss)
 	for i in range(0, N_Gauss):
 		gauss_weights[i] = gaussian_weights(N_Gauss, i)
 	
@@ -203,10 +203,8 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9,
 	global time
 	u_init     = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
 	time       = utils.linspace(0, 2, 20)
-	u          = af.interop.np_to_af_array(np.zeros([(N_Elements), N_LGL,
-												  time.shape[0]]))
+	u          = af.constant(0, (N_Elements), N_LGL, time.shape[0])
 	u[:, :, 0] = u_init
-	
 	
 	global c
 	c = 1.0

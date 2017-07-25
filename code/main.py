@@ -13,5 +13,5 @@ if __name__ == '__main__':
 	Can be used to obtain results from other modules.
 	'''
 	gvar.populateGlobalVariables(8)
-	element1_x_nodes = gvar.element_nodes[0 : 1]
-	
+	element1_x_nodes = af.reorder(gvar.element_nodes[0 : 1], 1, 0, 2)
+	print(wave_equation.volume_integral_flux(element1_x_nodes, gvar.u[0, :, 0]))

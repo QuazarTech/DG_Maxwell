@@ -105,18 +105,20 @@ def lagrange_basis(i, x):
 	return (l_xi_j)
 
 
-def d_Lp_xi():
+def d_Lp_xi(element_nodes):
 	'''
-	Function which [TODO] : Complete.
+	Function which returns the value of the
+	:math: `\\frac{d L_p(x_nodes)}{d\\xi}`
+	as a 2D arrayof :math: `L_i x_{nodes}`.[TODO] : Complete.
 	'''
 	differentiation_coeffs = (af.transpose(af.flip(af.tile\
 		(af.range(gvar.N_LGL), 1, gvar.N_LGL))) * gvar.lBasisArray)[:, :-1]
 	
-	xi_tile         = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL - 1))
+	nodes_tile         = af.transpose(af.tile(element_nodes, 1, gvar.N_LGL - 1))
 	power_tile      = af.flip(af.tile\
 		(af.range(gvar.N_LGL - 1), 1, gvar.N_LGL))
-	xi_power_tile   = af.pow(xi_tile, power_tile)
+	nodes_power_tile   = af.pow(nodes_tile, power_tile)
 	
-	d_Lp_xi = af.blas.matmul(differentiation_coeffs, xi_power_tile)
+	d_Lp_xi = af.blas.matmul(differentiation_coeffs, nodes_power_tile)
 	
 	return d_Lp_xi

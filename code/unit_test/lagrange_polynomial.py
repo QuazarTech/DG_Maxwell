@@ -39,7 +39,7 @@ def lagrangePolynomialTest():
 	A test function which plots the L1 norm of error against the number of LGL
 	points taken.
 	'''
-	L1_norm = af.interop.np_to_af_array(np.zeros([15]))
+	L1_norm = af.costant(0, 15)
 	
 	for n in range (2,16):
 		gvar.populateGlobalVariables(n)

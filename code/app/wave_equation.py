@@ -133,20 +133,56 @@ def A_matrix():
 
 def flux_x(u):
     """
+    A function which returns the value of flux for a given wave function u.
+    :math:`f(u) = c u^k`
+    
+    Parameters
+    ----------
+    u         : arrayfire.Array [N 1 1 1]
+				A 1-D array which contains the value of wave function.
+	
     """
     return gvar.c * u
 
-def volume_integral_flux(u):
+def volume_integral_flux(element_nodes, u):
 	'''
-	'''
-	d_Lp_xi     = af.transpose(lagrange.d_Lp_xi())
-	weight_tile = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)
-	flux        = af.reorder(flux_x(u), 2, 1, 0)
-	flux_u_tile = af.tile(flux, 1, gvar.N_LGL)
-	print(weight_tile, d_Lp_xi, flux_u_tile)
-	integral    = af.sum(weight_tile * d_Lp_xi * flux_u_tile, 0)
+	A function to calculate the volume integral of flux in the wave equation.
+	:math:`\\int_{-1}^1 f(u) \frac{d L_p}{d\\xi} d\\xi`
+	This will give N values of flux integral as p varies from 0 to N - 1.
 	
-	return integral
+	This integral is carried out over an element with LGL nodes mapped onto it.
+	
+	Parameters
+	----------
+	element_nodes : arrayfire.Array [N 1 1 1]
+					A 1-D array consisting of the LGL nodes mapped onto the
+					element's domain.
+	
+	u             : arrayfire.Array [1 N 1 1]
+					A 1-D array containing the value of the wave function at the
+					mapped LGL nodes in the element
+	
+	Returns
+	-------
+	flux_integral : arrayfire.Array [1 N 1 1]
+					A 1-D array of the value of the flux integral calculated
+					for various lagrange basis functions.
+	'''
+	
+	d_Lp_xi       = af.transpose(lagrange.d_Lp_xi(element_nodes))
+	weight_tile   = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)
+	flux          = af.reorder(flux_x(u), 1, 0, 2)
+	flux_u_tile   = af.tile(flux, 1, gvar.N_LGL)
+	limits_change = af.sum(element_nodes[-1] - element_nodes[0]) / 2
+	
+	#limits_change is used so that the quadrature method being carried out at
+	#the limits of the element need to be changed to (-1, 1)
+	
+	
+	flux_integral      = limits_change \
+								* af.sum(weight_tile * d_Lp_xi * flux_u_tile, 0)
+	
+	return flux_integral
 
 def lax_friedrichs_flux(left_state, right_state, c_lax):
     """
@@ -164,6 +200,8 @@ def lax_friedrichs_flux(left_state, right_state, c_lax):
 
 def b_vector(u_n):
 	'''
+	NOTE 
+	Incomplete.
 	'''
 	int_u_ni_Lp_Li   = af.blas.matmul(A_matrix(), af.transpose(u_n))
 	int_flux_dLp_dxi = volume_integral_flux(u_n)

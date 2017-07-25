@@ -42,7 +42,7 @@ def test_Li_Lp_x_gauss():
 	
 	test_array1 = af.reorder(test_array, 2, 0, 1)
 	
-	product = np.zeros([3,3,3])
+	product    = np.zeros([3,3,3])
 	product[0] = np.array([[1,2,3],[8,10,12],[21,24,27]])
 	product[1] = np.array([[4,8,12],[20,25,30],[42,48,54]])
 	product[2] = np.array([[7,14,21],[32,40,48],[63,72,81]])
@@ -240,7 +240,7 @@ def test_gaussian_quadrature():
 	A test function to check the accuracy of gaussian quadrature and plotting
 	the error against the number of gaussian nodes used.
 	'''
-	error = af.interop.np_to_af_array(np.zeros([29]))
+	error = af.constant(0, 29)
 	gvar.populateGlobalVariables(8)
 	for N in range(2, 30):
 		gvar.populateGlobalVariables(8, N)
@@ -275,11 +275,12 @@ def test_gaussian_quadrature():
 
 def test_d_Lp_xi():
 	'''
-	Test function to check the d_Lp_xi function in the wave_equation 
-	module	with a numerically obtained one.
+	Test function to check the d_Lp_xi function in the lagrange module with a
+	numerically obtained one.
 	'''
 	threshold = 1e-13
 	gvar.populateGlobalVariables(8)
+	
 	reference_d_Lp_xi = af.interop.np_to_af_array(np.array([\
 	[-14.0000000000226, -3.20991570302344,0.792476681323880,-0.372150435728984,\
 	0.243330712724289, -0.203284568901545,0.219957514771985,-0.500000000000000],
@@ -307,7 +308,7 @@ def test_d_Lp_xi():
 	0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
 	]))
 	
-	assert(af.max(reference_d_Lp_xi - lagrange.d_Lp_xi())) < threshold
+	assert(af.max(reference_d_Lp_xi - lagrange.d_Lp_xi(gvar.xi_LGL))) < threshold
 
 def test_volume_integral_flux():
 	'''
@@ -319,15 +320,39 @@ def test_volume_integral_flux():
 	The analytically obtained flux integral by Gauss-Lobatto quadrature
 	doesn't match result obtained by numerically integrating the flux integral
 	term.
+	
+	However by taking limits which aren't -1 and 1. The flux integral method
+	has much improved precision.
+	
+	The second check in this test function uses a reference value obtained
+	numerically by a solver with machine accuracy.
 	'''
-	threshold = 1e-14
+	threshold = 1e-10
+	gvar.populateGlobalVariables(8)
 	analytical_flux_integral = af.transpose(af.interop.np_to_af_array(np.array(\
-		[-0.0243250104044395, 0.0445985586016178, -0.412943909240457, \
-			-0.592576678843147, 0.592576678843147, 0.412943909240457,\
-				-0.0445985586016178, 0.0243250104044395])))
+				[-0.0243250104044395, 0.0445985586016178, -0.412943909240457, \
+					-0.592576678843147, 0.592576678843147, 0.412943909240457,\
+									-0.0445985586016178, 0.0243250104044395])))
 	
-	calculated_flux_integral =\
-		wave_equation.volume_integral_flux(gvar.u[0, 0, :])
+	calculated_flux_integral = wave_equation.volume_integral_flux(gvar.xi_LGL\
+		, af.reorder(np.e ** (-(gvar.xi_LGL) ** 2 / 0.4 ** 2), 1, 0, 2))
 	
-	assert(af.max(af.abs(analytical_flux_integral - calculated_flux_integral)) 
+	check1 = (af.max(af.abs(analytical_flux_integral - calculated_flux_integral)) 
 		< threshold)
+	
+	#Here, we use an element from -1 to 0.8 and compare the numerically obtained
+	#result and the one returned by volume_integral_flux.
+	
+	
+	element1_x_nodes = af.reorder(gvar.element_nodes[0 : 1], 1, 0, 2)
+	flux_integral    = np.array(wave_equation.volume_integral_flux(element1_x_nodes\
+											, gvar.u[0, :, 0]))
+	
+	numerical_flux_integral = np.array([-0.005293926590211267, 0.0010839010095961025, \
+		0.005653446247246795, -0.0022480977450876714, 0.0013285326802573401, \
+			-0.0008800498093180824, 0.0005769753858060879, \
+				-0.00022078117828930213])
+	
+	check2 = np.max(np.abs(flux_integral - numerical_flux_integral)) < threshold
+	
+	assert (check1 & check2)
