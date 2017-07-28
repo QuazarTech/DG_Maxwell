@@ -144,6 +144,7 @@ def flux_x(u):
     """
     return gvar.c * u
 
+
 def volume_integral_flux(element_nodes, u):
 	'''
 	A function to calculate the volume integral of flux in the wave equation.
@@ -160,7 +161,7 @@ def volume_integral_flux(element_nodes, u):
 	
 	u             : arrayfire.Array [1 N 1 1]
 					A 1-D array containing the value of the wave function at the
-					mapped LGL nodes in the element
+					mapped LGL nodes in the element.
 	
 	Returns
 	-------
@@ -175,14 +176,23 @@ def volume_integral_flux(element_nodes, u):
 	flux_u_tile   = af.tile(flux, 1, gvar.N_LGL)
 	limits_change = af.sum(element_nodes[-1] - element_nodes[0]) / 2
 	
-	#limits_change is used so that the quadrature method being carried out at
-	#the limits of the element need to be changed to (-1, 1)
+	# limits_change is used so that the quadrature method being carried out
+	# over the interval of element nodes and not [-1, 1] domain.
 	
 	
 	flux_integral      = limits_change \
 								* af.sum(weight_tile * d_Lp_xi * flux_u_tile, 0)
 	
 	return flux_integral
+
+
+def element_flux_integral(n):
+	'''
+	'''
+	element_n_x_nodes = af.reorder(gvar.element_nodes[n], 1, 0, 2)
+	
+	return volume_integral_flux(element_n_x_nodes, gvar.u[n, :, 0])
+
 
 def lax_friedrichs_flux(left_state, right_state, c_lax):
     """
@@ -195,7 +205,6 @@ def lax_friedrichs_flux(left_state, right_state, c_lax):
     """
     return 0.5*((flux_x(left_state) + flux_x(right_state)) - c_lax * \
 		(right_state - left_state))
-
 
 
 def b_vector(u_n):

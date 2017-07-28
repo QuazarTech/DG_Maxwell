@@ -11,6 +11,9 @@ import math
 
 def test_mappingXiToX():
 	'''
+	A test function to check the mappingXiToX function in wave_equation module,
+	The test involves passing trial element nodes and xi and comparing it with
+	the x obatined by passing the trial parameters to mappingXiToX function.
 	'''
 	threshold = 1e-14
 	gvar.populateGlobalVariables()
@@ -168,27 +171,6 @@ def test_lBasisArray():
 	assert af.sum(af.abs(basis_array_analytical - gvar.lBasisArray)) < threshold
 
 
-def test_gaussian_weights():
-	'''
-	Test function to check the Gaussian_weights function in the global 
-	global_variables
-	module
-	
-	Note
-	----
-	The accuracy of the gaussian weight is only 1e-7. This causes accuracy 
-	errors in the A matrix / Integral_Li_Lp calculation.
-	'''
-	threshold = 1e-7
-	gvar.populateGlobalVariables(5, 5)
-	gaussian_weights = gvar.gauss_weights
-	
-	reference_weights = af.Array([0.23692688505618908, 0.47862867049936647,
-					0.5688888888888, 0.47862867049936647, 0.23692688505618908 ])
-	
-	assert af.max(af.abs(gaussian_weights - reference_weights)) <= threshold
-
-
 def test_Integral_Li_Lp():
 	'''
 	Test function to check the A_matrix function in wave_equation module.
@@ -235,44 +217,6 @@ def test_A_matrix():
 	assert af.algorithm.max(error_array) < threshold
 
 
-def test_gaussian_quadrature():
-	'''
-	A test function to check the accuracy of gaussian quadrature and plotting
-	the error against the number of gaussian nodes used.
-	'''
-	error = af.constant(0, 29)
-	gvar.populateGlobalVariables(8)
-	for N in range(2, 30):
-		gvar.populateGlobalVariables(8, N)
-		gaussian_nodes = gvar.gauss_nodes
-		gauss_weights = gvar.gauss_weights
-		
-		function_nodes = af.arith.sinh(gaussian_nodes)
-		
-		polynomial_L_0          = np.poly1d(np.array(gvar.lBasisArray[0])[0])
-		value_at_gaussian_nodes = af.interop.np_to_af_array\
-			(polynomial_L_0(gaussian_nodes) ** 2 + np.array(function_nodes))
-		Integral_L_0_gaussian   = value_at_gaussian_nodes * gauss_weights
-		
-		numerical_integral  = np.sum(Integral_L_0_gaussian)
-		reference_integral  = 0.03333333333332194 #zero for :math:`sinh(x)`
-		
-		error[(N - 2)]    = abs(numerical_integral - reference_integral)
-		pass
-	af.display(error, 14)
-	number_gaussian_Nodes = utils.linspace(2, 30, 29)
-	plt.title(r'Error vs N')
-	plt.xlabel(r'Number of Gaussian nodes')
-	plt.ylabel(r'Error')
-	
-	plt.loglog(number_gaussian_Nodes, error, basex = 2)
-
-	plt.legend(['Error'])
-	
-	plt.show()
-	
-	return
-
 def test_d_Lp_xi():
 	'''
 	Test function to check the d_Lp_xi function in the lagrange module with a
@@ -308,7 +252,7 @@ def test_d_Lp_xi():
 	0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
 	]))
 	
-	assert(af.max(reference_d_Lp_xi - lagrange.d_Lp_xi(gvar.xi_LGL))) < threshold
+	assert af.max(reference_d_Lp_xi - lagrange.d_Lp_xi(gvar.xi_LGL)) < threshold
 
 def test_volume_integral_flux():
 	'''
@@ -337,22 +281,39 @@ def test_volume_integral_flux():
 	calculated_flux_integral = wave_equation.volume_integral_flux(gvar.xi_LGL\
 		, af.reorder(np.e ** (-(gvar.xi_LGL) ** 2 / 0.4 ** 2), 1, 0, 2))
 	
-	check1 = (af.max(af.abs(analytical_flux_integral - calculated_flux_integral)) 
-		< threshold)
+	check1 = af.max(af.abs(analytical_flux_integral - calculated_flux_integral)\
+		) < threshold
 	
 	#Here, we use an element from -1 to 0.8 and compare the numerically obtained
 	#result and the one returned by volume_integral_flux.
 	
 	
 	element1_x_nodes = af.reorder(gvar.element_nodes[0 : 1], 1, 0, 2)
-	flux_integral    = np.array(wave_equation.volume_integral_flux(element1_x_nodes\
-											, gvar.u[0, :, 0]))
+	flux_integral    = np.array(wave_equation.volume_integral_flux\
+							 (element1_x_nodes, gvar.u[0, :, 0]))
 	
-	numerical_flux_integral = np.array([-0.005293926590211267, 0.0010839010095961025, \
-		0.005653446247246795, -0.0022480977450876714, 0.0013285326802573401, \
-			-0.0008800498093180824, 0.0005769753858060879, \
-				-0.00022078117828930213])
+	numerical_flux_integral = np.array([-0.005293926590211267,\
+		0.0010839010095961025, 0.005653446247246795, -0.0022480977450876714,\
+		0.0013285326802573401, -0.0008800498093180824, 0.0005769753858060879,\
+		-0.00022078117828930213])
 	
 	check2 = np.max(np.abs(flux_integral - numerical_flux_integral)) < threshold
 	
 	assert (check1 & check2)
+
+def test_matrix_multiplier():
+	'''
+	A trial function which attempts to matrix multiply 3 2 dim matrices stored
+	as two 3d matrices.
+	'''
+	a = af.randu(3, 3, 3)
+	b = af.randu(3, 3, 3)
+	
+	c = af.constant(0, 3, 3, 3)
+	
+	for i in range(3):
+		c[:, :, i] = af.blas.matmul(a[:, :, i], b[:, :, i])
+	
+	print(c)
+	
+	return

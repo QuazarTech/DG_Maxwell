@@ -142,10 +142,14 @@ for idx in np.arange(len(gaussianNodesList)):
 										dtype = np.float64)
 	gaussianNodesList[idx] = af.interop.np_to_af_array(gaussianNodesList[idx])
 
-x_nodes     = af.interop.np_to_af_array(np.array([[-1., 1.]]))
-N_LGL       = 16
-xi_LGL      = None
-lBasisArray = None
+x_nodes         = af.interop.np_to_af_array(np.array([[-1., 1.]]))
+N_LGL           = 16
+xi_LGL          = None
+lBasisArray     = None
+lobatto_weights = None
+N_Elements      = None
+element_nodes   = None
+
 
 def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9,
 							Number_of_elements = 10):
@@ -190,15 +194,6 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9,
 										af.transpose(element_array), xi_LGL))
 	
 	
-	global N_Gauss
-	global gauss_nodes
-	global gauss_weights
-	N_Gauss = Number_of_Gauss_nodes
-	gauss_nodes = af.Array(gaussianNodesList[N_Gauss - 2])
-	gauss_weights = af.constant(0, N_Gauss)
-	for i in range(0, N_Gauss):
-		gauss_weights[i] = gaussian_weights(N_Gauss, i)
-	
 	global u
 	global time
 	u_init     = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
@@ -210,6 +205,7 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_Gauss_nodes = 9,
 	c = 1.0
 	
 	return
+
 
 def gaussian_weights(N, i):
 	'''
@@ -236,6 +232,7 @@ def gaussian_weights(N, i):
 	
 	
 	return gaussian_weight
+
 
 def lobatto_weight_function(n, x):
 	'''
@@ -267,17 +264,23 @@ def lobatto_weight_function(n, x):
 	
 	return (2 / (n * (n - 1)) / (P(x))**2)
 
+
 def lagrange_basis_function():
 	'''
 	Funtion which calculates the value of lagrange basis functions over LGL
 	nodes.
+	
+	Returns
+	-------
+	L_i    : arrayfire.Array [N 1 1 1]
+			 The value of lagrange basis functions calculated over the LGL
+			 nodes.
 	'''
-	x_tile           = af.transpose(af.tile(xi_LGL, 1, N_LGL))
-	power            = af.flip(af.range(N_LGL))
-	power_tile       = af.tile(power, 1, N_LGL)
-	x_pow            = af.arith.pow(x_tile, power_tile)
+	xi_tile    = af.transpose(af.tile(xi_LGL, 1, N_LGL))
+	power      = af.flip(af.range(N_LGL))
+	power_tile = af.tile(power, 1, N_LGL)
+	xi_pow     = af.arith.pow(xi_tile, power_tile)
+	index      = af.range(N_LGL)
+	L_i        = af.blas.matmul(lBasisArray[index], xi_pow)
 	
-	index = af.range(N_LGL)
-	L_i = af.blas.matmul(lBasisArray[index], x_pow)
-	
-	return L_i 
+	return L_i
