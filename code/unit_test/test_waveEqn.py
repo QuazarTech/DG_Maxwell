@@ -1,6 +1,6 @@
 import numpy as np
 import arrayfire as af
-af.set_backend('opencl')
+af.set_backend('cuda')
 from app import lagrange
 from app import global_variables as gvar
 from app import wave_equation
@@ -21,7 +21,6 @@ def test_mappingXiToX():
 	numerical_x_value  = wave_equation.mappingXiToX(test_element_nodes, test_xi)
 	
 	assert af.abs(analytical_x_value - numerical_x_value) <= threshold
-
 
 
 def test_Li_Lp_x_gauss():
@@ -168,27 +167,6 @@ def test_lBasisArray():
 	assert af.sum(af.abs(basis_array_analytical - gvar.lBasisArray)) < threshold
 
 
-def test_gaussian_weights():
-	'''
-	Test function to check the Gaussian_weights function in the global 
-	global_variables
-	module
-	
-	Note
-	----
-	The accuracy of the gaussian weight is only 1e-7. This causes accuracy 
-	errors in the A matrix / Integral_Li_Lp calculation.
-	'''
-	threshold = 1e-7
-	gvar.populateGlobalVariables(5, 5)
-	gaussian_weights = gvar.gauss_weights
-	
-	reference_weights = af.Array([0.23692688505618908, 0.47862867049936647,
-					0.5688888888888, 0.47862867049936647, 0.23692688505618908 ])
-	
-	assert af.max(af.abs(gaussian_weights - reference_weights)) <= threshold
-
-
 def test_Integral_Li_Lp():
 	'''
 	Test function to check the A_matrix function in wave_equation module.
@@ -235,44 +213,6 @@ def test_A_matrix():
 	assert af.algorithm.max(error_array) < threshold
 
 
-def test_gaussian_quadrature():
-	'''
-	A test function to check the accuracy of gaussian quadrature and plotting
-	the error against the number of gaussian nodes used.
-	'''
-	error = af.constant(0, 29)
-	gvar.populateGlobalVariables(8)
-	for N in range(2, 30):
-		gvar.populateGlobalVariables(8, N)
-		gaussian_nodes = gvar.gauss_nodes
-		gauss_weights = gvar.gauss_weights
-		
-		function_nodes = af.arith.sinh(gaussian_nodes)
-		
-		polynomial_L_0          = np.poly1d(np.array(gvar.lBasisArray[0])[0])
-		value_at_gaussian_nodes = af.interop.np_to_af_array\
-			(polynomial_L_0(gaussian_nodes) ** 2 + np.array(function_nodes))
-		Integral_L_0_gaussian   = value_at_gaussian_nodes * gauss_weights
-		
-		numerical_integral  = np.sum(Integral_L_0_gaussian)
-		reference_integral  = 0.03333333333332194 #zero for :math:`sinh(x)`
-		
-		error[(N - 2)]    = abs(numerical_integral - reference_integral)
-		pass
-	af.display(error, 14)
-	number_gaussian_Nodes = utils.linspace(2, 30, 29)
-	plt.title(r'Error vs N')
-	plt.xlabel(r'Number of Gaussian nodes')
-	plt.ylabel(r'Error')
-	
-	plt.loglog(number_gaussian_Nodes, error, basex = 2)
-
-	plt.legend(['Error'])
-	
-	plt.show()
-	
-	return
-
 def test_d_Lp_xi():
 	'''
 	Test function to check the d_Lp_xi function in the lagrange module with a
@@ -309,6 +249,7 @@ def test_d_Lp_xi():
 	]))
 	
 	assert(af.max(reference_d_Lp_xi - lagrange.d_Lp_xi(gvar.xi_LGL))) < threshold
+
 
 def test_volume_integral_flux():
 	'''
