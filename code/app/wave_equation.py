@@ -49,8 +49,8 @@ def mappingXiToX(x_nodes, xi):
 	N_0 = (1 - xi) / 2
 	N_1 = (1 + xi) / 2
 	
-	N0_x0 = af.bcast.broadcast(utils.multiply, N_0, x_nodes[0, :])
-	N1_x1 = af.bcast.broadcast(utils.multiply, N_1, x_nodes[1, :])
+	N0_x0 = af.bcast.broadcast(utils.multiply, N_0, x_nodes[0])
+	N1_x1 = af.bcast.broadcast(utils.multiply, N_1, x_nodes[1])
 	
 	return N0_x0 + N1_x1
 
@@ -121,9 +121,9 @@ def A_matrix():
 	L_j   = af.reorder(L_i, 0, 2, 1)
 	L_i   = af.reorder(L_i, 2, 0, 1)
 	
-	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes),gvar.xi_LGL)
+	dx_dxi      = dx_dxi_numerical((gvar.x_nodes),gvar.xi_LGL)
 	dx_dxi_tile = af.tile(dx_dxi, 1, gvar.N_LGL, gvar.N_LGL)
-	
+	print(dx_dxi_tile.shape)
 	Li_Lp_array     = Li_Lp_x_gauss(L_j, L_i)
 	L_element       = (Li_Lp_array * lobatto_weights_tile * dx_dxi_tile)
 	A_matrix        = af.sum(L_element, dim = 2)

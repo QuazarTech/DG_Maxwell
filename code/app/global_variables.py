@@ -1,6 +1,3 @@
-'''
-[TODO] Add global variable dLp_xi
-'''
 import numpy as np
 import arrayfire as af
 from scipy import special as sp
@@ -145,7 +142,7 @@ for idx in np.arange(len(gaussianNodesList)):
 										dtype = np.float64)
 	gaussianNodesList[idx] = af.interop.np_to_af_array(gaussianNodesList[idx])
 
-x_nodes         = af.Array([-1., 1.])
+x_nodes         = af.interop.np_to_af_array(np.array([-1., 1.]))
 N_LGL           = 16
 xi_LGL          = None
 lBasisArray     = None
@@ -188,8 +185,8 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	N_Elements       = Number_of_elements
 	element_size     = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
 	elements_xi_LGL  = af.constant(0, N_Elements, N_LGL)
-	elements         = utils.linspace(af.sum(x_nodes[0, 0]), \
-		af.sum(x_nodes[0, 1] - element_size), N_Elements)
+	elements         = utils.linspace(af.sum(x_nodes[0]), \
+		af.sum(x_nodes[1] - element_size), N_Elements)
 	
 	np_element_array = np.concatenate((af.transpose(elements), 
 						   af.transpose(elements + element_size)))
