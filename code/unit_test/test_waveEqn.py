@@ -217,7 +217,7 @@ def test_A_matrix():
 	assert af.algorithm.max(error_array) < threshold
 
 
-def test_d_Lp_xi():
+def test_dLp_xi():
 	'''
 	Test function to check the d_Lp_xi function in the lagrange module with a
 	numerically obtained one.
@@ -225,7 +225,7 @@ def test_d_Lp_xi():
 	threshold = 1e-13
 	gvar.populateGlobalVariables(8)
 	
-	reference_d_Lp_xi = af.interop.np_to_af_array(np.array([\
+	reference_dLp_xi = af.interop.np_to_af_array(np.array([\
 	[-14.0000000000226, -3.20991570302344,0.792476681323880,-0.372150435728984,\
 	0.243330712724289, -0.203284568901545,0.219957514771985,-0.500000000000000],
 	
@@ -252,7 +252,7 @@ def test_d_Lp_xi():
 	0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
 	]))
 	
-	assert af.max(reference_d_Lp_xi - lagrange.d_Lp_xi(gvar.xi_LGL)) < threshold
+	assert af.max(reference_dLp_xi - lagrange.dLp_xi(gvar.xi_LGL)) < threshold
 
 def test_volume_integral_flux():
 	'''

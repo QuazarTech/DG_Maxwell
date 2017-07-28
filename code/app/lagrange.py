@@ -104,13 +104,26 @@ def lagrange_basis(i, x):
 	return (l_xi_j)
 
 
-def d_Lp_xi(element_nodes):
+def dLp_xi(element_nodes):
 	'''
 	Function which returns the value of the
 	:math: `\\frac{d L_p(x_nodes)}{d\\xi}`
 	as a 2D array of :math: `L_i x_{nodes}`.
 	Where i varies along rows and the nodes vary along the columns.
-	[TODO] : Complete.
+	
+	Parameters
+	----------
+	element_nodes : arrayfire.Array [N 1 1 1]
+					A 1D array consisting of the element nodes whose lagrange
+					basis functions need to be calculated.
+	
+	Returns
+	-------
+	dLp_xi        : arrayfire.Array [N N 1 1]
+					A 2D array :math: `L_i x_p`, where i varies along dimension
+					1 and p varies along second dimension.
+	
+	
 	'''
 	differentiation_coeffs = (af.transpose(af.flip(af.tile\
 		(af.range(gvar.N_LGL), 1, gvar.N_LGL))) * gvar.lBasisArray)[:, :-1]
@@ -121,6 +134,6 @@ def d_Lp_xi(element_nodes):
 	nodes_power_tile   = af.pow(nodes_tile, power_tile)
 	
 	
-	d_Lp_xi = af.blas.matmul(differentiation_coeffs, nodes_power_tile)
+	dLp_xi = af.blas.matmul(differentiation_coeffs, nodes_power_tile)
 	
-	return d_Lp_xi
+	return dLp_xi

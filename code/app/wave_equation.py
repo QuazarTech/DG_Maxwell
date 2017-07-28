@@ -170,7 +170,7 @@ def volume_integral_flux(element_nodes, u):
 					for various lagrange basis functions.
 	'''
 	
-	d_Lp_xi       = af.transpose(lagrange.d_Lp_xi(element_nodes))
+	dLp_xi        = af.transpose(lagrange.dLp_xi(element_nodes))
 	weight_tile   = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)
 	flux          = af.reorder(flux_x(u), 1, 0, 2)
 	flux_u_tile   = af.tile(flux, 1, gvar.N_LGL)
@@ -181,7 +181,7 @@ def volume_integral_flux(element_nodes, u):
 	
 	
 	flux_integral      = limits_change \
-								* af.sum(weight_tile * d_Lp_xi * flux_u_tile, 0)
+								* af.sum(weight_tile * dLp_xi * flux_u_tile, 0)
 	
 	return flux_integral
 
