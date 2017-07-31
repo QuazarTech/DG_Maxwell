@@ -8,8 +8,7 @@ from app import global_variables as gvar
 
 def Li_Lp_xi(L_i_xi, L_p_xi):
 	'''
-	Parameters    [TODO] : Impose a condition such that ONLY required arrays can
-						   be passed
+	Parameters
 	----------
 	L_i_xi : arrayfire.Array [1 N N 1]
 				  A 2D array :math:`L_i` obtained at LGL points calculated at the

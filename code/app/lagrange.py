@@ -56,7 +56,7 @@ def lagrange_basis_coeffs(x):
 						  that :math:`i^{th}` lagrange polynomial will be the
 						  :math:`i^{th}` row of the matrix.
 	'''
-	X = np.array(X)
+	X = np.array(x)
 	lagrange_basis_poly = np.zeros([X.shape[0], X.shape[0]])
 	
 	for j in np.arange(X.shape[0]):
@@ -74,7 +74,7 @@ def lagrange_basis_coeffs(x):
 def lagrange_basis(i, x):
 	'''
 	Calculates the value of the :math: `i^{th}` Lagrange basis (calculated
-	using the gvar.xi_LGL points) at the :math: `x` coordinates.
+	using the :math:`\\xi_{LGL}` points) at the :math: `x` coordinates.
 	
 	Parameters
 	----------
