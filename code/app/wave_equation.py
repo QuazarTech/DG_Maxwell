@@ -204,7 +204,7 @@ def elementFluxIntegral(n):
 	Returns
 	-------
 	volumeIntegralFlux(element_n_x_nodes,\
-						gvar.u[n, :, 0])   :arrayfire.Array
+						gvar.u[n, :, 0])  : arrayfire.Array
 											An array of :math:`\\int_{-1}^1 f(u)
 											\\frac{d L_p}{d\\xi} d\\xi` for all
 											elements

@@ -50,7 +50,7 @@ def lagrange_basis_coeffs(x):
 
 	Returns
 	-------
-	lagrange_abgsis_poly : numpy.ndarray
+	lagrange_basis_poly : numpy.ndarray
 						  A :math: `N \\times N` matrix containing the
 						  coefficients of the Lagrange basis polynomials such
 						  that :math:`i^{th}` lagrange polynomial will be the
