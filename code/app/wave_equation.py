@@ -6,28 +6,28 @@ from app import lagrange
 from utils import utils
 from app import global_variables as gvar
 
-def Li_Lp_x_gauss(L_x_gauss_i, L_x_gauss_p):
+def Li_Lp_xi(L_i_xi, L_p_xi):
 	'''
 	Parameters    [TODO] : Impose a condition such that ONLY required arrays can
 						   be passed
 	----------
-	L_x_gauss_i : arrayfire.Array [1 N N 1]
+	L_i_xi : arrayfire.Array [1 N N 1]
 				  A 2D array :math:`L_i` obtained at LGL points calculated at the
-				  gaussian nodes :math:`N_Gauss`.
+				  LGL nodes :math:`N_LGL`.
 	
-	L_x_gauss_p : arrayfire.Array [N 1 N 1]
-				  A 2D array :math:`L_p` obtained at LGL points calculated at the
-				  gaussian nodes :math:`N_Gauss`.
+	L_p_xi : arrayfire.Array [N 1 N 1]
+			 A 2D array :math:`L_p` obtained at LGL points calculated at the
+			 LGL nodes :math:`N_LGL`.
 	
 	Returns
 	-------	
-	Li_Lp_x_gauss : arrayfire.Array [N N N 1]
-			   Matrix of :math:`L_p (N_Gauss) L_i (N_Gauss)`.
+	Li_Lp_xi : arrayfire.Array [N N N 1]
+			   Matrix of :math:`L_p (N_LGL) L_i (N_LGL)`.
 	
 	'''
-	Li_Lp_x_gauss = af.bcast.broadcast(utils.multiply, L_x_gauss_i, L_x_gauss_p)
+	Li_Lp_xi = af.bcast.broadcast(utils.multiply, L_i_xi, L_p_xi)
 	
-	return Li_Lp_x_gauss
+	return Li_Lp_xi
 
 
 def mappingXiToX(x_nodes, xi):
@@ -39,12 +39,13 @@ def mappingXiToX(x_nodes, xi):
 			  Element nodes.
 	
 	xi      : numpy.float64
-			  Value of :math: `xi` in domain (-1, 1) which returns the 
-			  corresponding :math: `x` value in the element.
+			  Value of :math: `\\xi`coordinate for which the corresponding
+			  :math: `x` coordinate is to be found.
+.
 	
 	Returns
 	-------
-	:math: `X` value in the element with given nodes and :math: `xi`.
+	:math: `x` value in the element corresponding to :math: `\\xi`.
 	'''
 	N_0 = (1 - xi) / 2
 	N_1 = (1 + xi) / 2
@@ -57,7 +58,7 @@ def mappingXiToX(x_nodes, xi):
 
 def dx_dxi_numerical(x_nodes, xi):
 	'''
-	Differential calculated by central differential method about :math: `xi`
+	Differential calculated by central differential method about :math: `\\xi`
 	using the mappingXiToX function.
 	
 	Parameters
@@ -67,11 +68,12 @@ def dx_dxi_numerical(x_nodes, xi):
 			  Contains the nodes of elements
 	
 	xi		: float
-			  Value of xi
+			  Value of :math: `\\xi`
 	
 	Returns
 	-------
-	Numerical value of differential of :math: `X` w.r.t the given :math: `xi`. 
+	Numerical value of differential of :math: `x` w.r.t the given :math: `xi`.
+	:math:`\\frac{dx}{d \\xi}`. 
 	'''
 	dxi = 1e-7
 	x2 = mappingXiToX(x_nodes, xi + dxi)
@@ -99,12 +101,14 @@ def dx_dxi_analytical(x_nodes, xi):
 def A_matrix():
 	'''
 	Calculates the value of lagrange basis functions obtained for :math: `N_LGL`
-	points at the gaussian nodes.
+	points at the LGL nodes.
 	
 	Returns
 	-------
-	The value of integral of product of lagrange basis functions obtained by LGL
-	points, using gaussian quadrature method using :math: `n_gauss` points. 
+	A_matrix : arrayfire.Array
+			   The value of integral of product of lagrange basis functions
+			   obtained by LGL points, using Gauss-Lobatto quadrature method
+			   using :math: `N_LGL` points. 
 	'''	
 	
 	x_tile           = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL))
@@ -118,13 +122,12 @@ def A_matrix():
 	
 	index = af.range(gvar.N_LGL)
 	L_i   = af.blas.matmul(gvar.lBasisArray[index], x_pow)
-	L_j   = af.reorder(L_i, 0, 2, 1)
+	L_p   = af.reorder(L_i, 0, 2, 1)
 	L_i   = af.reorder(L_i, 2, 0, 1)
 	
 	dx_dxi      = dx_dxi_numerical((gvar.x_nodes),gvar.xi_LGL)
 	dx_dxi_tile = af.tile(dx_dxi, 1, gvar.N_LGL, gvar.N_LGL)
-	print(dx_dxi_tile.shape)
-	Li_Lp_array     = Li_Lp_x_gauss(L_j, L_i)
+	Li_Lp_array     = Li_Lp_xi(L_p, L_i)
 	L_element       = (Li_Lp_array * lobatto_weights_tile * dx_dxi_tile)
 	A_matrix        = af.sum(L_element, dim = 2)
 	
@@ -141,14 +144,17 @@ def flux_x(u):
     u         : arrayfire.Array [N 1 1 1]
 				A 1-D array which contains the value of wave function.
 	
+	Returns
+	-------
+	The value of the flux for given u.
     """
     return gvar.c * u
 
 
-def volume_integral_flux(element_nodes, u):
+def volumeIntegralFlux(element_nodes, u):
 	'''
 	A function to calculate the volume integral of flux in the wave equation.
-	:math:`\\int_{-1}^1 f(u) \frac{d L_p}{d\\xi} d\\xi`
+	:math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
 	This will give N values of flux integral as p varies from 0 to N - 1.
 	
 	This integral is carried out over an element with LGL nodes mapped onto it.
@@ -170,42 +176,50 @@ def volume_integral_flux(element_nodes, u):
 					for various lagrange basis functions.
 	'''
 	
-	dLp_xi        = af.transpose(lagrange.dLp_xi(element_nodes))
-	weight_tile   = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)
-	flux          = af.reorder(flux_x(u), 1, 0, 2)
-	flux_u_tile   = af.tile(flux, 1, gvar.N_LGL)
-	limits_change = af.sum(element_nodes[-1] - element_nodes[0]) / 2
+	dLp_xi        = af.tile(af.transpose(gvar.dLp_xi), 1, 1, gvar.N_Elements)
+	weight_tile   = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL,\
+																gvar.N_Elements)
+	flux          = af.reorder(flux_x(u), 1, 2, 0)
+	flux_u_tile   = af.tile(flux, 1, gvar.N_LGL, 1)
+	flux_integral = af.sum((weight_tile * dLp_xi * flux_u_tile), 0)
 	
-	# limits_change is used so that the quadrature method being carried out
-	# over the interval of element nodes and not [-1, 1] domain.
-	
-	
-	flux_integral      = limits_change \
-								* af.sum(weight_tile * dLp_xi * flux_u_tile, 0)
-	
-	return flux_integral
+	return af.reorder(flux_integral, 2, 1, 0)
 
-
-def element_flux_integral(n):
+def elementFluxIntegral(n):
 	'''
+	Function which reorders the element numbers which can then be passed
+	into volumeIntegralFlux. 
+	
+	Parameters
+	----------
+	n  :  Element numbers for which the flux integral is to be calculated,
+		  Passing an array of 0 to N_Elements - 1 would give the flux integral
+		  for all elements at all :math:`p`
+	
+	Returns
+	-------
+	An array of :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi` for all
+	elements
 	'''
 	element_n_x_nodes = af.reorder(gvar.element_nodes[n], 1, 0, 2)
 	
-	return volume_integral_flux(element_n_x_nodes, gvar.u[n, :, 0])
+	return volumeIntegralFlux(element_n_x_nodes, gvar.u[n, :, 0])
 
 
-def lax_friedrichs_flux(left_state, right_state, c_lax):
+def lax_friedrichs_flux(u):
     """
-    Function to calculate the lax friedrichs flux which depends on the flux
-    on either side of the boundary and also has a stability inducing term??
+    """
     
-    Parameters
-    ----------
-    [TODO]
-    """
-    return 0.5*((flux_x(left_state) + flux_x(right_state)) - c_lax * \
-		(right_state - left_state))
-
+    u_n_0              = u[1:, 0]
+    u_nminus1_N_LGL    = u[:gvar.N_Elements, -1]
+    flux_n_0           = flux_x(u_n_0)
+    flux_nminus1_N_LGL = flux_x(u[:gvar.N_Elements, -1])
+    c_lax              = gvar.c_lax
+    
+    lax_friedrichs_flux = (flux_n_0 + flux_nminus1_N_LGL) / 2 \
+							- c_lax * (u_n_0 - u_nminus1_N_LGL)
+    
+    return lax_friedrichs_flux
 
 def b_vector(u_n):
 	'''
@@ -214,9 +228,5 @@ def b_vector(u_n):
 	'''
 	int_u_ni_Lp_Li   = af.blas.matmul(A_matrix(), af.transpose(u_n))
 	int_flux_dLp_dxi = volume_integral_flux(u_n)
-	
-	L_p = gvar.lagrange_basis_function()
-	
-	#surface_term = L_p[-1] * lax_friedrichs_flux(u[n, i, -1], u[n, i + 1, ])
 	
 	return

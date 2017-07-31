@@ -11,7 +11,7 @@ def LGL_points(N):
 	Returns the :math: `N` Legendre-Gauss-Laguere points which are
 	the roots of the equation
 	:math::
-		(1 - x^{2})L'_{N} = 0
+		(1 - x^2)L'_} = 0
 	
 	Parameters
 	----------
@@ -43,20 +43,21 @@ def lagrange_basis_coeffs(X):
 	This function calculates the Lagrange basis
 	polynomials by this formula:
 	:math::
-		L_i = \prod_{m = 0, m \notin i}^{N - 1}
-				\frac{(x - x_m)}{(x_i - x_m)}
+		L_i = \\prod_{m = 0, m \\notin i}^{N - 1}
+				\\frac{(x - x_m)}{(x_i - x_m)}
 
 	Parameters
 	----------
-	X : numpy array
-		The :math: `x` coordinates.
+	X : numpy.array
+		A numpy array consisting of the :math: `x` coordinates.
 
 	Returns
 	-------
-	numpy.ndarray
-	A :math: `N` x :math: `N` matrix containing the coefficients of the
-	Lagrange basis polynomials such that :math:`i^{th}` lagrange polynomial 
-	will be the :math:`i^{th}` row of the matrix.
+	lagrange_basis_poly : numpy.ndarray
+						  A :math: `N \\times N` matrix containing the
+						  coefficients of the Lagrange basis polynomials such
+						  that :math:`i^{th}` lagrange polynomial will be the
+						  :math:`i^{th}` row of the matrix.
 	'''
 	X = np.array(X)
 	lagrange_basis_poly = np.zeros([X.shape[0], X.shape[0]])
@@ -84,16 +85,16 @@ def lagrange_basis(i, x):
 	i : int
 		The Lagrange basis which is to be calculated.
 	
-	x : af.Array
+	x : arrayfire.Array
 		The coordinates at which the `i^{th}` Lagrange polynomial is to be
 		calculated.
 	
 	Returns
 	-------
 	
-	lagrange : af.Array
-			   Array of values of the :math: `i^{th}` Lagrange basis
-			   calculated at the given :math: `x` coordinates.
+	l_xi_j : arrayfire.Array
+			 Array of values of the :math: `i^{th}` Lagrange basis
+			 calculated at the given :math: `x` coordinates.
 	'''
 	x_tile      = af.transpose(af.tile(x, 1, gvar.N_LGL))
 	power       = utils.linspace((gvar.N_LGL-1), 0, gvar.N_LGL)
@@ -101,39 +102,4 @@ def lagrange_basis(i, x):
 	x_pow       = af.arith.pow(x_tile, power_tile)
 	l_xi_j      = af.blas.matmul(gvar.lBasisArray[i], x_pow)
 	
-	return (l_xi_j)
-
-
-def dLp_xi(element_nodes):
-	'''
-	Function which returns the value of the
-	:math: `\\frac{d L_p(x_nodes)}{d\\xi}`
-	as a 2D array of :math: `L_i x_{nodes}`.
-	Where i varies along rows and the nodes vary along the columns.
-	
-	Parameters
-	----------
-	element_nodes : arrayfire.Array [N 1 1 1]
-					A 1D array consisting of the element nodes whose lagrange
-					basis functions need to be calculated.
-	
-	Returns
-	-------
-	dLp_xi        : arrayfire.Array [N N 1 1]
-					A 2D array :math: `L_i x_p`, where i varies along dimension
-					1 and p varies along second dimension.
-	
-	
-	'''
-	differentiation_coeffs = (af.transpose(af.flip(af.tile\
-		(af.range(gvar.N_LGL), 1, gvar.N_LGL))) * gvar.lBasisArray)[:, :-1]
-	
-	nodes_tile         = af.transpose(af.tile(element_nodes, 1, gvar.N_LGL - 1))
-	power_tile         = af.flip(af.tile\
-									(af.range(gvar.N_LGL - 1), 1, gvar.N_LGL))
-	nodes_power_tile   = af.pow(nodes_tile, power_tile)
-	
-	
-	dLp_xi = af.blas.matmul(differentiation_coeffs, nodes_power_tile)
-	
-	return dLp_xi
+	return l_xi_j

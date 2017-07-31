@@ -12,8 +12,9 @@ import math
 def test_mappingXiToX():
 	'''
 	A test function to check the mappingXiToX function in wave_equation module,
-	The test involves passing trial element nodes and xi and comparing it with
-	the x obatined by passing the trial parameters to mappingXiToX function.
+	The test involves passing trial element nodes and :math: `\\xi` and
+	comparing it with the x obatined by passing the trial parameters to
+	mappingXiToX function.
 	'''
 	threshold = 1e-14
 	gvar.populateGlobalVariables()
@@ -27,9 +28,9 @@ def test_mappingXiToX():
 
 
 
-def test_Li_Lp_x_gauss():
+def test_Li_Lp_xi():
 	'''
-	A Test function to check the Li_Lp_x_gauss function in wave_equation module
+	A Test function to check the Li_Lp_xi function in wave_equation module
 	by passing two test arrays and comparing the analytical product with the
 	numerically calculated one with a tolerance of 1e-14.
 	'''
@@ -52,7 +53,7 @@ def test_Li_Lp_x_gauss():
 	
 	analytical_product = af.interop.np_to_af_array(product)
 	
-	check_order3 = af.sum(af.abs(wave_equation.Li_Lp_x_gauss\
+	check_order3 = af.sum(af.abs(wave_equation.Li_Lp_xi\
 		(test_array, test_array1) - analytical_product)) <= threshold
 	
 	assert check_order3
@@ -93,6 +94,13 @@ def test_lBasisArray():
 	Function to test the lBasisArray function in global_variables module by
 	passing 8 LGL points and comparing the numerically obtained basis function
 	coefficients to analytically calculated ones.
+	
+	Reference
+	---------
+	The link to the sage worksheet where the calculations were carried out.
+	
+	https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+	/PM_2_5/wave_equation/worksheets/l_basis_array.sagews
 	'''
 	threshold = 1e-12
 	gvar.populateGlobalVariables(8)
@@ -219,15 +227,21 @@ def test_A_matrix():
 
 def test_dLp_xi():
 	'''
-	Test function to check the dLp_xi function in the lagrange module with a
+	Test function to check the dLp_xi calculated in gvar mdule with a
 	numerically obtained one.
+	
+	Refrence
+	--------
+	The link to the sage worksheet where the calculations were carried out.
+	https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+	/PM_2_5/wave_equation/worksheets/dLp_xi.sagews
 	'''
 	threshold = 1e-13
 	gvar.populateGlobalVariables(8)
 	
 	reference_d_Lp_xi = af.interop.np_to_af_array(np.array([\
-	[-14.0000000000226, -3.20991570302344,0.792476681323880,-0.372150435728984,\
-	0.243330712724289, -0.203284568901545,0.219957514771985,-0.500000000000000],
+	[-14.0000000000226,-3.20991570302344,0.792476681323880,-0.372150435728984,\
+	0.243330712724289,-0.203284568901545,0.219957514771985, -0.500000000000000],
 	
 	[18.9375986071129, 3.31499272476776e-11, -2.80647579473469,1.07894468878725\
 	,-0.661157350899271,0.537039586158262, -0.573565414940005,1.29768738831567],
@@ -252,68 +266,77 @@ def test_dLp_xi():
 	0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
 	]))
 	
-	assert af.max(reference_d_Lp_xi - lagrange.dLp_xi(gvar.xi_LGL)) < threshold
+	assert af.max(reference_d_Lp_xi - gvar.dLp_xi) < threshold
 
 def test_volume_integral_flux():
 	'''
 	A test function to check the volume_integral_flux function in wave_equation
 	module by analytically calculated Gauss-Lobatto quadrature.
 	
-	NOTE
-	----
-	The analytically obtained flux integral by Gauss-Lobatto quadrature
-	doesn't match result obtained by numerically integrating the flux integral
-	term.
+	Reference
+	---------
+	The link to the sage worksheet where the calculations were caried out is
+	given below.
+	https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+	/PM_2_5/wave_equation/worksheets/volume_integral_flux.sagews
 	
-	However by taking limits which aren't -1 and 1. The flux integral method
-	has much improved precision.
-	
-	The second check in this test function uses a reference value obtained
-	numerically by a solver with machine accuracy.
 	'''
-	threshold = 1e-10
+	threshold = 4 * 1e-8
 	gvar.populateGlobalVariables(8)
-	analytical_flux_integral = af.transpose(af.interop.np_to_af_array(np.array(\
-				[-0.0243250104044395, 0.0445985586016178, -0.412943909240457, \
-					-0.592576678843147, 0.592576678843147, 0.412943909240457,\
-									-0.0445985586016178, 0.0243250104044395])))
 	
-	calculated_flux_integral = wave_equation.volume_integral_flux(gvar.xi_LGL\
-		, af.reorder(np.e ** (-(gvar.xi_LGL) ** 2 / 0.4 ** 2), 1, 0, 2))
+	referenceFluxIntegral0 = af.interop.np_to_af_array(np.array(
+		[-0.002016634876668093, -0.000588597708116113, -0.0013016773719126333,\
+			-0.002368387579324652, -0.003620502047659841, -0.004320197094090966,
+		-0.003445512010153811, 0.0176615086879261]))
 	
-	check1 = af.max(af.abs(analytical_flux_integral - calculated_flux_integral)\
-		) < threshold
+	numerical_flux0 = af.transpose(wave_equation.elementFluxIntegral\
+		(af.range(gvar.N_Elements))[0])
 	
-	#Here, we use an element from -1 to 0.8 and compare the numerically obtained
-	#result and the one returned by volume_integral_flux.
+	referenceFluxIntegral1 = af.interop.np_to_af_array(np.array([-0.018969769374
+		,-0.00431252844519, -0.00882630935977, -0.0144355176966, -0.019612124119
+		,-0.0209837936827, -0.0154359890788, 0.102576031756]))
+	
+	numerical_flux1 = af.transpose(wave_equation.elementFluxIntegral\
+		(af.range(gvar.N_Elements))[1])
 	
 	
-	element1_x_nodes = af.reorder(gvar.element_nodes[0 : 1], 1, 0, 2)
-	flux_integral    = np.array(wave_equation.volume_integral_flux\
-							 (element1_x_nodes, gvar.u[0, :, 0]))
+	referenceFluxIntegral2 = af.interop.np_to_af_array(np.array([-0.108222418798
+		,-0.0179274222595, -0.0337807018822, -0.0492589052599, -0.0588472807471,
+			-0.0557970236273, -0.0374764132459, 0.361310165819]))
 	
-	numerical_flux_integral = np.array([-0.005293926590211267,\
-		0.0010839010095961025, 0.005653446247246795, -0.0022480977450876714,\
-		0.0013285326802573401, -0.0008800498093180824, 0.0005769753858060879,\
-		-0.00022078117828930213])
+	numerical_flux2 = af.transpose(wave_equation.elementFluxIntegral\
+		(af.range(gvar.N_Elements))[2])
 	
-	check2 = np.max(np.abs(flux_integral - numerical_flux_integral)) < threshold
 	
-	assert (check1 & check2)
-
-def test_matrix_multiplier():
-	'''
-	A trial function which attempts to matrix multiply 3 2 dim matrices stored
-	as two 3d matrices.
-	'''
-	a = af.randu(3, 3, 3)
-	b = af.randu(3, 3, 3)
+	referenceFluxIntegral3 = af.interop.np_to_af_array(np.array([-0.374448714304
+		, -0.0399576371245, -0.0683852285846, -0.0869229749357, -0.0884322503841
+		, -0.0714664112839, -0.0422339853622, 0.771847201979]))
 	
-	c = af.constant(0, 3, 3, 3)
+	numerical_flux3 = af.transpose(wave_equation.elementFluxIntegral\
+		(af.range(gvar.N_Elements))[3])
 	
-	for i in range(3):
-		c[:, :, i] = af.blas.matmul(a[:, :, i], b[:, :, i])
+	referenceFluxIntegral4 = af.interop.np_to_af_array(np.array([-0.785754362849
+		, -0.0396035640187, -0.0579313769517, -0.0569022801117,
+		-0.0392041960688, -0.0172295769141, -0.00337464521455, 1.00000000213]))
 	
-	print(c)
+	numerical_flux4 = af.transpose(wave_equation.elementFluxIntegral\
+		(af.range(gvar.N_Elements))[4])
 	
-	return
+	
+	referenceFluxIntegral5 = af.interop.np_to_af_array(np.array([-1.00000000213,
+		0.00337464521455, 0.0172295769141, 0.0392041960688, 0.0569022801117, \
+			0.0579313769517, 0.0396035640187, 0.785754362849]))
+	
+	numerical_flux5 = af.transpose(wave_equation.elementFluxIntegral\
+		(af.range(gvar.N_Elements))[5])
+	
+	
+	numerical_flux_sum = numerical_flux0 + numerical_flux1 + numerical_flux2 \
+		+ numerical_flux3 + numerical_flux4 + numerical_flux5
+	
+	referenceFluxIntegral_sum = referenceFluxIntegral0 + referenceFluxIntegral1\
+		+ referenceFluxIntegral2 + referenceFluxIntegral3 \
+		+ referenceFluxIntegral4 + referenceFluxIntegral5
+	
+	assert (af.max(af.abs(numerical_flux_sum - referenceFluxIntegral_sum))\
+		< threshold)
