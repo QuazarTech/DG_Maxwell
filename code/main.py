@@ -14,3 +14,5 @@ if __name__ == '__main__':
 		(af.range(gvar.N_Elements))))
 	print(af.timeit(wave_equation.elementFluxIntegral,\
 		af.range(gvar.N_Elements)))
+	print(wave_equation.elementFluxIntegral())
+	print(af.range(gvar.N_Elements))

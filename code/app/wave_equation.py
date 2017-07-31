@@ -189,7 +189,7 @@ def volumeIntegralFlux(element_nodes, u):
 	
 	return af.reorder(flux_integral, 2, 1, 0)
 
-def elementFluxIntegral(n):
+def elementFluxIntegral(n = af.range(10)):
 	'''
 	Function which reorders the element numbers which can then be passed
 	into volumeIntegralFlux. 
