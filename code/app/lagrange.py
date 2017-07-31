@@ -1,17 +1,15 @@
 #! /usr/bin/env python3
 import numpy as np
 import arrayfire as af
-
 from utils import utils
-
 from app import global_variables as gvar
 
 def LGL_points(N):
-	"""
+	'''
 	Returns the :math: `N` Legendre-Gauss-Laguere points which are
 	the roots of the equation
 	:math::
-		(1 - x^2)L'_} = 0
+		(1 - x^2)L'_N = 0
 	
 	Parameters
 	----------
@@ -23,11 +21,10 @@ def LGL_points(N):
 	-------
 	lgl : arrayfire.Array
 		  An array of :math: `N` LGL points.
-	"""
+	'''
 	if N > 16 or N < 2:
 		print('Skipping! This function can only return from ',
 			  '2 to 16 LGL points.')
-	
 	
 	n = N - 2
 
@@ -35,25 +32,25 @@ def LGL_points(N):
 	return lgl
 
 
-def lagrange_basis_coeffs(X):    
+def lagrange_basis_coeffs(x):    
 	'''
-	A function to get the coefficients of the Lagrange
-	basis polynomials for a given set of values.
+	A function to get the coefficients of the Lagrange basis polynomials for
+	a given set of x nodes.
 
 	This function calculates the Lagrange basis
 	polynomials by this formula:
 	:math::
-		L_i = \\prod_{m = 0, m \\notin i}^{N - 1}
-				\\frac{(x - x_m)}{(x_i - x_m)}
+	`L_i = \\prod_{m = 0, m \\notin i}^{N - 1}\\frac{(x - x_m)}{(x_i - x_m)}`
 
 	Parameters
 	----------
-	X : numpy.array
-		A numpy array consisting of the :math: `x` coordinates.
+	x : numpy.array
+		A numpy array consisting of the :math: `x` nodes using which the
+		lagrange basis functions need to be evaluated.
 
 	Returns
 	-------
-	lagrange_basis_poly : numpy.ndarray
+	lagrange_abgsis_poly : numpy.ndarray
 						  A :math: `N \\times N` matrix containing the
 						  coefficients of the Lagrange basis polynomials such
 						  that :math:`i^{th}` lagrange polynomial will be the

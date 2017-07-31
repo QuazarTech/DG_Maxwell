@@ -1,18 +1,10 @@
-'''
-[TODO]
-
-- Declare dLp_xi as a global variable.
-- dLp_xi takes xi_LGL as a parameter not element nodes, modify docstring
-                            v  accordingly.
-- 
-'''
-
-
 import numpy as np
 import arrayfire as af
 from scipy import special as sp
 from app import lagrange
 from app import wave_equation
+from utils import utils
+
 
 LGL_list = [ \
 [-1.0,1.0],                                                               \
@@ -56,7 +48,6 @@ for idx in np.arange(len(LGL_list)):
 
 x_nodes         = af.interop.np_to_af_array(np.array([-1., 1.]))
 N_LGL           = 16
-from utils import utils
 xi_LGL          = None
 lBasisArray     = None
 lobatto_weights = None
@@ -72,9 +63,12 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	Initialize the global variables.
 	Parameters
 	----------
-	N_LGL : int
-			Number of LGL points.
-			Number of LGL nodes.
+	Number_of_LGL_pts : int
+						Number of LGL nodes.
+	
+	Number_of_elements : int
+						 Number of elements into which the domain is to be
+						 split.
 	
 	'''
 	
@@ -145,8 +139,9 @@ def lobatto_weight_function(n, x):
 	
 	Returns
 	-------
-	An array of lobatto weight functions for the given :math: `x` points
-	and index.
+	(2 / (n * (n - 1)) / (P(x))**2) : arrayfire.Array
+									  An array of lobatto weight functions for
+									  the given :math: `x` points and index.
 	
 	'''
 	P = sp.legendre(n - 1)
@@ -179,12 +174,6 @@ def dLp_xi_LGL():
 	Function to calculate :math: `\\frac{d L_p(\\xi_{LGL})}{d\\xi}`
 	as a 2D array of :math: `L_i (\\xi_{LGL})`. Where i varies along rows
 	and the nodes vary along the columns.
-	
-	Parameters
-	----------
-	element_nodes : arrayfire.Array [N 1 1 1]
-					A 1D array consisting of the element nodes whose lagrange
-					basis functions need to be calculated.
 	
 	Returns
 	-------

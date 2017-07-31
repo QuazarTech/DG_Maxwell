@@ -45,7 +45,9 @@ def mappingXiToX(x_nodes, xi):
 	
 	Returns
 	-------
-	:math: `x` value in the element corresponding to :math: `\\xi`.
+	N0_x0 + N1_x1 : arrayfire.Array
+				    :math: `x` value in the element corresponding to
+				    :math:`\\xi`.
 	'''
 	N_0 = (1 - xi) / 2
 	N_1 = (1 + xi) / 2
@@ -72,8 +74,8 @@ def dx_dxi_numerical(x_nodes, xi):
 	
 	Returns
 	-------
-	Numerical value of differential of :math: `x` w.r.t the given :math: `xi`.
-	:math:`\\frac{dx}{d \\xi}`. 
+	(x2 - x1) / (2 * dxi) : arrayfire.Array
+							:math:`\\frac{dx}{d \\xi}`. 
 	'''
 	dxi = 1e-7
 	x2 = mappingXiToX(x_nodes, xi + dxi)
@@ -92,10 +94,12 @@ def dx_dxi_analytical(x_nodes, xi):
 	
 	Returns
 	-------
-	The analytical solution to the \\frac{dx}{d\\xi} for an element.
+	(x_nodes[1] - x_nodes[0]) / 2 : arrayfire.Array
+									The analytical solution of
+									\\frac{dx}{d\\xi} for an element.
 	
 	'''
-	return((x_nodes[1] - x_nodes[0]) / 2)
+	return (x_nodes[1] - x_nodes[0]) / 2
 
 
 def A_matrix():
@@ -135,7 +139,7 @@ def A_matrix():
 
 
 def flux_x(u):
-    """
+    '''
     A function which returns the value of flux for a given wave function u.
     :math:`f(u) = c u^k`
     
@@ -146,8 +150,9 @@ def flux_x(u):
 	
 	Returns
 	-------
-	The value of the flux for given u.
-    """
+	c * u : arrayfire.Array
+			The value of the flux for given u.
+    '''
     return gvar.c * u
 
 
@@ -198,8 +203,11 @@ def elementFluxIntegral(n):
 	
 	Returns
 	-------
-	An array of :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi` for all
-	elements
+	volumeIntegralFlux(element_n_x_nodes,\
+						gvar.u[n, :, 0])   :arrayfire.Array
+											An array of :math:`\\int_{-1}^1 f(u)
+											\\frac{d L_p}{d\\xi} d\\xi` for all
+											elements
 	'''
 	element_n_x_nodes = af.reorder(gvar.element_nodes[n], 1, 0, 2)
 	
@@ -207,8 +215,8 @@ def elementFluxIntegral(n):
 
 
 def lax_friedrichs_flux(u):
-    """
-    """
+    '''
+    '''
     
     u_n_0              = u[1:, 0]
     u_nminus1_N_LGL    = u[:gvar.N_Elements, -1]
