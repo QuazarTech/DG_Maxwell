@@ -10,7 +10,7 @@ from app import lagrange
 if __name__ == '__main__':
 	
 	gvar.populateGlobalVariables(8)
-	print(af.transpose(wave_equation.elementFluxIntegral\
+	print((wave_equation.elementFluxIntegral\
 		(af.range(gvar.N_Elements))))
 	print(af.timeit(wave_equation.elementFluxIntegral,\
 		af.range(gvar.N_Elements)))

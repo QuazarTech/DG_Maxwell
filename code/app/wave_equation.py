@@ -213,18 +213,17 @@ def elementFluxIntegral(n):
 	return volumeIntegralFlux(element_n_x_nodes, gvar.u[n, :, 0])
 
 
-def lax_friedrichs_flux(u):
-    '''
-    '''
-    
-    u_n_0              = u[1:, 0]
-    u_nminus1_N_LGL    = u[:gvar.N_Elements, -1]
-    flux_n_0           = flux_x(u_n_0)
-    flux_nminus1_N_LGL = flux_x(u[:gvar.N_Elements, -1])
-    c_lax              = gvar.c_lax
-    
-    lax_friedrichs_flux = (flux_n_0 + flux_nminus1_N_LGL) / 2 \
-							- c_lax * (u_n_0 - u_nminus1_N_LGL)
+def lax_friedrichs_flux(u, t_n):
+	'''
+	'''
+		
+	u_n_0              = u[1:, 0, t_n]
+	u_nminus1_N_LGL    = u[:gvar.N_Elements, -1, t_n]
+	flux_n_0           = flux_x(u_n_0)
+	flux_nminus1_N_LGL = flux_x(u_nminus1_N_LGL)
+	
+	lax_friedrichs_flux = (flux_n_0 + flux_nminus1_N_LGL) / 2 \
+						- gvar.c_lax * (u_n_0 - u_nminus1_N_LGL)
     
     return lax_friedrichs_flux
 

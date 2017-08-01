@@ -57,6 +57,7 @@ u               = None
 time            = None
 c               = None
 dLp_xi          = None
+c_lax           = None
 
 def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	'''
@@ -99,7 +100,6 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	element_nodes = af.transpose(wave_equation.mappingXiToX(\
 										af.transpose(element_array), xi_LGL))
 	
-	
 	global u
 	global time
 	u_init     = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
@@ -112,7 +112,10 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	dLp_xi = dLp_xi_LGL()
 	
 	global c
+	global c_lax
 	c = 1.0
+	#delta_x = af.min(element_nodes, 1)
+	print(element_nodes)
 	
 	return
 
