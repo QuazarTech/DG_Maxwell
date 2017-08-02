@@ -104,7 +104,8 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	global time
 	u_init     = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
 	time       = utils.linspace(0, 2, 200)
-	u          = af.constant(0, (N_Elements), N_LGL, time.shape[0])
+	u          = af.constant(0, N_Elements, N_LGL, time.shape[0],\
+														dtype = af.Dtype.f64)
 	
 	u[:, :, 0] = u_init
 	
@@ -114,8 +115,8 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	global c
 	global c_lax
 	c = 1.0
+	c_lax = 0.1
 	#delta_x = af.min(element_nodes, 1)
-	print(element_nodes)
 	
 	return
 

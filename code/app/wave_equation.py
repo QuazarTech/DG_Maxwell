@@ -11,8 +11,8 @@ def Li_Lp_xi(L_i_xi, L_p_xi):
 	Parameters
 	----------
 	L_i_xi : arrayfire.Array [1 N N 1]
-				  A 2D array :math:`L_i` obtained at LGL points calculated at the
-				  LGL nodes :math:`N_LGL`.
+			 A 2D array :math:`L_i` obtained at LGL points calculated at the
+			 LGL nodes :math:`N_LGL`.
 	
 	L_p_xi : arrayfire.Array [N 1 N 1]
 			 A 2D array :math:`L_p` obtained at LGL points calculated at the
@@ -213,19 +213,70 @@ def elementFluxIntegral(n):
 	return volumeIntegralFlux(element_n_x_nodes, gvar.u[n, :, 0])
 
 
-def lax_friedrichs_flux(u, t_n):
+def lax_friedrichs_flux(t_n):
 	'''
-	'''
-		
-	u_n_0              = u[1:, 0, t_n]
-	u_nminus1_N_LGL    = u[:gvar.N_Elements, -1, t_n]
-	flux_n_0           = flux_x(u_n_0)
-	flux_nminus1_N_LGL = flux_x(u_nminus1_N_LGL)
+	A function which calculates the lax-friedrichs_flux :math:`f_i` using.
+	:math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \frac
+					{\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
 	
-	lax_friedrichs_flux = (flux_n_0 + flux_nminus1_N_LGL) / 2 \
-						- gvar.c_lax * (u_n_0 - u_nminus1_N_LGL)
-    
-    return lax_friedrichs_flux
+	Parameters
+	----------
+	u    : arrayfire.Array[N_Elements N_LGL 1 1]
+		   A 2D array consisting of the amplitude of the wave at the LGL nodes
+		   at each element.
+	
+	t_n  : float
+		   The timestep at which the lax-friedrichs-flux is to be calculated.
+	'''
+	
+	u_iplus1_0    = af.shift(gvar.u[:, 0, t_n], -1)
+	u_i_N_LGL     = gvar.u[:, -1, t_n]
+	flux_iplus1_0 = flux_x(u_iplus1_0)
+	flux_i_N_LGL  = flux_x(u_i_N_LGL)
+	
+	lax_friedrichs_flux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
+						- gvar.c_lax * (u_iplus1_0 - u_i_N_LGL)
+	
+	return lax_friedrichs_flux
+
+
+def surface_term(t_n):
+	'''
+	A function which is used to calculate the surface term,
+	:math:`L_p (1) f_i - L_p (-1) f_{i - 1}`
+	using the lax_friedrichs_flux function and the dLp_xi_LGL function in gvar
+	module.
+	
+	Parameters
+	----------
+	t_n : float
+		  The timestep at which the surface term is to be calculated.
+	
+	Returns
+	-------
+	surface_term : The surface term represented in the form of an array,
+				   :math:`L_p (1) f_i - L_p (-1) f_{i - 1}`, where p varies from
+				   zero to :math:`N_{LGL}` and i from zero to
+				   :math:`N_{Elements}`. p varies along the rows and i along
+				   columns.
+	
+	Reference
+	---------
+	Link to PDF describing the algorithm to obtain the surface term.
+	
+	https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+	/PM\_2\_5/wave\_equation/documents/surface\_term/surface\_term.pdf
+	
+	'''
+	L_p_minus1   = gvar.lagrange_basis_function()[:, 0]
+	L_p_1        = gvar.lagrange_basis_function()[:, -1]
+	f_i          = af.transpose(lax_friedrichs_flux(t_n))
+	f_iminus1    = af.transpose(af.shift(lax_friedrichs_flux(t_n), 1))
+	surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,\
+																	f_iminus1)
+	
+	return surface_term
+
 
 def b_vector(u_n):
 	'''

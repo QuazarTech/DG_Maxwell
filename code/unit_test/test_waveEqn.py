@@ -340,3 +340,17 @@ def test_volume_integral_flux():
 	
 	assert (af.max(af.abs(numerical_flux_sum - referenceFluxIntegral_sum))\
 		< threshold)
+
+def test_lax_friedrichs_flux():
+	'''
+	A test function to test the lax_friedrichs_flux function in wave_equation
+	module. [TODO] : confirm.
+	'''
+	threshold = 1e-14
+	gvar.populateGlobalVariables(8, 10)
+	
+	f_i = wave_equation.lax_friedrichs_flux(0)
+	#The lax friedrichs flux at timestep 0 should just be a list of the element
+	#boundaries of the elements at LGL nodes.
+	analytical_lax_friedrichs_flux = gvar.u[:, -1, 0]
+	assert af.max(analytical_lax_friedrichs_flux - f_i) < threshold
