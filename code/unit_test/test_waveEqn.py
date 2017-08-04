@@ -290,14 +290,14 @@ def test_volume_integral_flux():
 		-0.003445512010153811, 0.0176615086879261]))
 	
 	numerical_flux0 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[0])
+		(af.range(gvar.N_Elements), 0)[0])
 	
 	referenceFluxIntegral1 = af.interop.np_to_af_array(np.array([-0.018969769374
 		,-0.00431252844519, -0.00882630935977, -0.0144355176966, -0.019612124119
 		,-0.0209837936827, -0.0154359890788, 0.102576031756]))
 	
 	numerical_flux1 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[1])
+		(af.range(gvar.N_Elements), 0)[1])
 	
 	
 	referenceFluxIntegral2 = af.interop.np_to_af_array(np.array([-0.108222418798
@@ -305,7 +305,7 @@ def test_volume_integral_flux():
 			-0.0557970236273, -0.0374764132459, 0.361310165819]))
 	
 	numerical_flux2 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[2])
+		(af.range(gvar.N_Elements), 0)[2])
 	
 	
 	referenceFluxIntegral3 = af.interop.np_to_af_array(np.array([-0.374448714304
@@ -313,14 +313,14 @@ def test_volume_integral_flux():
 		, -0.0714664112839, -0.0422339853622, 0.771847201979]))
 	
 	numerical_flux3 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[3])
+		(af.range(gvar.N_Elements), 0)[3])
 	
 	referenceFluxIntegral4 = af.interop.np_to_af_array(np.array([-0.785754362849
 		, -0.0396035640187, -0.0579313769517, -0.0569022801117,
 		-0.0392041960688, -0.0172295769141, -0.00337464521455, 1.00000000213]))
 	
 	numerical_flux4 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[4])
+		(af.range(gvar.N_Elements), 0)[4])
 	
 	
 	referenceFluxIntegral5 = af.interop.np_to_af_array(np.array([-1.00000000213,
@@ -328,7 +328,7 @@ def test_volume_integral_flux():
 			0.0579313769517, 0.0396035640187, 0.785754362849]))
 	
 	numerical_flux5 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[5])
+		(af.range(gvar.N_Elements), 0)[5])
 	
 	
 	numerical_flux_sum = numerical_flux0 + numerical_flux1 + numerical_flux2 \
@@ -344,13 +344,58 @@ def test_volume_integral_flux():
 def test_lax_friedrichs_flux():
 	'''
 	A test function to test the lax_friedrichs_flux function in wave_equation
-	module. [TODO] : confirm.
+	module.
 	'''
 	threshold = 1e-14
 	gvar.populateGlobalVariables(8, 10)
 	
 	f_i = wave_equation.lax_friedrichs_flux(0)
-	#The lax friedrichs flux at timestep 0 should just be a list of the element
-	#boundaries of the elements at LGL nodes.
+	#The lax friedrichs flux at timestep 0 should just be a list of the 
+	#amplitude at element boundaries.
 	analytical_lax_friedrichs_flux = gvar.u[:, -1, 0]
-	assert af.max(analytical_lax_friedrichs_flux - f_i) < threshold
+	assert af.max(af.abs(analytical_lax_friedrichs_flux - f_i)) < threshold
+
+
+def test_surface_term():
+	'''
+	A test function to test the surface_term function in the wave_equation
+	module using analytical Lax-Friedrichs flux.
+	'''
+	threshold = 1e-13
+	gvar.populateGlobalVariables(8, 10)
+	analytical_f_i        = af.transpose(gvar.u[:, -1, 0])
+	analytical_f_i_minus1 = af.transpose(af.shift(gvar.u[:, -1, 0], 1))
+	
+	L_p_1                 = af.constant(0, gvar.N_LGL, dtype = af.Dtype.f64)
+	L_p_1[gvar.N_LGL - 1] = 1 
+	
+	L_p_minus1    = af.constant(0, gvar.N_LGL, dtype = af.Dtype.f64)
+	L_p_minus1[0] = 1
+	
+	analytical_surface_term = af.blas.matmul(L_p_1, analytical_f_i)\
+		- af.blas.matmul(L_p_minus1, analytical_f_i_minus1)
+	
+	numerical_surface_term = af.transpose(wave_equation.surface_term(0))
+	assert af.max(af.abs(analytical_surface_term - numerical_surface_term)) \
+		< threshold
+	return analytical_surface_term
+
+
+def test_b_vector():
+	'''
+	A test function to check the b vector obtained analytically and compare it
+	with the one returned by b_vector  function in wave_equation module
+	'''
+	threshold = 1e-13
+	gvar.populateGlobalVariables(8, 10)
+	
+	u_n_A_matrix         = af.blas.matmul(gvar.u[:, :, 0],\
+								wave_equation.A_matrix())
+	volume_integral_flux = wave_equation.elementFluxIntegral\
+							(af.range(gvar.N_Elements), 0)
+	surface_term         = test_surface_term()
+	b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\
+									af.transpose(surface_term)) * gvar.delta_t
+	b_vector_array       = wave_equation.b_vector(0)
+	
+	assert (b_vector_analytical - b_vector_array) < threshold

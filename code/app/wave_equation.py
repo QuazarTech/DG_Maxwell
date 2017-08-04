@@ -5,6 +5,36 @@ import numpy as np
 from app import lagrange
 from utils import utils
 from app import global_variables as gvar
+from matplotlib import pyplot as plt
+import pylab as pl
+
+plt.rcParams['figure.figsize'] = 9.6, 6.
+plt.rcParams['figure.dpi'] = 300
+plt.rcParams['image.cmap'] = 'jet'
+plt.rcParams['lines.linewidth'] = 1.5
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['font.size'] = 20
+plt.rcParams['font.sans-serif'] = 'serif'
+plt.rcParams['text.usetex'] = True
+plt.rcParams['axes.linewidth'] = 1.5
+plt.rcParams['axes.titlesize'] = 'medium'
+plt.rcParams['axes.labelsize'] = 'medium'
+plt.rcParams['xtick.major.size'] = 8
+plt.rcParams['xtick.minor.size'] = 4
+plt.rcParams['xtick.major.pad'] = 8
+plt.rcParams['xtick.minor.pad'] = 8
+plt.rcParams['xtick.color'] = 'k'
+plt.rcParams['xtick.labelsize'] = 'medium'
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.major.size'] = 8
+plt.rcParams['ytick.minor.size'] = 4
+plt.rcParams['ytick.major.pad'] = 8
+plt.rcParams['ytick.minor.pad'] = 8
+plt.rcParams['ytick.color'] = 'k'
+plt.rcParams['ytick.labelsize'] = 'medium'
+plt.rcParams['ytick.direction'] = 'in'
+
 
 def Li_Lp_xi(L_i_xi, L_p_xi):
 	'''
@@ -189,7 +219,7 @@ def volumeIntegralFlux(element_nodes, u):
 	
 	return af.reorder(flux_integral, 2, 1, 0)
 
-def elementFluxIntegral(n):
+def elementFluxIntegral(n, t_n):
 	'''
 	Function which reorders the element numbers which can then be passed
 	into volumeIntegralFlux. 
@@ -210,7 +240,7 @@ def elementFluxIntegral(n):
 	'''
 	element_n_x_nodes = af.reorder(gvar.element_nodes[n], 1, 0, 2)
 	
-	return volumeIntegralFlux(element_n_x_nodes, gvar.u[n, :, 0])
+	return volumeIntegralFlux(element_n_x_nodes, gvar.u[n, :, t_n])
 
 
 def lax_friedrichs_flux(t_n):
@@ -221,7 +251,7 @@ def lax_friedrichs_flux(t_n):
 	
 	Parameters
 	----------
-	u    : arrayfire.Array[N_Elements N_LGL 1 1]
+	u    : arrayfire.Array [N_Elements N_LGL 1 1]
 		   A 2D array consisting of the amplitude of the wave at the LGL nodes
 		   at each element.
 	
@@ -249,12 +279,13 @@ def surface_term(t_n):
 	
 	Parameters
 	----------
-	t_n : float
+	t_n : double
 		  The timestep at which the surface term is to be calculated.
 	
 	Returns
 	-------
-	surface_term : The surface term represented in the form of an array,
+	surface_term : arrayfire.Array [N_LGL N_Elements 1 1]
+				   The surface term represented in the form of an array,
 				   :math:`L_p (1) f_i - L_p (-1) f_{i - 1}`, where p varies from
 				   zero to :math:`N_{LGL}` and i from zero to
 				   :math:`N_{Elements}`. p varies along the rows and i along
@@ -272,18 +303,64 @@ def surface_term(t_n):
 	L_p_1        = gvar.lagrange_basis_function()[:, -1]
 	f_i          = af.transpose(lax_friedrichs_flux(t_n))
 	f_iminus1    = af.transpose(af.shift(lax_friedrichs_flux(t_n), 1))
-	surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,\
-																	f_iminus1)
+	surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1, f_iminus1)
 	
-	return surface_term
+	return af.transpose(surface_term)
 
 
-def b_vector(u_n):
+def b_vector(t_n):
 	'''
-	NOTE 
-	Incomplete.
-	'''
-	int_u_ni_Lp_Li   = af.blas.matmul(A_matrix(), af.transpose(u_n))
-	int_flux_dLp_dxi = volume_integral_flux(u_n)
+	A function which returns the b vector for N_Elements number of elements.
 	
-	return
+	Parameters
+	----------
+	t_n : double
+	
+	Returns
+	-------
+	b_vector_array : arrayfire.array
+	'''
+	u_n_A_matrix    = af.blas.matmul(gvar.u[:, :, t_n], A_matrix())
+	volume_integral = elementFluxIntegral(af.range(gvar.N_Elements), t_n)
+	surfaceTerm     = surface_term(t_n)
+	b_vector_array  = u_n_A_matrix + gvar.delta_t * (volume_integral -\
+																	surfaceTerm)
+	
+	
+	return b_vector_array
+
+
+def time_evolution():
+	'''
+	Function which solves the wave equation 
+	:math: `u^{t_n + 1} = b(t_n) \\times A`
+	iterated over time steps t_n and then plots :math: `x` against the amplitude
+	of the wave. The images are then stored in Wave folder.
+	'''
+	
+	A_inverse     = af.lapack.inverse(A_matrix())
+	element_nodes = gvar.element_nodes
+	
+	for t_n in range(0, gvar.time.shape[0] - 1):
+		
+		gvar.u[:, :, t_n + 1] = af.blas.matmul(b_vector(t_n), A_inverse) 
+	
+	print('u calculated!')
+	
+	#for t_n in range(0, gvar.time.shape[0] - 1):
+		
+		#if (t_n % 6) == 0:
+			
+			#fig = plt.figure()
+			#x   = (af.transpose(gvar.element_nodes))
+			#y   = (af.transpose(gvar.u[:, :, t_n]))
+			
+			#plt.plot(x, y)
+			#plt.xlabel('x')
+			#plt.ylabel('Amplitude')
+			#fig.savefig('Wave/%04d' %(t_n / 6) + '.png')
+			#plt.close('all')
+			
+			#print(t_n)
+	
+	return 
