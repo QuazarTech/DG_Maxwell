@@ -303,7 +303,8 @@ def surface_term(t_n):
 	L_p_1        = gvar.lagrange_basis_function()[:, -1]
 	f_i          = af.transpose(lax_friedrichs_flux(t_n))
 	f_iminus1    = af.transpose(af.shift(lax_friedrichs_flux(t_n), 1))
-	surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1, f_iminus1)
+	surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,\
+																	f_iminus1)
 	
 	return af.transpose(surface_term)
 
@@ -350,7 +351,7 @@ def time_evolution():
 	
 	for t_n in range(0, gvar.time.shape[0] - 1):
 		
-		if (t_n % 500) == 0:
+		if (t_n % 80) == 0:
 			
 			fig = plt.figure()
 			x   = (af.transpose(gvar.element_nodes))
@@ -360,7 +361,7 @@ def time_evolution():
 			plt.xlabel('x')
 			plt.ylabel('Amplitude')
 			plt.title('Time = %f' %(t_n * delta_t))
-			fig.savefig('Wave/%04d' %(t_n / 500) + '.png')
+			fig.savefig('1D_Wave_images/%04d' %(t_n / 80) + '.png')
 			plt.close('all')
 			
 			print(t_n)
