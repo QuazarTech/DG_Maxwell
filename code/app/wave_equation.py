@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 import pylab as pl
 
 plt.rcParams['figure.figsize'] = 9.6, 6.
-plt.rcParams['figure.dpi'] = 300
+plt.rcParams['figure.dpi'] = 100
 plt.rcParams['image.cmap'] = 'jet'
 plt.rcParams['lines.linewidth'] = 1.5
 plt.rcParams['font.family'] = 'serif'
@@ -340,6 +340,7 @@ def time_evolution():
 	
 	A_inverse     = af.lapack.inverse(A_matrix())
 	element_nodes = gvar.element_nodes
+	delta_t       = gvar.delta_t
 	
 	for t_n in range(0, gvar.time.shape[0] - 1):
 		
@@ -347,20 +348,21 @@ def time_evolution():
 	
 	print('u calculated!')
 	
-	#for t_n in range(0, gvar.time.shape[0] - 1):
+	for t_n in range(0, gvar.time.shape[0] - 1):
 		
-		#if (t_n % 6) == 0:
+		if (t_n % 500) == 0:
 			
-			#fig = plt.figure()
-			#x   = (af.transpose(gvar.element_nodes))
-			#y   = (af.transpose(gvar.u[:, :, t_n]))
+			fig = plt.figure()
+			x   = (af.transpose(gvar.element_nodes))
+			y   = (af.transpose(gvar.u[:, :, t_n]))
 			
-			#plt.plot(x, y)
-			#plt.xlabel('x')
-			#plt.ylabel('Amplitude')
-			#fig.savefig('Wave/%04d' %(t_n / 6) + '.png')
-			#plt.close('all')
+			plt.plot(x, y)
+			plt.xlabel('x')
+			plt.ylabel('Amplitude')
+			plt.title('Time = %f' %(t_n * delta_t))
+			fig.savefig('Wave/%04d' %(t_n / 500) + '.png')
+			plt.close('all')
 			
-			#print(t_n)
+			print(t_n)
 	
 	return 

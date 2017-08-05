@@ -14,3 +14,4 @@ if __name__ == '__main__':
 	
 	gvar.populateGlobalVariables(8)
 	print(gvar.time.shape)
+	wave_equation.time_evolution()
