@@ -174,7 +174,7 @@ def flux_x(u):
     
     Parameters
     ----------
-    u         : arrayfire.Array [N 1 1 1]
+    u         : arrayfire.Array
 				A 1-D array which contains the value of wave function.
 	
 	Returns
@@ -210,37 +210,13 @@ def volumeIntegralFlux(element_nodes, u):
 					for various lagrange basis functions.
 	'''
 	
-	dLp_xi        = af.tile(af.transpose(gvar.dLp_xi), 1, 1, gvar.N_Elements)
-	weight_tile   = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL,\
-																gvar.N_Elements)
-	flux          = af.reorder(flux_x(u), 1, 2, 0)
-	flux_u_tile   = af.tile(flux, 1, gvar.N_LGL, 1)
-	flux_integral = af.sum((weight_tile * dLp_xi * flux_u_tile), 0)
+	dLp_xi        = gvar.dLp_xi
+	weight_tile   = af.tile(gvar.lobatto_weights, 1, gvar.N_Elements)
+	flux          = flux_x(u)
+	weight_flux   = weight_tile * flux
+	flux_integral = af.blas.matmul(dLp_xi, weight_flux)
 	
-	return af.reorder(flux_integral, 2, 1, 0)
-
-def elementFluxIntegral(n, t_n):
-	'''
-	Function which reorders the element numbers which can then be passed
-	into volumeIntegralFlux. 
-	
-	Parameters
-	----------
-	n  :  Element numbers for which the flux integral is to be calculated,
-		  Passing an array of 0 to N_Elements - 1 would give the flux integral
-		  for all elements at all :math:`p`
-	
-	Returns
-	-------
-	volumeIntegralFlux(element_n_x_nodes,\
-						gvar.u[n, :, 0])  : arrayfire.Array
-											An array of :math:`\\int_{-1}^1 f(u)
-											\\frac{d L_p}{d\\xi} d\\xi` for all
-											elements
-	'''
-	element_n_x_nodes = af.reorder(gvar.element_nodes[n], 1, 0, 2)
-	
-	return volumeIntegralFlux(element_n_x_nodes, gvar.u[n, :, t_n])
+	return flux_integral
 
 
 def lax_friedrichs_flux(t_n):
@@ -251,7 +227,7 @@ def lax_friedrichs_flux(t_n):
 	
 	Parameters
 	----------
-	u    : arrayfire.Array [N_Elements N_LGL 1 1]
+	u    : arrayfire.Array [N_LGL N_Elements 1 1]
 		   A 2D array consisting of the amplitude of the wave at the LGL nodes
 		   at each element.
 	
@@ -259,8 +235,8 @@ def lax_friedrichs_flux(t_n):
 		   The timestep at which the lax-friedrichs-flux is to be calculated.
 	'''
 	
-	u_iplus1_0    = af.shift(gvar.u[:, 0, t_n], -1)
-	u_i_N_LGL     = gvar.u[:, -1, t_n]
+	u_iplus1_0    = af.shift(gvar.u[0, :, t_n], 0, -1)
+	u_i_N_LGL     = gvar.u[-1, :, t_n]
 	flux_iplus1_0 = flux_x(u_iplus1_0)
 	flux_i_N_LGL  = flux_x(u_i_N_LGL)
 	
@@ -301,12 +277,12 @@ def surface_term(t_n):
 	'''
 	L_p_minus1   = gvar.lagrange_basis_function()[:, 0]
 	L_p_1        = gvar.lagrange_basis_function()[:, -1]
-	f_i          = af.transpose(lax_friedrichs_flux(t_n))
-	f_iminus1    = af.transpose(af.shift(lax_friedrichs_flux(t_n), 1))
+	f_i          = lax_friedrichs_flux(t_n)
+	f_iminus1    = af.shift(f_i, 0, 1)
 	surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,\
 																	f_iminus1)
 	
-	return af.transpose(surface_term)
+	return surface_term
 
 
 def b_vector(t_n):
@@ -321,11 +297,9 @@ def b_vector(t_n):
 	-------
 	b_vector_array : arrayfire.array
 	'''
-	u_n_A_matrix    = af.blas.matmul(gvar.u[:, :, t_n], A_matrix())
-	volume_integral = elementFluxIntegral(af.range(gvar.N_Elements), t_n)
+	volume_integral = volumeIntegralFlux(gvar.element_nodes, gvar.u[:, :, t_n])
 	surfaceTerm     = surface_term(t_n)
-	b_vector_array  = u_n_A_matrix + gvar.delta_t * (volume_integral -\
-																	surfaceTerm)
+	b_vector_array  = gvar.delta_t * (volume_integral - surfaceTerm)
 	
 	
 	return b_vector_array
@@ -339,31 +313,37 @@ def time_evolution():
 	of the wave. The images are then stored in Wave folder.
 	'''
 	
-	A_inverse     = af.lapack.inverse(A_matrix())
+	A_inverse     = af.transpose(af.lapack.inverse(A_matrix()))
 	element_nodes = gvar.element_nodes
 	delta_t       = gvar.delta_t
 	
 	for t_n in range(0, gvar.time.shape[0] - 1):
 		
-		gvar.u[:, :, t_n + 1] = af.blas.matmul(b_vector(t_n), A_inverse) 
-	
+		gvar.u[:, :, t_n + 1] = gvar.u[:, :, t_n] + af.blas.matmul(A_inverse, b_vector(t_n)) 
+		if (t_n % 100 == 0):
+			print('timestep', t_n)
 	print('u calculated!')
+	
 	
 	for t_n in range(0, gvar.time.shape[0] - 1):
 		
-		if (t_n % 80) == 0:
+		if t_n % 100 == 0:
 			
 			fig = plt.figure()
-			x   = (af.transpose(gvar.element_nodes))
-			y   = (af.transpose(gvar.u[:, :, t_n]))
+			x   = gvar.element_nodes
+			y   = gvar.u[:, :, t_n]
 			
 			plt.plot(x, y)
 			plt.xlabel('x')
 			plt.ylabel('Amplitude')
 			plt.title('Time = %f' %(t_n * delta_t))
-			fig.savefig('1D_Wave_images/%04d' %(t_n / 80) + '.png')
+			fig.savefig('1D_Wave_images/%04d' %(t_n / 100) + '.png')
 			plt.close('all')
 			
 			print(t_n)
+	
+	
+	
+	
 	
 	return 
