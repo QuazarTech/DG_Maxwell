@@ -7,6 +7,7 @@ from utils import utils
 from app import global_variables as gvar
 from matplotlib import pyplot as plt
 import pylab as pl
+from tqdm import trange
 
 plt.rcParams['figure.figsize'] = 9.6, 6.
 plt.rcParams['figure.dpi'] = 100
@@ -144,11 +145,11 @@ def A_matrix():
 			   using :math: `N_LGL` points. 
 	'''	
 	
-	x_tile           = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL))
-	power            = af.flip(af.range(gvar.N_LGL))
-	power_tile       = af.tile(power, 1, gvar.N_LGL)
-	x_pow            = af.arith.pow(x_tile, power_tile)
-	lobatto_weights  = gvar.lobatto_weights
+	x_tile          = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL))
+	power           = af.flip(af.range(gvar.N_LGL))
+	power_tile      = af.tile(power, 1, gvar.N_LGL)
+	x_pow           = af.arith.pow(x_tile, power_tile)
+	lobatto_weights = gvar.lobatto_weights
 	
 	lobatto_weights_tile = af.tile(af.reorder(lobatto_weights, 1, 2, 0),\
 												gvar.N_LGL, gvar.N_LGL)
@@ -158,11 +159,11 @@ def A_matrix():
 	L_p   = af.reorder(L_i, 0, 2, 1)
 	L_i   = af.reorder(L_i, 2, 0, 1)
 	
-	dx_dxi      = dx_dxi_numerical((gvar.x_nodes),gvar.xi_LGL)
+	dx_dxi      = dx_dxi_numerical((gvar.elementMeshNodes[0 : 2]), gvar.xi_LGL)
 	dx_dxi_tile = af.tile(dx_dxi, 1, gvar.N_LGL, gvar.N_LGL)
-	Li_Lp_array     = Li_Lp_xi(L_p, L_i)
-	L_element       = (Li_Lp_array * lobatto_weights_tile * dx_dxi_tile)
-	A_matrix        = af.sum(L_element, dim = 2)
+	Li_Lp_array = Li_Lp_xi(L_p, L_i)
+	L_element   = (Li_Lp_array * lobatto_weights_tile * dx_dxi_tile)
+	A_matrix    = af.sum(L_element, dim = 2)
 	
 	return A_matrix
 
@@ -241,7 +242,7 @@ def lax_friedrichs_flux(t_n):
 	flux_i_N_LGL  = flux_x(u_i_N_LGL)
 	
 	lax_friedrichs_flux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
-						- gvar.c_lax * (u_iplus1_0 - u_i_N_LGL)
+						- gvar.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
 	
 	return lax_friedrichs_flux
 
@@ -307,7 +308,7 @@ def b_vector(t_n):
 
 def time_evolution():
 	'''
-	Function which solves the wave equation 
+	Function which solves the wave equation
 	:math: `u^{t_n + 1} = b(t_n) \\times A`
 	iterated over time steps t_n and then plots :math: `x` against the amplitude
 	of the wave. The images are then stored in Wave folder.
@@ -317,15 +318,16 @@ def time_evolution():
 	element_nodes = gvar.element_nodes
 	delta_t       = gvar.delta_t
 	
-	for t_n in range(0, gvar.time.shape[0] - 1):
+	for t_n in trange(0, gvar.time.shape[0] - 1):
 		
-		gvar.u[:, :, t_n + 1] = gvar.u[:, :, t_n] + af.blas.matmul(A_inverse, b_vector(t_n)) 
-		if (t_n % 100 == 0):
-			print('timestep', t_n)
+		gvar.u[:, :, t_n + 1] = gvar.u[:, :, t_n] + af.blas.matmul(A_inverse,\
+																b_vector(t_n)) 
+
+		
+	
 	print('u calculated!')
 	
-	
-	for t_n in range(0, gvar.time.shape[0] - 1):
+	for t_n in trange(0, gvar.time.shape[0]):
 		
 		if t_n % 100 == 0:
 			
@@ -336,14 +338,8 @@ def time_evolution():
 			plt.plot(x, y)
 			plt.xlabel('x')
 			plt.ylabel('Amplitude')
-			plt.title('Time = %f' %(t_n * delta_t))
+			plt.title('Time = %f' % (t_n * delta_t))
 			fig.savefig('1D_Wave_images/%04d' %(t_n / 100) + '.png')
 			plt.close('all')
-			
-			print(t_n)
-	
-	
-	
-	
-	
-	return 
+				
+	return

@@ -12,7 +12,7 @@ from app import lagrange
 
 if __name__ == '__main__':
 	
-	gvar.populateGlobalVariables(8)
+	gvar.populateGlobalVariables(16)
 	print(gvar.time.shape[0])
-	print(wave_equation.volumeIntegralFlux(gvar.element_nodes, gvar.u[:, :, 0]))
 	print(wave_equation.time_evolution())
+	#print(gvar.element_nodes)

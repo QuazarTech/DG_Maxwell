@@ -46,7 +46,7 @@ for idx in np.arange(len(LGL_list)):
 	LGL_list[idx] = np.array(LGL_list[idx], dtype = np.float64)
 	LGL_list[idx] = af.interop.np_to_af_array(LGL_list[idx])
 
-x_nodes         = af.interop.np_to_af_array(np.array([-1., 1.]))
+x_nodes         = af.interop.np_to_af_array(np.array([-2., 2.]))
 N_LGL           = 16
 xi_LGL          = None
 lBasisArray     = None
@@ -86,33 +86,42 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 		lobatto_weight_function(N_LGL, xi_LGL)) 
 	
 	global N_Elements
-	global element_nodes
+	global element_nodes   #[TODO] Change nodes notation.
+	global elementMeshNodes
+	
 	N_Elements       = Number_of_elements
 	element_size     = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
 	elements_xi_LGL  = af.constant(0, N_Elements, N_LGL)
-	elements         = utils.linspace(af.sum(x_nodes[0]), \
-		af.sum(x_nodes[1] - element_size), N_Elements)
+	elements         = utils.linspace(af.sum(x_nodes[0]),
+									  af.sum(x_nodes[1] - element_size),
+									  N_Elements)
 	
 	np_element_array = np.concatenate((af.transpose(elements), 
 						   af.transpose(elements + element_size)))
 	
-	element_array = (af.transpose(af.interop.np_to_af_array(np_element_array)))
-	element_nodes = (wave_equation.mappingXiToX(\
-										af.transpose(element_array), xi_LGL))
+	elementMeshNodes = utils.linspace(af.sum(x_nodes[0]),
+									  af.sum(x_nodes[1]),
+									  N_Elements + 1)
+	
+	
+	element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
+	element_nodes = wave_equation.mappingXiToX(\
+										af.transpose(element_array), xi_LGL)
 	
 	global c
 	global c_lax
 	global delta_t
-	c       = 4.0
+	c       = 1.0
 	delta_x = af.min((element_nodes - af.shift(element_nodes, 1, 0))[1:, :])
-	delta_t = delta_x / (10 * c)
-	c_lax   = delta_x / (2 * delta_t)
+	delta_t = delta_x / (50 * c)
+	c_lax   = 0
 	
 	global u
 	global time
-	time   = utils.linspace(0, 20, int(20 / delta_t))
-	u_init = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
-	u      = af.constant(0, N_LGL, N_Elements, time.shape[0],\
+	total_time = 3
+	time       = utils.linspace(0, total_time, int(total_time / delta_t))
+	u_init     = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
+	u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
 					dtype = af.Dtype.f64)
 	
 	u[:, :, 0] = u_init
