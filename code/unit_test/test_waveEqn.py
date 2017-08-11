@@ -2,10 +2,10 @@ import numpy as np
 import arrayfire as af
 import math
 from matplotlib import pyplot as plt
-from code.app.lagrange import lagrange
-from code.app.global_variables import global_variables as gvar
-from code.app.wave_equation import wave_equation
-from utils.utils import utils
+from app import lagrange
+from app import global_variables as gvar
+from app import wave_equation
+from utils import utils
 af.set_backend('opencl')
 af.set_device(1)
 
