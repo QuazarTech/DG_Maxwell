@@ -1,5 +1,7 @@
 import numpy as np
 import arrayfire as af
+af.set_backend('opencl')
+af.set_device(1)
 from scipy import special as sp
 from app import lagrange
 from app import wave_equation
@@ -46,13 +48,13 @@ for idx in np.arange(len(LGL_list)):
 	LGL_list[idx] = np.array(LGL_list[idx], dtype = np.float64)
 	LGL_list[idx] = af.interop.np_to_af_array(LGL_list[idx])
 
-x_nodes         = af.interop.np_to_af_array(np.array([-2., 2.]))
+x_nodes         = af.interop.np_to_af_array(np.array([-1., 1.]))
 N_LGL           = 16
 xi_LGL          = None
 lBasisArray     = None
 lobatto_weights = None
 N_Elements      = None
-element_nodes   = None
+element_LGL     = None
 u               = None
 time            = None
 c               = None
@@ -86,7 +88,7 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 		lobatto_weight_function(N_LGL, xi_LGL)) 
 	
 	global N_Elements
-	global element_nodes   #[TODO] Change nodes notation.
+	global element_LGL
 	global elementMeshNodes
 	
 	N_Elements       = Number_of_elements
@@ -105,26 +107,29 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	
 	
 	element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
-	element_nodes = wave_equation.mappingXiToX(\
+	element_LGL = wave_equation.mappingXiToX(\
 										af.transpose(element_array), xi_LGL)
 	
 	global c
 	global c_lax
 	global delta_t
-	c       = 1.0
-	delta_x = af.min((element_nodes - af.shift(element_nodes, 1, 0))[1:, :])
-	delta_t = delta_x / (50 * c)
-	c_lax   = 0
+	c       = 4
+	delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
+	delta_t = delta_x / (80 * c)
+	c_lax   = c / 2        # Was previously taken to be 0.1 even works if it's
+						   # taken to be c.
+	
 	
 	global u
 	global time
-	total_time = 3
+	total_time = 1.05
 	time       = utils.linspace(0, total_time, int(total_time / delta_t))
-	u_init     = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
+	u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 	u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
 					dtype = af.Dtype.f64)
 	
 	u[:, :, 0] = u_init
+	
 	
 	global dLp_xi
 	dLp_xi = dLp_xi_LGL()
@@ -139,7 +144,7 @@ def lobatto_weight_function(n, x):
 	and points :math: `x`.
 	
 	:math::
-		w_{n} = \\frac{2 P(x)^2}{n (n - 1)},
+		`w_{n} = \\frac{2 P(x)^2}{n (n - 1)}`,
 		Where P(x) is $ (n - 1)^th $ index.
 	
 	Parameters

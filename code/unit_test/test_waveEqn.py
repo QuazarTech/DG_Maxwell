@@ -1,12 +1,13 @@
 import numpy as np
 import arrayfire as af
-af.set_backend('opencl')
-from app import lagrange
-from app import global_variables as gvar
-from app import wave_equation
-from matplotlib import pyplot as plt
-from utils import utils
 import math
+from matplotlib import pyplot as plt
+from code.app.lagrange import lagrange
+from code.app.global_variables import global_variables as gvar
+from code.app.wave_equation import wave_equation
+from utils.utils import utils
+af.set_backend('opencl')
+af.set_device(1)
 
 
 def test_mappingXiToX():
@@ -186,7 +187,7 @@ def test_Integral_Li_Lp():
 	Obtaining the A_matrix from the function and setting the value of
 	all elements above a certain threshold to be 1 and plotting it.
 	'''
-	threshold          = 1e-5
+	threshold = 1e-5
 	gvar.populateGlobalVariables(8, 8)
 	A_matrix_structure = np.zeros([gvar.N_LGL, gvar.N_LGL])
 	non_zero_indices  = np.where(np.array(wave_equation.A_matrix()) > threshold)
@@ -214,13 +215,17 @@ def test_A_matrix():
 	
 	'''
 	threshold = 1e-8
-	gvar.populateGlobalVariables(8, 8)
+	gvar.populateGlobalVariables(8)
 	
 	reference_A_matrix = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)\
-		* af.identity(gvar.N_LGL, gvar.N_LGL, dtype = af.Dtype.f64)
+		* af.identity(gvar.N_LGL, gvar.N_LGL, dtype = af.Dtype.f64)\
+		* af.mean(wave_equation.dx_dxi_numerical((gvar.elementMeshNodes[0 : 2])\
+			,gvar.xi_LGL))
 	
 	test_A_matrix = wave_equation.A_matrix()
 	error_array   = af.abs(reference_A_matrix - test_A_matrix)
+	
+	print(test_A_matrix, reference_A_matrix)
 	
 	assert af.algorithm.max(error_array) < threshold
 
@@ -237,7 +242,10 @@ def test_dLp_xi():
 	/PM_2_5/wave_equation/worksheets/dLp_xi.sagews
 	'''
 	threshold = 1e-13
+	gvar.x_nodes = af.interop.np_to_af_array(np.array([-1., 1.]))
 	gvar.populateGlobalVariables(8)
+	gvar.c = 1
+	
 	
 	reference_d_Lp_xi = af.interop.np_to_af_array(np.array([\
 	[-14.0000000000226,-3.20991570302344,0.792476681323880,-0.372150435728984,\
@@ -283,6 +291,7 @@ def test_volume_integral_flux():
 	'''
 	threshold = 4 * 1e-8
 	gvar.populateGlobalVariables(8)
+	gvar.c = 1
 	
 	referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array([
 		[-0.002016634876668093, -0.000588597708116113, -0.0013016773719126333,\
@@ -307,18 +316,19 @@ def test_volume_integral_flux():
 		[-0.0176615086879, 0.00344551201015 ,0.00432019709409, 0.00362050204766,\
 		0.00236838757932, 0.00130167737191, 0.000588597708116, 0.00201663487667]])))
 	
-	numerical_flux = wave_equation.volumeIntegralFlux(gvar.element_nodes, gvar.u[:, :, 0])
+	numerical_flux = wave_equation.volumeIntegralFlux(gvar.element_LGL, gvar.u[:, :, 0])
 	assert (af.max(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
 
 def test_lax_friedrichs_flux():
 	'''
-	A test function to test the lax_friedrichs_flux function in wave_equation
+	A test function to test the laxFriedrichsFlux function in wave_equation
 	module.
 	'''
 	threshold = 1e-14
 	gvar.populateGlobalVariables(8, 10)
+	gvar.c = 1
 	
-	f_i = wave_equation.lax_friedrichs_flux(0)
+	f_i = wave_equation.laxFriedrichsFlux(0)
 	#The lax friedrichs flux at timestep 0 should just be a list of the 
 	#amplitude at element boundaries.
 	analytical_lax_friedrichs_flux = gvar.u[-1, :, 0]
@@ -332,6 +342,9 @@ def test_surface_term():
 	'''
 	threshold = 1e-13
 	gvar.populateGlobalVariables(8, 10)
+	gvar.c = 1
+	
+	
 	analytical_f_i        = (gvar.u[-1, :, 0])
 	analytical_f_i_minus1 = (af.shift(gvar.u[-1, :, 0], 0, 1))
 	
@@ -353,16 +366,20 @@ def test_surface_term():
 def test_b_vector():
 	'''
 	A test function to check the b vector obtained analytically and compare it
-	with the one returned by b_vector  function in wave_equation module
+	with the one returned by b_vector function in wave_equation module
 	'''
 	threshold = 1e-13
-	gvar.populateGlobalVariables(8, 10)
+	gvar.populateGlobalVariables(8)
+	gvar.c = 1
 	
 	u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(), gvar.u[:, :, 0])
-	volume_integral_flux = wave_equation.volumeIntegralFlux(gvar.element_nodes, gvar.u[:, :, 0])
+	volume_integral_flux = wave_equation.volumeIntegralFlux(gvar.element_LGL, gvar.u[:, :, 0])
 	surface_term         = test_surface_term()
 	b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\
 									(surface_term)) * gvar.delta_t
 	b_vector_array       = wave_equation.b_vector(0)
 	
 	assert (b_vector_analytical - b_vector_array) < threshold
+
+
+#def test_time_evo

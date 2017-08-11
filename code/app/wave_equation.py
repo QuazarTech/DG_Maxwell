@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 
 import arrayfire as af
+af.set_backend('opencl')
+af.set_device(1)
 import numpy as np
 from app import lagrange
 from utils import utils
@@ -143,6 +145,11 @@ def A_matrix():
 			   The value of integral of product of lagrange basis functions
 			   obtained by LGL points, using Gauss-Lobatto quadrature method
 			   using :math: `N_LGL` points. 
+	
+	[NOTE]:
+	
+	The A matrix will vary for each element. The one calculatedis for the case
+	of 1D elements which are of equal size.
 	'''	
 	
 	x_tile          = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL))
@@ -186,7 +193,7 @@ def flux_x(u):
     return gvar.c * u
 
 
-def volumeIntegralFlux(element_nodes, u):
+def volumeIntegralFlux(element_LGL, u):
 	'''
 	A function to calculate the volume integral of flux in the wave equation.
 	:math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -196,11 +203,11 @@ def volumeIntegralFlux(element_nodes, u):
 	
 	Parameters
 	----------
-	element_nodes : arrayfire.Array [N 1 1 1]
-					A 1-D array consisting of the LGL nodes mapped onto the
+	element_LGL   : arrayfire.Array [N_LGL N_Elements 1 1]
+					A 2-D array consisting of the LGL nodes mapped onto the
 					element's domain.
 	
-	u             : arrayfire.Array [1 N 1 1]
+	u             : arrayfire.Array [N_LGL N_Elements 1 1]
 					A 1-D array containing the value of the wave function at the
 					mapped LGL nodes in the element.
 	
@@ -220,7 +227,7 @@ def volumeIntegralFlux(element_nodes, u):
 	return flux_integral
 
 
-def lax_friedrichs_flux(t_n):
+def laxFriedrichsFlux(t_n):
 	'''
 	A function which calculates the lax-friedrichs_flux :math:`f_i` using.
 	:math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \frac
@@ -241,17 +248,17 @@ def lax_friedrichs_flux(t_n):
 	flux_iplus1_0 = flux_x(u_iplus1_0)
 	flux_i_N_LGL  = flux_x(u_i_N_LGL)
 	
-	lax_friedrichs_flux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
+	laxFriedrichsFlux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
 						- gvar.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
 	
-	return lax_friedrichs_flux
+	return laxFriedrichsFlux
 
 
 def surface_term(t_n):
 	'''
 	A function which is used to calculate the surface term,
 	:math:`L_p (1) f_i - L_p (-1) f_{i - 1}`
-	using the lax_friedrichs_flux function and the dLp_xi_LGL function in gvar
+	using the laxFriedrichsFlux function and the dLp_xi_LGL function in gvar
 	module.
 	
 	Parameters
@@ -274,11 +281,10 @@ def surface_term(t_n):
 	
 	https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
 	/PM\_2\_5/wave\_equation/documents/surface\_term/surface\_term.pdf
-	
 	'''
 	L_p_minus1   = gvar.lagrange_basis_function()[:, 0]
 	L_p_1        = gvar.lagrange_basis_function()[:, -1]
-	f_i          = lax_friedrichs_flux(t_n)
+	f_i          = laxFriedrichsFlux(t_n)
 	f_iminus1    = af.shift(f_i, 0, 1)
 	surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,\
 																	f_iminus1)
@@ -296,9 +302,9 @@ def b_vector(t_n):
 	
 	Returns
 	-------
-	b_vector_array : arrayfire.array
+	b_vector_array : arrayfire.Array
 	'''
-	volume_integral = volumeIntegralFlux(gvar.element_nodes, gvar.u[:, :, t_n])
+	volume_integral = volumeIntegralFlux(gvar.element_LGL, gvar.u[:, :, t_n])
 	surfaceTerm     = surface_term(t_n)
 	b_vector_array  = gvar.delta_t * (volume_integral - surfaceTerm)
 	
@@ -314,25 +320,30 @@ def time_evolution():
 	of the wave. The images are then stored in Wave folder.
 	'''
 	
-	A_inverse     = af.transpose(af.lapack.inverse(A_matrix()))
-	element_nodes = gvar.element_nodes
-	delta_t       = gvar.delta_t
+	A_inverse   = af.lapack.inverse(A_matrix())
+	element_LGL = gvar.element_LGL
+	delta_t     = gvar.delta_t
+	
 	
 	for t_n in trange(0, gvar.time.shape[0] - 1):
 		
 		gvar.u[:, :, t_n + 1] = gvar.u[:, :, t_n] + af.blas.matmul(A_inverse,\
-																b_vector(t_n)) 
-
-		
+																b_vector(t_n))
 	
 	print('u calculated!')
 	
-	for t_n in trange(0, gvar.time.shape[0]):
+	approximate_1_s = (int(1 / gvar.delta_t) * gvar.delta_t)
+	analytical_u_after_1s = np.e ** (-(gvar.element_LGL - gvar.c * (1 - approximate_1_s)) ** 2 / 0.4 ** 2)
+	
+	af.display(analytical_u_after_1s, 10)
+	af.display(gvar.u[:, :, int(1 / gvar.delta_t)], 10)
+	af.display(gvar.u[:, :, 0], 10)
+	for t_n in trange(0, gvar.time.shape[0] - 1):
 		
 		if t_n % 100 == 0:
 			
 			fig = plt.figure()
-			x   = gvar.element_nodes
+			x   = gvar.element_LGL
 			y   = gvar.u[:, :, t_n]
 			
 			plt.plot(x, y)
