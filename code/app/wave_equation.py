@@ -227,7 +227,7 @@ def volumeIntegralFlux(element_LGL, u):
 	return flux_integral
 
 
-def laxFriedrichsFlux(t_n):
+def laxFriedrichsFlux(u_t_n):
 	'''
 	A function which calculates the lax-friedrichs_flux :math:`f_i` using.
 	:math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \frac
@@ -243,8 +243,8 @@ def laxFriedrichsFlux(t_n):
 		   The timestep at which the lax-friedrichs-flux is to be calculated.
 	'''
 	
-	u_iplus1_0    = af.shift(gvar.u[0, :, t_n], 0, -1)
-	u_i_N_LGL     = gvar.u[-1, :, t_n]
+	u_iplus1_0    = af.shift(u_t_n[0, :], 0, -1)
+	u_i_N_LGL     = u_t_n[-1, :]
 	flux_iplus1_0 = flux_x(u_iplus1_0)
 	flux_i_N_LGL  = flux_x(u_i_N_LGL)
 	
@@ -254,7 +254,7 @@ def laxFriedrichsFlux(t_n):
 	return laxFriedrichsFlux
 
 
-def surface_term(t_n):
+def surface_term(u_t_n):
 	'''
 	A function which is used to calculate the surface term,
 	:math:`L_p (1) f_i - L_p (-1) f_{i - 1}`
@@ -284,7 +284,7 @@ def surface_term(t_n):
 	'''
 	L_p_minus1   = gvar.lagrange_basis_function()[:, 0]
 	L_p_1        = gvar.lagrange_basis_function()[:, -1]
-	f_i          = laxFriedrichsFlux(t_n)
+	f_i          = laxFriedrichsFlux(u_t_n)
 	f_iminus1    = af.shift(f_i, 0, 1)
 	surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,\
 																	f_iminus1)
@@ -292,7 +292,7 @@ def surface_term(t_n):
 	return surface_term
 
 
-def b_vector(t_n):
+def b_vector(u_t_n):
 	'''
 	A function which returns the b vector for N_Elements number of elements.
 	
@@ -304,15 +304,15 @@ def b_vector(t_n):
 	-------
 	b_vector_array : arrayfire.Array
 	'''
-	volume_integral = volumeIntegralFlux(gvar.element_LGL, gvar.u[:, :, t_n])
-	surfaceTerm     = surface_term(t_n)
+	volume_integral = volumeIntegralFlux(gvar.element_LGL, u_t_n[:, :])
+	surfaceTerm     = surface_term(u_t_n)
 	b_vector_array  = gvar.delta_t * (volume_integral - surfaceTerm)
 	
 	
 	return b_vector_array
 
 
-def time_evolution():
+def time_evolution(Plot = 1):
 	'''
 	Function which solves the wave equation
 	:math: `u^{t_n + 1} = b(t_n) \\times A`
@@ -320,37 +320,34 @@ def time_evolution():
 	of the wave. The images are then stored in Wave folder.
 	'''
 	
-	A_inverse   = af.lapack.inverse(A_matrix())
-	element_LGL = gvar.element_LGL
-	delta_t     = gvar.delta_t
-	
+	A_inverse      = af.lapack.inverse(A_matrix())
+	element_LGL    = gvar.element_LGL
+	delta_t        = gvar.delta_t
+	amplitude_list = []
 	
 	for t_n in trange(0, gvar.time.shape[0] - 1):
 		
-		gvar.u[:, :, t_n + 1] = gvar.u[:, :, t_n] + af.blas.matmul(A_inverse,\
-																b_vector(t_n))
+		amplitude_list.append(gvar.u[:, :,0])
+		gvar.u[:, :, 0] += af.blas.matmul(A_inverse, b_vector(gvar.u[:, :, 0]))
 	
 	print('u calculated!')
 	
-	approximate_1_s = (int(1 / gvar.delta_t) * gvar.delta_t)
-	analytical_u_after_1s = np.e ** (-(gvar.element_LGL - gvar.c * (1 - approximate_1_s)) ** 2 / 0.4 ** 2)
 	
-	af.display(analytical_u_after_1s, 10)
-	af.display(gvar.u[:, :, int(1 / gvar.delta_t)], 10)
-	af.display(gvar.u[:, :, 0], 10)
-	for t_n in trange(0, gvar.time.shape[0] - 1):
-		
-		if t_n % 100 == 0:
+	
+	if Plot==1 :
+		for t_n in trange(0, gvar.time.shape[0] - 1):
 			
-			fig = plt.figure()
-			x   = gvar.element_LGL
-			y   = gvar.u[:, :, t_n]
-			
-			plt.plot(x, y)
-			plt.xlabel('x')
-			plt.ylabel('Amplitude')
-			plt.title('Time = %f' % (t_n * delta_t))
-			fig.savefig('1D_Wave_images/%04d' %(t_n / 100) + '.png')
-			plt.close('all')
+			if t_n % 100 == 0:
 				
+				fig = plt.figure()
+				x   = gvar.element_LGL
+				y   = gvar.u[:, :, t_n]
+				
+				plt.plot(x, y)
+				plt.xlabel('x')
+				plt.ylabel('Amplitude')
+				plt.title('Time = %f' % (t_n * delta_t))
+				fig.savefig('1D_Wave_images/%04d' %(t_n / 100) + '.png')
+				plt.close('all')
+					
 	return

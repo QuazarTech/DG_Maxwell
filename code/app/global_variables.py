@@ -125,8 +125,10 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	total_time = 1.05
 	time       = utils.linspace(0, total_time, int(total_time / delta_t))
 	u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
-	u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
-					dtype = af.Dtype.f64)
+	u          = af.constant(0, N_LGL, N_Elements, 5,\
+					dtype = af.Dtype.f64) 
+	
+	# Dim = 2 of u was time.shape[0] instead of 5 (chosen arbitrarily)
 	
 	u[:, :, 0] = u_init
 	
