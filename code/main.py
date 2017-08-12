@@ -14,3 +14,4 @@ if __name__ == '__main__':
 	
 	gvar.populateGlobalVariables(8)
 	print(wave_equation.time_evolution(0))
+	#print(wave_equation.plot_wave())

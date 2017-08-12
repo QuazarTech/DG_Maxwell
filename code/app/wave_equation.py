@@ -10,6 +10,9 @@ from app import global_variables as gvar
 from matplotlib import pyplot as plt
 import pylab as pl
 from tqdm import trange
+import h5py
+
+
 
 plt.rcParams['figure.figsize'] = 9.6, 6.
 plt.rcParams['figure.dpi'] = 100
@@ -316,38 +319,51 @@ def time_evolution(Plot = 1):
 	'''
 	Function which solves the wave equation
 	:math: `u^{t_n + 1} = b(t_n) \\times A`
-	iterated over time steps t_n and then plots :math: `x` against the amplitude
-	of the wave. The images are then stored in Wave folder.
+	iterated over time steps t_n and then saves the images in a hdf5 file.
 	'''
 	
 	A_inverse      = af.lapack.inverse(A_matrix())
 	element_LGL    = gvar.element_LGL
 	delta_t        = gvar.delta_t
-	amplitude_list = []
+	
+	u       = af.interop.np_to_af_array(np.zeros([8, 10]))
+	u[:, :] = gvar.u_init
+	u_data  = af.reorder(u[:, :], 2, 0, 1)
+	
+	h5file = h5py.File('hdf5/amplitude.hdf5', 'w')
+	dset   = h5file.create_dataset('amplitude', data = u_data ,\
+					maxshape = (None, 8, 10), dtype = 'd', chunks = (1, 8, 10))
 	
 	for t_n in trange(0, gvar.time.shape[0] - 1):
 		
-		amplitude_list.append(gvar.u[:, :,0])
-		gvar.u[:, :, 0] += af.blas.matmul(A_inverse, b_vector(gvar.u[:, :, 0]))
+		u[:, :] += af.blas.matmul(A_inverse, b_vector(u[:, :]))
+		
+		
+		if (t_n % 20) == 0:
+			
+			dset.resize(dset.shape[0] + 1, axis = 0)
+			dset[-1, :, :] = u[:, :]
+	
+	h5file.close()
 	
 	print('u calculated!')
 	
-	
-	
-	if Plot==1 :
-		for t_n in trange(0, gvar.time.shape[0] - 1):
+
+def plot_wave():
+	'''
+	[NOTE] Incomplete.
+	'''
 			
-			if t_n % 100 == 0:
-				
-				fig = plt.figure()
-				x   = gvar.element_LGL
-				y   = gvar.u[:, :, t_n]
-				
-				plt.plot(x, y)
-				plt.xlabel('x')
-				plt.ylabel('Amplitude')
-				plt.title('Time = %f' % (t_n * delta_t))
-				fig.savefig('1D_Wave_images/%04d' %(t_n / 100) + '.png')
-				plt.close('all')
-					
+	filename = 'amplitude.hdf5'
+	f = h5py.File(filename, 'r')
+	print(f.keys())
+	
+	
+	#plt.plot(x, y)
+	#plt.xlabel('x')
+	#plt.ylabel('Amplitude')
+	#plt.title('Time = %f' % (t_n * delta_t))
+	#fig.savefig('1D_Wave_images/%04d' %(t_n / 100) + '.png')
+	#plt.close('all')
+	
 	return
