@@ -3,10 +3,10 @@
 from os import sys
 
 import arrayfire as af
-af.set_backend(sys.argv[1])
-
+af.set_backend('cuda')
 import numpy as np
 from scipy import special as sp
+
 from app import lagrange
 from app import wave_equation
 from utils import utils
@@ -121,7 +121,7 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	c       = 4
 	delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 	delta_t = delta_x / (80 * c)
-	c_lax   = c / 2        # Was previously taken to be 0.1 even works if it's
+	c_lax   = c  # Was previously taken to be 0.1 even works if it's
 						   # taken to be c.
 	
 	

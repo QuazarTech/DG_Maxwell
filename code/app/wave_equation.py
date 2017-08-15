@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import subprocess
 
 import arrayfire as af
-af.set_backend(sys.argv[1])
+af.set_backend('cuda')
 from tqdm import trange
 
 from app import lagrange
@@ -178,21 +178,21 @@ def A_matrix():
 
 
 def flux_x(u):
-    '''
-    A function which returns the value of flux for a given wave function u.
-    :math:`f(u) = c u^k`
-    
-    Parameters
-    ----------
-    u         : arrayfire.Array
-				A 1-D array which contains the value of wave function.
+	'''
+	A function which returns the value of flux for a given wave function u.
+	:math:`f(u) = c u^k`
+
+	Parameters
+	----------
+	u         : arrayfire.Array
+						  A 1-D array which contains the value of wave function.
 	
 	Returns
 	-------
 	c * u : arrayfire.Array
 			The value of the flux for given u.
-    '''
-    return gvar.c * u
+	'''
+	return gvar.c * u
 
 
 def volumeIntegralFlux(element_LGL, u):
@@ -341,7 +341,8 @@ def time_evolution():
 	af.display(gvar.u[:, :, int(1 / gvar.delta_t)], 10)
 	af.display(gvar.u[:, :, 0], 10)
 	
-	subprocess.
+	subprocess.run(['mkdir', '1D_Wave_images'])
+	
 	for t_n in trange(0, gvar.time.shape[0] - 1):
 		
 		if t_n % 100 == 0:
