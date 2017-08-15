@@ -1,6 +1,9 @@
+#! /usr/bin/env python3
+
+from os import sys
+
 import arrayfire as af
-af.set_backend('opencl')
-af.set_device(1)
+af.set_backend(sys.argv[1])
 
 def add(a, b):
 	'''

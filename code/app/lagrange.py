@@ -1,6 +1,11 @@
 #! /usr/bin/env python3
-import numpy as np
+
+from os import sys
+
 import arrayfire as af
+af.set_backend(sys.argv[1])
+
+import numpy as np
 from utils import utils
 from app import global_variables as gvar
 

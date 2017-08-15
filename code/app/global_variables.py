@@ -1,12 +1,17 @@
-import numpy as np
+#! /usr/bin/env python3
+
+from os import sys
+
 import arrayfire as af
-af.set_backend('opencl')
-af.set_device(1)
+af.set_backend(sys.argv[1])
+
+import numpy as np
 from scipy import special as sp
 from app import lagrange
 from app import wave_equation
 from utils import utils
 
+af_backend = sys.argv[1]
 
 LGL_list = [ \
 [-1.0,1.0],                                                               \

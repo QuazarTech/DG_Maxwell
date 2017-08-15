@@ -1,15 +1,17 @@
 #! /usr/bin/env python3
 
-import arrayfire as af
-af.set_backend('opencl')
-af.set_device(1)
+from os import sys
 import numpy as np
+from matplotlib import pyplot as plt
+import subprocess
+
+import arrayfire as af
+af.set_backend(sys.argv[1])
+from tqdm import trange
+
 from app import lagrange
 from utils import utils
 from app import global_variables as gvar
-from matplotlib import pyplot as plt
-import pylab as pl
-from tqdm import trange
 
 plt.rcParams['figure.figsize'] = 9.6, 6.
 plt.rcParams['figure.dpi'] = 100
@@ -338,6 +340,8 @@ def time_evolution():
 	af.display(analytical_u_after_1s, 10)
 	af.display(gvar.u[:, :, int(1 / gvar.delta_t)], 10)
 	af.display(gvar.u[:, :, 0], 10)
+	
+	subprocess.
 	for t_n in trange(0, gvar.time.shape[0] - 1):
 		
 		if t_n % 100 == 0:
