@@ -1,62 +1,53 @@
 #! /usr/bin/env python3
 
+from os import sys
+import numpy as np
+from matplotlib import pyplot as plt
+import subprocess
+
 import arrayfire as af
+af.set_backend('opencl')
+from tqdm import trange
+
 from app import lagrange
 from utils import utils
 from app import global_variables as gvar
 
-def Li_Lp_xi(L_xi_i, L_xi_p):
+def Li_Lp_xi(L_i_xi, L_p_xi):
 	'''
 	Parameters
 	----------
-	L_xi_i : arrayfire.Array [1 N N 1]
-			 A 2D array :math:`L_i` calculated at all the
-			 LGL points :math:`\\xi_j`
+	L_i_xi : arrayfire.Array [1 N N 1]
+			 A 2D array :math:`L_i` obtained at LGL points calculated at the
+			 LGL nodes :math:`N_LGL`.
 	
-	L_xi_p : arrayfire.Array [N 1 N 1]
-			 A 2D array :math:`L_p` calculated at all the
-			 LGL points :math:`\\xi_j`
+	L_p_xi : arrayfire.Array [N 1 N 1]
+			 A 2D array :math:`L_p` obtained at LGL points calculated at the
+			 LGL nodes :math:`N_LGL`.
 	
 	Returns
-	-------
+	-------	
 	Li_Lp_xi : arrayfire.Array [N N N 1]
-			   Matrix of :math:`L_p(\\xi)L_i(\\xi)`
+			   Matrix of :math:`L_p (N_LGL) L_i (N_LGL)`.
 	
 	'''
-	Li_Lp_xi = af.bcast.broadcast(utils.multiply, L_xi_i, L_xi_p)
+	Li_Lp_xi = af.bcast.broadcast(utils.multiply, L_i_xi, L_p_xi)
 	
 	return Li_Lp_xi
 
 
 def mappingXiToX(x_nodes, xi):
 	'''
-	Parameters
-	----------
-	
-	x_nodes : arrayfire.Array
-			  Element nodes.
-	
-	xi      : np.float64
-			  Value of xi in domain (-1, 1) which returns the corresponding
-			  x value in the
-	
-	Returns
-	-------
-	X value in the element with given nodes and xi.
+	Function for isoparametric mapping from x coordinates to xi coordinates.
 	'''
-	N_0 = (1. - xi) / 2
-	N_1 = (xi + 1.) / 2
 	
-	N0_x0 = af.bcast.broadcast(utils.multiply, N_0, x_nodes[0])
-	N1_x1 = af.bcast.broadcast(utils.multiply, N_1, x_nodes[1])
-	
-	return N0_x0 + N1_x1
+	return 
 
 
 def dx_dxi_numerical(x_nodes, xi):
 	'''
-	Differential calculated by central differential method about xi using the
-	mappingXiToX function.
+	Differential calculated by central differential method about :math: `\\xi`
+	using the mappingXiToX function.
 	
 	Parameters
 	----------
@@ -65,11 +56,12 @@ def dx_dxi_numerical(x_nodes, xi):
 			  Contains the nodes of elements
 	
 	xi		: float
-			  Value of xi
+			  Value of :math: `\\xi`
 	
 	Returns
 	-------
-	Numerical value of differential of X w.r.t the given xi
+	(x2 - x1) / (2 * dxi) : arrayfire.Array
+							:math:`\\frac{dx}{d \\xi}`. 
 	'''
 	dxi = 1e-7
 	x2 = mappingXiToX(x_nodes, xi + dxi)
@@ -88,53 +80,62 @@ def dx_dxi_analytical(x_nodes, xi):
 	
 	Returns
 	-------
-	The analytical solution to the dx/dxi for an element.
+	(x_nodes[1] - x_nodes[0]) / 2 : arrayfire.Array
+									The analytical solution of
+									\\frac{dx}{d\\xi} for an element.
 	
 	'''
-	return((x_nodes[1] - x_nodes[0]) / 2)
+	return (x_nodes[1] - x_nodes[0]) / 2
 
 
 def A_matrix():
 	'''
+	Calculates the A matrix.
+	'''
 	
-	:math::
-		A_matrix = \Sigma L_{i}(\\xi) L_{p}(\\xi) w_{j} \frac{dx}{d s\\xi}
-	
-	The A matrix depends on the product of lagrange basis functions at two
-	different indices for xi LGL points, The differential of x w.r.t xi at the
-	LGL points. Taking the sum of the resultant array along dimension 2 gives
-	the required A matrix.
+	return
+
+
+def flux_x(u):
+    '''
+    A function which returns the value of flux for a given wave function u.
+    :math:`f(u) = c u^k`
+    
+    Parameters
+    ----------
+    u         : arrayfire.Array
+				A 1-D array which contains the value of wave function.
 	
 	Returns
 	-------
-	The A matrix.
-	
-	'''
-	index = af.range(gvar.N_LGL)
-	L_xi_i = lagrange.lagrange_basis(index, gvar.xi_LGL)
-	L_xi_p = af.reorder(L_xi_i, 1, 2, 0)
-	L_xi_i = af.reorder(L_xi_i, 2, 0, 1)
-	
-	Li_Lp_xi_array = Li_Lp_xi(L_xi_i, L_xi_p)
-	
-	lobatto_weights_tile = af.tile(af.reorder(gvar.lobatto_weights, 1, 2, 0),
-							   gvar.N_LGL, gvar.N_LGL)
-	
-	dx_dxi      = dx_dxi_numerical(af.transpose(gvar.x_nodes), gvar.xi_LGL)
-	dx_dxi_tile = af.tile(af.reorder(dx_dxi, 1, 2, 0), gvar.N_LGL, gvar.N_LGL)
-	A_matrix    = af.sum(Li_Lp_xi_array * lobatto_weights_tile * dx_dxi_tile,
-				   dim = 2)
-	
-	return A_matrix
+	c * u : arrayfire.Array
+			The value of the flux for given u.
+    '''
+    return gvar.c * u
 
-def RHSWaveEqn():
+
+def laxFriedrichsFlux():
 	'''
-	Function to calculate the RHS of the wave equation.
-	:math::
-		\Sigma U^{n+1}_{i} \int
+	A function which calculates the lax-friedrichs_flux :math:`f_i` using.
+	:math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \frac
+					{\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
+	
 	'''
 	
-	Sum_U_n_i   = af.sum(gvar.initial_displacement)
-	U_n_i_AMatrix = Sigma_U_n_i * af.sum(A_matrix(), 1)
+	return
+
+
+def b_vector():
+	'''
+	A function which returns the b vector for N_Elements number of elements.
+	'''
+	
+	return
+
+
+def time_evolution():
+	'''
+	Simulates the time evolution of a wave equation.
+	'''
 	
 	return
