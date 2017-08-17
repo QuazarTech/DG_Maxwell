@@ -129,7 +129,8 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	global time
 	total_time = 1.05
 	time       = utils.linspace(0, total_time, int(total_time / delta_t))
-	u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+	#u_init     = np.e ** (-(element_LGL) ** 2 / 0.2 ** 2)
+	u_init     = af.np_to_af_array((np.cos(np.pi * element_LGL / 2))**2)
 	u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
 					dtype = af.Dtype.f64)
 	

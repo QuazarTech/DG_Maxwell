@@ -11,5 +11,5 @@ from app import wave_equation
 
 if __name__ == '__main__':
 	
-	gvar.populateGlobalVariables(8)
+	gvar.populateGlobalVariables(9)
 	wave_equation.time_evolution()
