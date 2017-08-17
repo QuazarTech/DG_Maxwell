@@ -11,8 +11,6 @@ from app import lagrange
 from app import wave_equation
 from utils import utils
 
-af_backend = sys.argv[1]
-
 LGL_list = [ \
 [-1.0,1.0],                                                               \
 [-1.0,0.0,1.0],                                                           \

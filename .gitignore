@@ -127,3 +127,6 @@ ENV/
 
 # Results
 results
+
+# Temporary files
+*~
