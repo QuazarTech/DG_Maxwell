@@ -6,8 +6,8 @@ from app import lagrange
 from app import global_variables as gvar
 from app import wave_equation
 from utils import utils
-af.set_backend('opencl')
-af.set_device(1)
+
+af.set_backend('cuda')
 
 
 def test_mappingXiToX():
@@ -382,4 +382,20 @@ def test_b_vector():
 	assert (b_vector_analytical - b_vector_array) < threshold
 
 
-#def test_time_evo
+def test_timeEvolutionAnalyticSurfaceTerm():
+	'''
+	This unit test do the time evolution of the 1D wave equation.
+	The initial condition for this unit test will be given be given by
+	:math:`u(x) = cos^2(\frac{\\pi x}{2})`
+	We know that one of the analytical solution will be
+	:math:`u(x) = cos^2(\frac{\\pi (x - ct)}{2})`.
+	
+	We will use this analytical solution for calculating the surface term
+	involved in the calculation of the :math:`b` vector given by
+	:math:`L_p F(u)`
+	where, :math:`L_p` is the Lagrange basis polynomial
+	and :math:`F(u)` is the flux.
+	'''
+	
+	
+	assert False

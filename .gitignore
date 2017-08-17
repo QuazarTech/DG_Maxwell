@@ -124,3 +124,6 @@ ENV/
 # Kdev
 *kdev*
 *.ipynb
+
+# Results
+results
