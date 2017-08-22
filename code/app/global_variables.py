@@ -75,15 +75,30 @@ def populateGlobalVariables(Number_of_LGL_pts = 8):
 	
 	global N_LGL
 	global xi_LGL
+	global eta_LGL
 	global lobatto_weights
 	
-	N_LGL  = Number_of_LGL_pts
-	xi_LGL = LGL_list[Number_of_LGL_pts - 2]
+	N_LGL           = Number_of_LGL_pts
+	xi_LGL          = LGL_list[Number_of_LGL_pts - 2]
+	eta_LGL         = LGL_list[Number_of_LGL_pts - 2]
+	lobatto_weights = af.interop.np_to_af_array(\
+						lobatto_weight_function(N_LGL, xi_LGL)) 
 	
 	
 	global N_Elements
 	global element_LGL
 	global elementMeshNodes
+	global x_nodes
+	global y_nodes
+	
+	test_nodes = af.interop.np_to_af_array(np.array([[0., 2], [0, 1], [0, 0], \
+													[1, 0], [2, 0], [2, 1],\
+													[2, 2], [1, 2]]))
+	
+	
+	x_nodes = test_nodes[:, 0]
+	y_nodes = test_nodes[:, 1]
+	
 	
 	global c
 	global c_lax
