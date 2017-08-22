@@ -155,7 +155,7 @@ def flux_x(u):
     return gvar.c * u
 
 
-def volumeIntegralFlux(element_nodes, u):
+def volumeIntegralFlux(u):
 	'''
 	A function to calculate the volume integral of flux in the wave equation.
 	:math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -165,56 +165,29 @@ def volumeIntegralFlux(element_nodes, u):
 	
 	Parameters
 	----------
-	element_nodes : arrayfire.Array [N 1 1 1]
-					A 1-D array consisting of the LGL nodes mapped onto the
-					element's domain.
-	
-	u             : arrayfire.Array [1 N 1 1]
-					A 1-D array containing the value of the wave function at the
-					mapped LGL nodes in the element.
+	u             : arrayfire.Array [N M 1 1]
+					An N_LGL x N_Elements array containing the value of the
+					wave function at the mapped LGL nodes in all the elements.
 	
 	Returns
 	-------
-	flux_integral : arrayfire.Array [1 N 1 1]
+	flux_integral : arrayfire.Array [N M 1 1]
 					A 1-D array of the value of the flux integral calculated
 					for various lagrange basis functions.
 	'''
 	
-	dLp_xi        = af.tile(af.transpose(gvar.dLp_xi), 1, 1, gvar.N_Elements)
-	weight_tile   = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL,\
-																gvar.N_Elements)
-	flux          = af.reorder(flux_x(u), 1, 2, 0)
-	flux_u_tile   = af.tile(flux, 1, gvar.N_LGL, 1)
-	flux_integral = af.sum((weight_tile * dLp_xi * flux_u_tile), 0)
+	dLp_xi        = gvar.dLp_xi
+	weight_tile   = af.tile(gvar.lobatto_weights, 1, gvar.N_Elements)
+	flux          = flux_x(u)
+	weight_flux   = weight_tile * flux
+	flux_integral = af.blas.matmul(dLp_xi, weight_flux)
 	
-	return af.reorder(flux_integral, 2, 1, 0)
-
-def elementFluxIntegral(n = af.range(10)):
-	'''
-	Function which reorders the element numbers which can then be passed
-	into volumeIntegralFlux. 
-	
-	Parameters
-	----------
-	n  :  Element numbers for which the flux integral is to be calculated,
-		  Passing an array of 0 to N_Elements - 1 would give the flux integral
-		  for all elements at all :math:`p`
-	
-	Returns
-	-------
-	volumeIntegralFlux(element_n_x_nodes,\
-						gvar.u[n, :, 0])  : arrayfire.Array
-											An array of :math:`\\int_{-1}^1 f(u)
-											\\frac{d L_p}{d\\xi} d\\xi` for all
-											elements
-	'''
-	element_n_x_nodes = af.reorder(gvar.element_nodes[n], 1, 0, 2)
-	
-	return volumeIntegralFlux(element_n_x_nodes, gvar.u[n, :, 0])
+	return flux_integral
 
 
 def lax_friedrichs_flux(u):
     '''
+    [NOTE] Incomplete.
     '''
     
     u_n_0              = u[1:, 0]

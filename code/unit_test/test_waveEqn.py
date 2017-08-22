@@ -281,62 +281,32 @@ def test_volume_integral_flux():
 	/PM_2_5/wave_equation/worksheets/volume_integral_flux.sagews
 	
 	'''
-	threshold = 4 * 1e-8
+	threshold = 5 * 1e-8
 	gvar.populateGlobalVariables(8)
+	gvar.c = 1
 	
-	referenceFluxIntegral0 = af.interop.np_to_af_array(np.array(
+	referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array([
 		[-0.002016634876668093, -0.000588597708116113, -0.0013016773719126333,\
-			-0.002368387579324652, -0.003620502047659841, -0.004320197094090966,
-		-0.003445512010153811, 0.0176615086879261]))
+		-0.002368387579324652, -0.003620502047659841, -0.004320197094090966,
+		-0.003445512010153811, 0.0176615086879261],\
+		[-0.018969769374, -0.00431252844519,-0.00882630935977,-0.0144355176966,\
+		-0.019612124119, -0.0209837936827, -0.0154359890788, 0.102576031756], \
+		[-0.108222418798, -0.0179274222595, -0.0337807018822, -0.0492589052599,\
+		-0.0588472807471, -0.0557970236273, -0.0374764132459, 0.361310165819],\
+		[-0.374448714304, -0.0399576371245, -0.0683852285846, -0.0869229749357,\
+		-0.0884322503841, -0.0714664112839, -0.0422339853622, 0.771847201979], \
+		[-0.785754362849, -0.0396035640187, -0.0579313769517, -0.0569022801117,\
+		-0.0392041960688, -0.0172295769141, -0.00337464521455, 1.00000000213],\
+		[-1.00000000213, 0.00337464521455, 0.0172295769141, 0.0392041960688,\
+		0.0569022801117, 0.0579313769517, 0.0396035640187, 0.785754362849],\
+		[-0.771847201979, 0.0422339853622, 0.0714664112839, 0.0884322503841, \
+		0.0869229749357, 0.0683852285846, 0.0399576371245, 0.374448714304],\
+		[-0.361310165819, 0.0374764132459, 0.0557970236273, 0.0588472807471,\
+		0.0492589052599, 0.0337807018822, 0.0179274222595, 0.108222418798], \
+		[-0.102576031756, 0.0154359890788, 0.0209837936827, 0.019612124119, \
+		0.0144355176966, 0.00882630935977, 0.00431252844519, 0.018969769374],\
+		[-0.0176615086879, 0.00344551201015 ,0.00432019709409, 0.00362050204766,\
+		0.00236838757932, 0.00130167737191, 0.000588597708116, 0.00201663487667]])))
 	
-	numerical_flux0 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[0])
-	
-	referenceFluxIntegral1 = af.interop.np_to_af_array(np.array([-0.018969769374
-		,-0.00431252844519, -0.00882630935977, -0.0144355176966, -0.019612124119
-		,-0.0209837936827, -0.0154359890788, 0.102576031756]))
-	
-	numerical_flux1 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[1])
-	
-	
-	referenceFluxIntegral2 = af.interop.np_to_af_array(np.array([-0.108222418798
-		,-0.0179274222595, -0.0337807018822, -0.0492589052599, -0.0588472807471,
-			-0.0557970236273, -0.0374764132459, 0.361310165819]))
-	
-	numerical_flux2 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[2])
-	
-	
-	referenceFluxIntegral3 = af.interop.np_to_af_array(np.array([-0.374448714304
-		, -0.0399576371245, -0.0683852285846, -0.0869229749357, -0.0884322503841
-		, -0.0714664112839, -0.0422339853622, 0.771847201979]))
-	
-	numerical_flux3 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[3])
-	
-	referenceFluxIntegral4 = af.interop.np_to_af_array(np.array([-0.785754362849
-		, -0.0396035640187, -0.0579313769517, -0.0569022801117,
-		-0.0392041960688, -0.0172295769141, -0.00337464521455, 1.00000000213]))
-	
-	numerical_flux4 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[4])
-	
-	
-	referenceFluxIntegral5 = af.interop.np_to_af_array(np.array([-1.00000000213,
-		0.00337464521455, 0.0172295769141, 0.0392041960688, 0.0569022801117, \
-			0.0579313769517, 0.0396035640187, 0.785754362849]))
-	
-	numerical_flux5 = af.transpose(wave_equation.elementFluxIntegral\
-		(af.range(gvar.N_Elements))[5])
-	
-	
-	numerical_flux_sum = numerical_flux0 + numerical_flux1 + numerical_flux2 \
-		+ numerical_flux3 + numerical_flux4 + numerical_flux5
-	
-	referenceFluxIntegral_sum = referenceFluxIntegral0 + referenceFluxIntegral1\
-		+ referenceFluxIntegral2 + referenceFluxIntegral3 \
-		+ referenceFluxIntegral4 + referenceFluxIntegral5
-	
-	assert (af.max(af.abs(numerical_flux_sum - referenceFluxIntegral_sum))\
-		< threshold)
+	numerical_flux = wave_equation.volumeIntegralFlux(gvar.u[:, :, 0])
+	assert (af.max(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)

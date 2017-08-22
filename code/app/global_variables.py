@@ -95,16 +95,15 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	np_element_array = np.concatenate((af.transpose(elements), 
 						   af.transpose(elements + element_size)))
 	
-	element_array = (af.transpose(af.interop.np_to_af_array(np_element_array)))
-	element_nodes = af.transpose(wave_equation.mappingXiToX(\
-										af.transpose(element_array), xi_LGL))
-	
+	element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
+	element_nodes = wave_equation.mappingXiToX(
+										af.transpose(element_array), xi_LGL)
 	
 	global u
 	global time
 	u_init     = np.e ** (-(element_nodes) ** 2 / 0.4 ** 2)
 	time       = utils.linspace(0, 2, 200)
-	u          = af.constant(0, (N_Elements), N_LGL, time.shape[0])
+	u          = af.constant(0, N_LGL, N_Elements, time.shape[0])
 	
 	u[:, :, 0] = u_init
 	
