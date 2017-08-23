@@ -69,7 +69,35 @@ c_lax           = None # Lax friedrichs flux
 def populateGlobalVariables(Number_of_LGL_pts = 8,
                             Number_of_elements = 10):
     '''
-    Initialize the global variables.
+    A lot of variables needed to do the time evolution of the wave function
+    need a many variables containing the same value throughout the program.
+    These variables have been declared as a global variables in our program.
+    The following are the list of the global variable we are using in our
+    program.
+    
+    x_nodes : af.array [2 1 1 1]
+              This function stores the domain of the wave. By default it is
+              set to [-1, 1] in the program. This means that the domain is from
+              :math:`x \\epsilon [-1., 1.]`. This domain will be later split
+              into `Number_of_elements` elements.
+    
+    N_Elements : int
+                 The number of elements in which the domain is to be divided.
+                 
+    N_LGL   : int
+              The number of `LGL` nodes in an element.
+              
+    xi_LGL  : af.array [N_LGL 1 1 1]
+              `N_LGL` LGL points.
+    
+    lBasisArray : af.array [N_LGL N_LGL 1 1]
+                  Contains the coefficients of the Lagrange basis functions
+                  created using LGL nodes stored in xi_LGL.
+                  lBasisArray[i, :] contains the coefficients of the
+                  :math:`i^{th}` Lagrange basis polynomials.
+    
+    
+    
     Parameters
     ----------
     Number_of_LGL_pts : int
