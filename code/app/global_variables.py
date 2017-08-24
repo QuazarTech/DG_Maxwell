@@ -68,7 +68,10 @@ c_lax           = None # Lax friedrichs flux
 delta_t         = None
 
 def populateGlobalVariables(Number_of_LGL_pts = 8,
-                            Number_of_elements = 10):
+                            Number_of_elements = 10,
+                            c_ = 4.,
+                            c_lax_ = 4.,
+                            total_time_ = 1.05):
     '''
     For doing the time evolution of the wave function we
     need many constant variables throughout the program.
@@ -142,6 +145,15 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
     Number_of_elements : int
                          Number of elements into which the domain is to be
                          split.
+    c_ : float
+         Number denoting the wave speed.
+        
+    c_lax_ : float
+             A number used in the calculation of the Lax–Friedrichs flux.
+
+    total_time_ : float
+                  Total time for which the simulation will find the time
+                  evolution of the wave.
     '''
 
     global N_LGL
@@ -182,16 +194,16 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
     global c
     global c_lax
     global delta_t
-    c       = 4.
+    c       = c_
     delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
     delta_t = delta_x / (80. * c)
-    c_lax   = c  # Was previously taken to be 0.1 even works if it's
+    c_lax   = c_lax_  # Was previously taken to be 0.1 even works if it's
                  # taken to be c.
 
 
     global u
     global time
-    total_time = 1.05
+    total_time = total_time_
     time       = utils.linspace(0, total_time, int(total_time / delta_t))
     #u_init     = np.e ** (-(element_LGL) ** 2 / 0.2 ** 2)
     u_init     = af.np_to_af_array((np.cos(np.pi * element_LGL / 2))**2)

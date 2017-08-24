@@ -150,7 +150,7 @@ def A_matrix():
 
     [NOTE]:
 
-    The A matrix will vary for each element. The one calculatedis for the case
+    The A matrix will vary for each element. The one calculated is for the case
     of 1D elements which are of equal size.
     '''
     
@@ -299,8 +299,26 @@ def surface_term(t_n):
 
 def b_vector(t_n):
     '''
-    A function which returns the b vector for N_Elements number of elements.
-
+    For doing the time evolution of the wave equation we have reduced the
+    problem to solving a system of linear equations given by
+    :math:`Au = b`
+    where :math:`A` is the A matrix, :math:`b` is the b vector and :math:`u`
+    is the wave function to be found at the next time step.
+    
+    :math:`b` is given by the equation
+    
+    :math::
+        `
+        b =  \\Delta t {\\int \\frac{dL_p}{d\\xi} F(u) d\\xi
+            - L_p(\\xi) F(u)}
+        `
+    
+    here :math:`L_p * F` is called the surface term and it is got using the
+    the function `surfaceTerm`.
+    The other terms are got using the function `volume_integral`.
+    
+    Then, b = dt * (volume_integral - surfaceTerm)
+    
     Parameters
     ----------
     t_n : double
@@ -309,6 +327,7 @@ def b_vector(t_n):
     -------
     b_vector_array : arrayfire.Array
     '''
+    
     volume_integral = volumeIntegralFlux(gvar.element_LGL, gvar.u[:, :, t_n])
     surfaceTerm     = surface_term(t_n)
     b_vector_array  = gvar.delta_t * (volume_integral - surfaceTerm)
