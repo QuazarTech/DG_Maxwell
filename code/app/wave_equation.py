@@ -293,8 +293,27 @@ def A_matrix():
 	
 	A_matrix = af.bcast.broadcast(utils.multiply, Li_Lp_Lq_Lj, jacobian_xi_eta)
 	
+	print(xi_LGL_tile, eta_LGL_tile)
+	
 	return A_matrix
 
+def numerical_A_matrix():
+	'''
+	'''
+	
+	xi_LGL_tile     = af.flat(af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL)))
+	eta_LGL_tile    = af.tile(gvar.eta_LGL, gvar.N_LGL)
+	jacobian_xi_eta = jacobian(gvar.x_nodes, gvar.y_nodes,\
+													xi_LGL_tile, eta_LGL_tile)
+	lobatto_weights = gvar.lobatto_weights
+	weight_array    = af.flat(af.blas.matmul(lobatto_weights,\
+							af.transpose(lobatto_weights))) * jacobian_xi_eta
+	identity_matrix = af.identity(gvar.N_LGL ** 2, gvar.N_LGL ** 2,\
+														dtype = af.Dtype.f64)
+	A_matrix        = af.bcast.broadcast(utils.multiply,\
+							weight_array, identity_matrix)
+	
+	return A_matrix
 
 def flux_x(u):
     '''

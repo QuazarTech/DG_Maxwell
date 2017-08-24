@@ -2,6 +2,7 @@ from app import lagrange
 from utils import utils
 import math
 import arrayfire as af
+af.set_backend('opencl')
 import numpy as np
 from matplotlib import pyplot as plt
 

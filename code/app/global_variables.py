@@ -50,7 +50,7 @@ for idx in np.arange(len(LGL_list)):
 	LGL_list[idx] = np.array(LGL_list[idx], dtype = np.float64)
 	LGL_list[idx] = af.interop.np_to_af_array(LGL_list[idx])
 
-x_nodes         = af.interop.np_to_af_array(np.array([-1., 1.]))
+
 N_LGL           = 16
 xi_LGL          = None
 lBasisArray     = None
