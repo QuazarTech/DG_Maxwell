@@ -153,7 +153,7 @@ def A_matrix():
     The A matrix will vary for each element. The one calculatedis for the case
     of 1D elements which are of equal size.
     '''
-
+    
     x_tile          = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL))
     power           = af.flip(af.range(gvar.N_LGL))
     power_tile      = af.tile(power, 1, gvar.N_LGL)

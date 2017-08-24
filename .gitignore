@@ -130,3 +130,6 @@ results
 
 # Temporary files
 *~
+
+# Exceptions
+!analytic_surface_term_test.ipynb
