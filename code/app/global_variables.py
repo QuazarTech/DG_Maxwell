@@ -63,22 +63,23 @@ u               = None # value of the wave at all the x points corresponding to
                        # the LGL nodes.
 time            = None
 c               = None # Wave speed
-dLp_xi          = None 
+dLp_xi          = None
 c_lax           = None # Lax friedrichs flux
+delta_t         = None
 
 def populateGlobalVariables(Number_of_LGL_pts = 8,
                             Number_of_elements = 10):
     '''
-    A lot of variables needed to do the time evolution of the wave function
-    need a many variables containing the same value throughout the program.
+    For doing the time evolution of the wave function we
+    need many constant variables throughout the program.
     These variables have been declared as a global variables in our program.
-    The following are the list of the global variable we are using in our
-    program.
+    The following are the list and explaination of the global variables which
+    we are using in our program.
     
     x_nodes : af.array [2 1 1 1]
               This function stores the domain of the wave. By default it is
               set to [-1, 1] in the program. This means that the domain is from
-              :math:`x \\epsilon [-1., 1.]`. This domain will be later split
+              :math:`x \\epsilon [-1., 1.]`. This domain will be split
               into `Number_of_elements` elements.
     
     N_Elements : int
@@ -90,22 +91,57 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
     xi_LGL  : af.array [N_LGL 1 1 1]
               `N_LGL` LGL points.
     
+    element_LGL : af.array [N_LGL N_Elements 1 1]
+                  The domain is divided into `N_elements` number of elements
+                  and each element has N_LGL points corresponding to the
+                  each LGL point.
+                  This variable stores the :math:`x` coordinates corresponding
+                  to each `xi_LGL` for each element.
+                  element_LGL[n_LGL, n_element] returns the :math:`n\\_LGL^{th}`
+                  :math:`x` coordinate for the :math:`n_element^{th}` element.
+                  
     lBasisArray : af.array [N_LGL N_LGL 1 1]
                   Contains the coefficients of the Lagrange basis functions
                   created using LGL nodes stored in xi_LGL.
-                  lBasisArray[i, :] contains the coefficients of the
-                  :math:`i^{th}` Lagrange basis polynomials.
+                  lBasisArray[i, j] is the coefficient corresponding to the
+                  :math:`(N_LGL - j - 1)^{th}` power of :math:`x` in the
+                  :mat:`i^th` Lagrange polynomial.
     
+    dLp_xi      : af.array [N_LGL N_LGL 1 1]
+                  Stores the value of the derivative :math:`\\frac{dL_p}{d\\xi}`
+                  at all the LGL points.
     
+    lobatto_weights : af.array [N_LGL 1 1 1]
+                      Lobatto weights to integrate using Gauss-Lobatto
+                      quadrature.
+                      
+    c : float
+        Number denoting the wave speed.
+        
+    c_lax : float
+            A number used in the calculation of the Lax–Friedrichs flux.
+            
+    delta_t : float
+              :math:`dt` between each time evolution.
     
+    time    : af.array
+              Array containing the time for which the :math:`u` is to be
+              calculated.
+    
+    u : af.array [N_LGL N_Elements time.shape[0] 1]
+        Stores :math:`u` calculated at the :math:`x` cordinates stored in
+        the variable `element_LGL` at time :math:`t` stored in stored in
+        variable `time`.
+        
+        
     Parameters
     ----------
     Number_of_LGL_pts : int
                         Number of LGL nodes.
 
     Number_of_elements : int
-                            Number of elements into which the domain is to be
-                            split.
+                         Number of elements into which the domain is to be
+                         split.
     '''
 
     global N_LGL
@@ -146,11 +182,11 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
     global c
     global c_lax
     global delta_t
-    c       = 4
+    c       = 4.
     delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
-    delta_t = delta_x / (80 * c)
+    delta_t = delta_x / (80. * c)
     c_lax   = c  # Was previously taken to be 0.1 even works if it's
-                            # taken to be c.
+                 # taken to be c.
 
 
     global u
@@ -159,15 +195,14 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
     time       = utils.linspace(0, total_time, int(total_time / delta_t))
     #u_init     = np.e ** (-(element_LGL) ** 2 / 0.2 ** 2)
     u_init     = af.np_to_af_array((np.cos(np.pi * element_LGL / 2))**2)
-    u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
-                    dtype = af.Dtype.f64)
+    u          = af.constant(0, N_LGL, N_Elements,
+                             time.shape[0],
+                             dtype = af.Dtype.f64)
 
     u[:, :, 0] = u_init
 
-
     global dLp_xi
     dLp_xi = dLp_xi_LGL()
-
 
     return
 
