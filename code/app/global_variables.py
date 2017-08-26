@@ -6,7 +6,7 @@ from scipy import special as sp
 from app import lagrange
 from app import wave_equation
 from utils import utils
-
+import math
 
 LGL_list = [ \
 [-1.0,1.0],                                                               \
@@ -84,7 +84,8 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	lBasisArray = af.interop.np_to_af_array( \
 		lagrange.lagrange_basis_coeffs(xi_LGL))
 	
-	lobatto_weights = af.interop.np_to_af_array(\
+	lobatto_weights = af.interop.\
+		np_to_af_array(\
 		lobatto_weight_function(N_LGL, xi_LGL)) 
 	
 	global N_Elements
@@ -113,22 +114,20 @@ def populateGlobalVariables(Number_of_LGL_pts = 8, Number_of_elements = 10):
 	global c
 	global c_lax
 	global delta_t
-	c       = 4
+	c       = 1
 	delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
-	delta_t = delta_x / (80 * c)
-	c_lax   = c / 2        # Was previously taken to be 0.1 even works if it's
-						   # taken to be c.
-	
+	delta_t = delta_x / (20 * c)
+	c_lax   = c
 	
 	global u
 	global time
-	total_time = 1.05
+	total_time = 5
 	time       = utils.linspace(0, total_time, int(total_time / delta_t))
 	u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 	u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
 					dtype = af.Dtype.f64)
-	
 	u[:, :, 0] = u_init
+	
 	
 	
 	global dLp_xi
@@ -193,7 +192,7 @@ def lagrange_basis_function():
 def dLp_xi_LGL():
 	'''
 	Function to calculate :math: `\\frac{d L_p(\\xi_{LGL})}{d\\xi}`
-	as a 2D array of :math: `L_i (\\xi_{LGL})`. Where i varies along rows
+	as a 2D array of :math: `L_i' (\\xi_{LGL})`. Where i varies along rows
 	and the nodes vary along the columns.
 	
 	Returns

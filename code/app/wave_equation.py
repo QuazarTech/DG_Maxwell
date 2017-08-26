@@ -41,6 +41,9 @@ plt.rcParams['ytick.direction'] = 'in'
 
 def Li_Lp_xi(L_i_xi, L_p_xi):
 	'''
+	A function which broadcasts and multiplies two 2D arrays of
+	shapes [1 N N 1] and [N 1 N 1]
+	
 	Parameters
 	----------
 	L_i_xi : arrayfire.Array [1 N N 1]
@@ -126,12 +129,14 @@ def dx_dxi_analytical(x_nodes, xi):
 	
 	Returns
 	-------
-	(x_nodes[1] - x_nodes[0]) / 2 : arrayfire.Array
-									The analytical solution of
-									\\frac{dx}{d\\xi} for an element.
+	dx_xi   : arrayfire.Array 
+			  The analytical solution of
+			  \\frac{dx}{d\\xi} for an element.
 	
 	'''
-	return (x_nodes[1] - x_nodes[0]) / 2
+	dx_dxi = (x_nodes[1] - x_nodes[0]) / 2
+	
+	return dx_dxi
 
 
 def A_matrix():
@@ -148,7 +153,7 @@ def A_matrix():
 	
 	[NOTE]:
 	
-	The A matrix will vary for each element. The one calculatedis for the case
+	The A matrix will vary for each element. The one calculated is for the case
 	of 1D elements which are of equal size.
 	'''	
 	
@@ -172,6 +177,7 @@ def A_matrix():
 	L_element   = (Li_Lp_array * lobatto_weights_tile * dx_dxi_tile)
 	A_matrix    = af.sum(L_element, dim = 2)
 	
+	
 	return A_matrix
 
 
@@ -193,7 +199,7 @@ def flux_x(u):
     return gvar.c * u
 
 
-def volumeIntegralFlux(element_LGL, u):
+def volumeIntegralFlux(u):
 	'''
 	A function to calculate the volume integral of flux in the wave equation.
 	:math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -203,17 +209,13 @@ def volumeIntegralFlux(element_LGL, u):
 	
 	Parameters
 	----------
-	element_LGL   : arrayfire.Array [N_LGL N_Elements 1 1]
-					A 2-D array consisting of the LGL nodes mapped onto the
-					element's domain.
-	
 	u             : arrayfire.Array [N_LGL N_Elements 1 1]
 					A 1-D array containing the value of the wave function at the
 					mapped LGL nodes in the element.
 	
 	Returns
 	-------
-	flux_integral : arrayfire.Array [1 N 1 1]
+	flux_integral : arrayfire.Array [N_LGL N_Elements 1 1]
 					A 1-D array of the value of the flux integral calculated
 					for various lagrange basis functions.
 	'''
@@ -250,6 +252,7 @@ def laxFriedrichsFlux(t_n):
 	
 	laxFriedrichsFlux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
 						- gvar.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
+	
 	
 	return laxFriedrichsFlux
 
@@ -304,7 +307,7 @@ def b_vector(t_n):
 	-------
 	b_vector_array : arrayfire.Array
 	'''
-	volume_integral = volumeIntegralFlux(gvar.element_LGL, gvar.u[:, :, t_n])
+	volume_integral = volumeIntegralFlux(gvar.u[:, :, t_n])
 	surfaceTerm     = surface_term(t_n)
 	b_vector_array  = gvar.delta_t * (volume_integral - surfaceTerm)
 	
@@ -320,7 +323,7 @@ def time_evolution():
 	of the wave. The images are then stored in Wave folder.
 	'''
 	
-	A_inverse   = af.lapack.inverse(A_matrix())
+	A_inverse   = af.inverse(A_matrix())
 	element_LGL = gvar.element_LGL
 	delta_t     = gvar.delta_t
 	
@@ -332,12 +335,6 @@ def time_evolution():
 	
 	print('u calculated!')
 	
-	approximate_1_s = (int(1 / gvar.delta_t) * gvar.delta_t)
-	analytical_u_after_1s = np.e ** (-(gvar.element_LGL - gvar.c * (1 - approximate_1_s)) ** 2 / 0.4 ** 2)
-	
-	af.display(analytical_u_after_1s, 10)
-	af.display(gvar.u[:, :, int(1 / gvar.delta_t)], 10)
-	af.display(gvar.u[:, :, 0], 10)
 	for t_n in trange(0, gvar.time.shape[0] - 1):
 		
 		if t_n % 100 == 0:
