@@ -233,7 +233,7 @@ def laxFriedrichsFlux(t_n):
 	'''
 	A function which calculates the lax-friedrichs_flux :math:`f_i` using.
 	:math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \frac
-					{\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
+				{\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
 	
 	Parameters
 	----------
