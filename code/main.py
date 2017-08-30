@@ -8,6 +8,6 @@ from unit_test import test_waveEqn
 from app import wave_equation
 from app import lagrange
 if __name__ == '__main__':
-	
-	gvar.populateGlobalVariables(8)
-	print(wave_equation.volumeIntegralFlux(gvar.u[:, :, 0]))
+    
+    gvar.populateGlobalVariables(8)
+    print(wave_equation.volumeIntegralFlux(gvar.u[:, :, 0]))
