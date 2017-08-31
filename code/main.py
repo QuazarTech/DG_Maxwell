@@ -11,7 +11,7 @@ from app import lagrange
 
 
 if __name__ == '__main__':
-	
-	gvar.populateGlobalVariables(8,10)
-	wave_equation.time_evolution()
-	print(wave_equation.laxFriedrichsFlux(0))
+    
+    gvar.populateGlobalVariables(8,10)
+    wave_equation.time_evolution()
+    #print(gvar.lobatto_weights)
