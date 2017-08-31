@@ -57,8 +57,8 @@ def Li_Lp_xi(L_i_xi, L_p_xi):
     -------	
     Li_Lp_xi : arrayfire.Array [N N N 1]
                 Matrix of :math:`L_p (N_LGL) L_i (N_LGL)`.
-
     '''
+    
     Li_Lp_xi = af.bcast.broadcast(utils.multiply, L_i_xi, L_p_xi)
 
     return Li_Lp_xi
@@ -75,7 +75,6 @@ def mappingXiToX(x_nodes, xi):
     xi      : numpy.float64
                 Value of :math: `\\xi`coordinate for which the corresponding
                 :math: `x` coordinate is to be found.
-    .
 
     Returns
     -------
@@ -83,6 +82,7 @@ def mappingXiToX(x_nodes, xi):
                     :math: `x` value in the element corresponding to
                     :math:`\\xi`.
     '''
+    
     N_0 = (1 - xi) / 2
     N_1 = (1 + xi) / 2
 
