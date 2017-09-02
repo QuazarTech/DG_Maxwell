@@ -349,14 +349,6 @@ def time_evolution():
 
     print('u calculated!')
 
-    approximate_1_s       = (int(1 / gvar.delta_t) * gvar.delta_t)
-    analytical_u_after_1s = np.e ** (-(gvar.element_LGL - gvar.c
-                                    * (1 - approximate_1_s)) ** 2 / 0.4 ** 2)
-
-    af.display(analytical_u_after_1s, 10)
-    af.display(gvar.u[:, :, int(1 / gvar.delta_t)], 10)
-    af.display(gvar.u[:, :, 0], 10)
-
     subprocess.run(['mkdir', 'results/1D_Wave_images'])
 
     for t_n in trange(0, gvar.time.shape[0] - 1):

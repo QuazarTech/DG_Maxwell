@@ -71,7 +71,7 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
                             Number_of_elements = 10,
                             c_ = 4.,
                             c_lax_ = 4.,
-                            total_time_ = 1.05):
+                            total_time_ = 4):
     '''
     For doing the time evolution of the wave function we
     need many constant variables throughout the program.
@@ -186,7 +186,7 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
                                         af.sum(x_nodes[1]),
                                         N_Elements + 1)
 
-
+    
     element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
     element_LGL = wave_equation.mappingXiToX(\
                                         af.transpose(element_array), xi_LGL)
@@ -196,7 +196,7 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
     global delta_t
     c       = c_
     delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
-    delta_t = delta_x / (80. * c)
+    delta_t = delta_x / (20. * c)
     c_lax   = c_lax_  # Was previously taken to be 0.1 even works if it's
                  # taken to be c.
 
@@ -204,9 +204,12 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
     global u
     global time
     total_time = total_time_
-    time       = utils.linspace(0, total_time, int(total_time / delta_t))
-    #u_init     = np.e ** (-(element_LGL) ** 2 / 0.2 ** 2)
-    u_init     = af.np_to_af_array((np.cos(np.pi * element_LGL / 2))**2)
+    no_of_steps = int(total_time / delta_t)
+    end_time    = delta_t * no_of_steps
+    time        = utils.linspace(0, end_time, no_of_steps)
+    time       = utils.linspace(0, end_time, no_of_steps)
+    u_init     = np.e ** (-(element_LGL) ** 2 / 0.2 ** 2)
+    #u_init     = af.np_to_af_array((np.cos(np.pi * element_LGL / 2))**2)
     u          = af.constant(0, N_LGL, N_Elements,
                              time.shape[0],
                              dtype = af.Dtype.f64)
