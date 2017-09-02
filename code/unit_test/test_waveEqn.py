@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from tqdm import trange
 
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 
 
 from app import lagrange
@@ -108,7 +108,7 @@ def test_lBasisArray():
     ---------
     The link to the sage worksheet where the calculations were carried out.
 
-    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
     /PM_2_5/wave_equation/worksheets/l_basis_array.sagews
     '''
     threshold = 1e-12
@@ -390,112 +390,112 @@ def test_b_vector():
     assert (b_vector_analytical - b_vector_array) < threshold
 
 
-def test_timeEvolutionAnalyticSurfaceTerm():
-    '''
-    This unit test do the time evolution of the 1D wave equation.
-    The initial condition for this unit test will be given be given by
-    :math:`u(x) = cos^2(\frac{\\pi x}{2})`
-    We know that one of the analytical solution will be
-    :math:`u(x) = cos^2(\frac{\\pi (x - ct)}{2})`.
+#def test_timeEvolutionAnalyticSurfaceTerm():
+    #'''
+    #This unit test do the time evolution of the 1D wave equation.
+    #The initial condition for this unit test will be given be given by
+    #:math:`u(x) = cos^2(\frac{\\pi x}{2})`
+    #We know that one of the analytical solution will be
+    #:math:`u(x) = cos^2(\frac{\\pi (x - ct)}{2})`.
 
-    We will use this analytical solution for calculating the surface term
-    involved in the calculation of the :math:`b` vector given by
-    :math:`L_p F(u)`
-    where, :math:`L_p` is the Lagrange basis polynomial
-    and :math:`F(u)` is the flux.
-    '''
+    #We will use this analytical solution for calculating the surface term
+    #involved in the calculation of the :math:`b` vector given by
+    #:math:`L_p F(u)`
+    #where, :math:`L_p` is the Lagrange basis polynomial
+    #and :math:`F(u)` is the flux.
+    #'''
 
-    def surface_term(t_n):
-        '''
-        '''
-        L_p_minus1   = gvar.lagrange_basis_function()[:, 0]
-        L_p_1        = gvar.lagrange_basis_function()[:, -1]
+    #def surface_term(t_n):
+        #'''
+        #'''
+        #L_p_minus1   = gvar.lagrange_basis_function()[:, 0]
+        #L_p_1        = gvar.lagrange_basis_function()[:, -1]
         
-        #f_i          = wave_equation.laxFriedrichsFlux(t_n)
+        ##f_i          = wave_equation.laxFriedrichsFlux(t_n)
+        ##f_iminus1    = af.shift(f_i, 0, 1)
+        
+        ##print(f_i.shape)
+        #u_t          = af.np_to_af_array((np.cos(
+            #np.pi * (gvar.element_LGL - gvar.c * gvar.delta_t * t_n) / 2))**2)
+        
+        
+        ##flux_iplus1_0 = wave_equation.flux_x(u_t[-1, :])
+        ##flux_i_N_LGL  = wave_equation.flux_x(u_t[0, :])
+        #f_i          = wave_equation.flux_x(u_t[-1, :])
         #f_iminus1    = af.shift(f_i, 0, 1)
-        
-        #print(f_i.shape)
-        u_t          = af.np_to_af_array((np.cos(
-            np.pi * (gvar.element_LGL - gvar.c * gvar.delta_t * t_n) / 2))**2)
-        
-        
-        #flux_iplus1_0 = wave_equation.flux_x(u_t[-1, :])
-        #flux_i_N_LGL  = wave_equation.flux_x(u_t[0, :])
-        f_i          = wave_equation.flux_x(u_t[-1, :])
-        f_iminus1    = af.shift(f_i, 0, 1)
 
-        surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,
-                                                                    f_iminus1)
+        #surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,
+                                                                    #f_iminus1)
         
-        return surface_term
+        #return surface_term
 
 
-    def b_vector(t_n):
-        '''
-        '''
-        volume_integral = wave_equation.volumeIntegralFlux(gvar.element_LGL,
-                                                gvar.u[:, :, t_n])
-        surfaceTerm     = surface_term(t_n)
-        b_vector_array  = gvar.delta_t * (volume_integral - surfaceTerm)
+    #def b_vector(t_n):
+        #'''
+        #'''
+        #volume_integral = wave_equation.volumeIntegralFlux(gvar.element_LGL,
+                                                #gvar.u[:, :, t_n])
+        #surfaceTerm     = surface_term(t_n)
+        #b_vector_array  = gvar.delta_t * (volume_integral - surfaceTerm)
         
         
-        return b_vector_array
+        #return b_vector_array
 
-    A_inverse   = af.lapack.inverse(wave_equation.A_matrix())
-    element_LGL = gvar.element_LGL
-    delta_t     = gvar.delta_t
+    #A_inverse   = af.lapack.inverse(wave_equation.A_matrix())
+    #element_LGL = gvar.element_LGL
+    #delta_t     = gvar.delta_t
 
 
-    for t_n in trange(0, gvar.time.shape[0] - 1):
-        gvar.u[:, :, t_n + 1] =  gvar.u[:, :, t_n] \
-                                + af.blas.matmul(A_inverse,
-                                                b_vector(t_n))
+    #for t_n in trange(0, gvar.time.shape[0] - 1):
+        #gvar.u[:, :, t_n + 1] =  gvar.u[:, :, t_n] \
+                                #+ af.blas.matmul(A_inverse,
+                                                #b_vector(t_n))
 
-    print('u calculated!')
+    #print('u calculated!')
 
-    approximate_1_s       = (int(1 / gvar.delta_t) * gvar.delta_t)
-    analytical_u_after_1s = np.e ** (-(gvar.element_LGL - gvar.c
-                                    * (1 - approximate_1_s)) ** 2 / 0.4 ** 2)
+    #approximate_1_s       = (int(1 / gvar.delta_t) * gvar.delta_t)
+    #analytical_u_after_1s = np.e ** (-(gvar.element_LGL - gvar.c
+                                    #* (1 - approximate_1_s)) ** 2 / 0.4 ** 2)
 
-    af.display(analytical_u_after_1s, 10)
-    af.display(gvar.u[:, :, int(1 / gvar.delta_t)], 10)
-    af.display(gvar.u[:, :, 0], 10)
+    #af.display(analytical_u_after_1s, 10)
+    #af.display(gvar.u[:, :, int(1 / gvar.delta_t)], 10)
+    #af.display(gvar.u[:, :, 0], 10)
 
-    subprocess.run(['mkdir', 'results/1D_Wave_images'])
+    #subprocess.run(['mkdir', 'results/1D_Wave_images'])
 
-    for t_n in trange(0, gvar.time.shape[0] - 1):
-        if t_n % 100 == 0:
-            fig = plt.figure()
-            x   = gvar.element_LGL
-            y   = gvar.u[:, :, t_n]
+    #for t_n in trange(0, gvar.time.shape[0] - 1):
+        #if t_n % 100 == 0:
+            #fig = plt.figure()
+            #x   = gvar.element_LGL
+            #y   = gvar.u[:, :, t_n]
             
-            plt.plot(x, y)
-            plt.xlabel('x')
-            plt.ylabel('Amplitude')
-            plt.title('Time = %f' % (t_n * delta_t))
-            fig.savefig('results/1D_Wave_images/%04d' %(t_n / 100) + '.png')
-            plt.close('all')
+            #plt.plot(x, y)
+            #plt.xlabel('x')
+            #plt.ylabel('Amplitude')
+            #plt.title('Time = %f' % (t_n * delta_t))
+            #fig.savefig('results/1D_Wave_images/%04d' %(t_n / 100) + '.png')
+            #plt.close('all')
 
-    u_clax_is_c = gvar.u
-    t = []
-    amplitude_clax_is_c       = []
+    #u_clax_is_c = gvar.u
+    #t = []
+    #amplitude_clax_is_c       = []
 
-    for t_i in np.arange(u_clax_is_c.shape[2]):  
-        t.append(t_i * gvar.delta_t)
-        amplitude_clax_is_c.append(af.max(u_clax_is_c[:, :, t_i]))
+    #for t_i in np.arange(u_clax_is_c.shape[2]):  
+        #t.append(t_i * gvar.delta_t)
+        #amplitude_clax_is_c.append(af.max(u_clax_is_c[:, :, t_i]))
 
-    t = np.array(t)
-    amplitude_clax_is_c = np.array(amplitude_clax_is_c)
+    #t = np.array(t)
+    #amplitude_clax_is_c = np.array(amplitude_clax_is_c)
 
-    plt.title('Wave Amplitude vs Time for Analytical Flux')
-    plt.xlabel('t')
-    plt.ylabel('Amplitude')
+    #plt.title('Wave Amplitude vs Time for Analytical Flux')
+    #plt.xlabel('t')
+    #plt.ylabel('Amplitude')
 
-    plot_ampl_clax_is_c       = plt.plot(t, amplitude_clax_is_c, label = 'c\_lax = c')
-    # plot_ampl_clax_is_minus_c = plt.plot(t, amplitude_clax_is_minus_c, label = 'c\_lax = -c')
+    #plot_ampl_clax_is_c       = plt.plot(t, amplitude_clax_is_c, label = 'c\_lax = c')
+    ## plot_ampl_clax_is_minus_c = plt.plot(t, amplitude_clax_is_minus_c, label = 'c\_lax = -c')
 
-    plt.legend()
+    #plt.legend()
 
-    plt.show()
-    assert True
+    #plt.show()
+    #assert True
 

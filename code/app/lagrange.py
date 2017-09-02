@@ -3,7 +3,7 @@
 from os import sys
 
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 
 import numpy as np
 from utils import utils

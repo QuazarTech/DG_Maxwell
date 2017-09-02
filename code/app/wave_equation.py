@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import subprocess
 
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 from tqdm import trange
 
 from app import lagrange
@@ -153,18 +153,12 @@ def A_matrix():
     The A matrix will vary for each element. The one calculated is for the case
     of 1D elements which are of equal size.
     '''
-    
-    x_tile          = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL))
-    power           = af.flip(af.range(gvar.N_LGL))
-    power_tile      = af.tile(power, 1, gvar.N_LGL)
-    x_pow           = af.arith.pow(x_tile, power_tile)
     lobatto_weights = gvar.lobatto_weights
 
     lobatto_weights_tile = af.tile(af.reorder(lobatto_weights, 1, 2, 0),\
                                                 gvar.N_LGL, gvar.N_LGL)
 
-    index = af.range(gvar.N_LGL)
-    L_i   = af.blas.matmul(gvar.lBasisArray[index], x_pow)
+    L_i   = gvar.lagrange_basis_function()
     L_p   = af.reorder(L_i, 0, 2, 1)
     L_i   = af.reorder(L_i, 2, 0, 1)
 

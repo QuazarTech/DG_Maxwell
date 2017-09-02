@@ -3,7 +3,7 @@
 from os import sys
 
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 import numpy as np
 from scipy import special as sp
 
@@ -178,9 +178,9 @@ def populateGlobalVariables(Number_of_LGL_pts = 8,
     elements         = utils.linspace(af.sum(x_nodes[0]),
                                         af.sum(x_nodes[1] - element_size),
                                         N_Elements)
-
     np_element_array = np.concatenate((af.transpose(elements), 
                             af.transpose(elements + element_size)))
+    
 
     elementMeshNodes = utils.linspace(af.sum(x_nodes[0]),
                                         af.sum(x_nodes[1]),
