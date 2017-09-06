@@ -24,6 +24,12 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.png
+*.jpg
+*.swp
+*~
+*.swo
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -69,6 +75,8 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+
 
 # pyenv
 .python-version

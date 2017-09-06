@@ -12,6 +12,7 @@ from unit_test import test_waveEqn
 
 
 if __name__ == '__main__':
-	
-	gvar.populateGlobalVariables(3)
-	print(wave_equation.numerical_A_matrix())
+    
+    wave_equation.numerical_A_matrix()
+    #print(gvar.lagrange_value_array)
+    print(test_waveEqn.test_isoparam_x())
