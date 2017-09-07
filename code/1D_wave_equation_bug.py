@@ -1379,7 +1379,7 @@ x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 N_LGL      = 8        
 
 #Number of elements the domain is to be divided into.
-N_Elements       = 70
+N_Elements       = 10 
 
 #Size of equally divided elements
 element_size     = af.sum((x_nodes[1] -
@@ -1417,7 +1417,7 @@ delta_x     = af.min((element_LGL -
 delta_t     = delta_x / (20 * c)
 
 #The total time for which the simulation is to be carried out.
-total_time  = 10
+total_time  = 50
 
 no_of_steps = int(total_time / delta_t)
 end_time    = delta_t * no_of_steps
