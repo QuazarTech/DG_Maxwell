@@ -2,11 +2,10 @@
 
 import arrayfire as af
 af.set_backend('opencl')
-af.set_device(1)
 import numpy as np
+from app import global_variables as gvar
 from app import lagrange
 from utils import utils
-from app import global_variables as gvar
 from matplotlib import pyplot as plt
 import pylab as pl
 from tqdm import trange
@@ -39,33 +38,8 @@ plt.rcParams['ytick.labelsize'] = 'medium'
 plt.rcParams['ytick.direction'] = 'in'
 
 
-def Li_Lp_xi(L_i_xi, L_p_xi):
-    '''
-    Broadcasts and multiplies two arrays of different ordering. Used in the
-    calculation of A matrix.
-    
-    Parameters
-    ----------
-    L_i_xi : arrayfire.Array [1 N N 1]
-             A 2D array :math:`L_i` obtained at LGL points calculated at
-             the LGL nodes :math:`N_LGL`.
-    
-    L_p_xi : arrayfire.Array [N 1 N 1]
-             A 2D array :math:`L_p` obtained at LGL points calculated at the
-             LGL nodes :math:`N_LGL`.
-    
-    Returns
-    -------    
-    Li_Lp_xi : arrayfire.Array [N N N 1]
-               Matrix of :math:`L_p (N_LGL) L_i (N_LGL)`.
-    
-    '''
-    Li_Lp_xi = af.bcast.broadcast(utils.multiply, L_i_xi, L_p_xi)
-    
-	return Li_Lp_xi
 
-
-def mappingXiToX(x_nodes, xi):
+def mapping_xi_to_x(x_nodes, xi):
     '''
     Maps points in :math: `\\xi` space to :math:`x` space using the formula
     :math:  `x = \\frac{1 - \\xi}{2} x_0 + \\frac{1 + \\xi}{2} x_1`
@@ -89,19 +63,19 @@ def mappingXiToX(x_nodes, xi):
     N_0 = (1 - xi) / 2
     N_1 = (1 + xi) / 2
     
-    N0_x0 = af.bcast.broadcast(utils.multiply, N_0, x_nodes[0])
-    N1_x1 = af.bcast.broadcast(utils.multiply, N_1, x_nodes[1])
+    N0_x0 = af.broadcast(utils.multiply, N_0, x_nodes[0])
+    N1_x1 = af.broadcast(utils.multiply, N_1, x_nodes[1])
     
     x = N0_x0 + N1_x1
     
-	return x
+    return x
 
 
 
 def dx_dxi_numerical(x_nodes, xi):
     '''
     Differential :math: `\\frac{dx}{d \\xi}` calculated by central differential
-    method about xi using the mappingXiToX function.
+    method about xi using the mapping_xi_to_x function.
     
     Parameters
     ----------
@@ -118,12 +92,12 @@ def dx_dxi_numerical(x_nodes, xi):
              :math:`\\frac{dx}{d \\xi}`. 
     '''
     dxi = 1e-7
-    x2 = mappingXiToX(x_nodes, xi + dxi)
-    x1 = mappingXiToX(x_nodes, xi - dxi)
+    x2  = mapping_xi_to_x(x_nodes, xi + dxi)
+    x1  = mapping_xi_to_x(x_nodes, xi - dxi)
     
     dx_dxi = (x2 - x1) / (2 * dxi)
     
-	return dx_dxi
+    return dx_dxi
 
 
 def dx_dxi_analytical(x_nodes, xi):
@@ -144,7 +118,7 @@ def dx_dxi_analytical(x_nodes, xi):
     '''
     analytical_dx_dxi = (x_nodes[1] - x_nodes[0]) / 2
     
-	return analytical_dx_dxi
+    return analytical_dx_dxi
 
 
 def A_matrix():
@@ -166,12 +140,12 @@ def A_matrix():
                The value of integral of product of lagrange basis functions
                obtained by LGL points, using Gauss-Lobatto quadrature method
                using :math: `N_LGL` points.
-	'''
-    dx_dxi          = dx_dxi_numerical((gvar.elementMeshNodes[0 : 2]),
-                                                                    gvar.xi_LGL)
+    '''
+    dx_dxi          = dx_dxi_numerical((gvar.element_mesh_nodes[0 : 2]),
+                                                                   gvar.xi_LGL)
     dx_dxi_tile     = af.tile(dx_dxi, 1, gvar.N_LGL)
     identity_matrix = af.identity(gvar.N_LGL, gvar.N_LGL, dtype = af.Dtype.f64)
-    A_matrix        = af.bcast.broadcast(utils.multiply, gvar.lobatto_weights,
+    A_matrix        = af.broadcast(utils.multiply, gvar.lobatto_weights,
                                                  identity_matrix) * dx_dxi_tile
 
     return A_matrix
@@ -184,18 +158,20 @@ def flux_x(u):
     
     Parameters
     ----------
-    u         : arrayfire.Array
-                A 1-D array which contains the value of wave function.
+    u    : arrayfire.Array
+           A 1-D array which contains the value of wave function.
     
     Returns
     -------
-    c * u : arrayfire.Array
-            The value of the flux for given u.
+    flux : arrayfire.Array
+           The value of the flux for given u.
     '''
-    return gvar.c * u
+    flux = gvar.c * u
+
+    return flux
 
 
-def volumeIntegralFlux(u):
+def volume_integral_flux(u):
     '''
     A function to calculate the volume integral of flux in the wave equation.
     :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -206,8 +182,8 @@ def volumeIntegralFlux(u):
     Parameters
     ----------
     u             : arrayfire.Array [N_LGL N_Elements 1 1]
-                    A 1-D array containing the value of the wave function at the
-                    mapped LGL nodes in the element.
+                    A 1-D array containing the value of the wave function at
+                    the mapped LGL nodes in the element.
     
     Returns
     -------
@@ -226,7 +202,7 @@ def volumeIntegralFlux(u):
     return flux_integral
 
 
-def laxFriedrichsFlux(t_n):
+def lax_friedrichs_flux(u_t_n):
     '''
     A function which calculates the lax-friedrichs_flux :math:`f_i` using.
     :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \frac
@@ -234,36 +210,33 @@ def laxFriedrichsFlux(t_n):
     
     Parameters
     ----------
-    u    : arrayfire.Array [N_LGL N_Elements 1 1]
-           A 2D array consisting of the amplitude of the wave at the LGL nodes
-           at each element.
-    
-    t_n  : float
-           The timestep at which the lax-friedrichs-flux is to be calculated.
+    u_t_n : arrayfire.Array [N_LGL N_Elements 1 1]
+            A 2D array consisting of the amplitude of the wave at the LGL nodes
+            at each element.
     '''
     
-    u_iplus1_0    = af.shift(gvar.u[0, :, t_n], 0, -1)
-    u_i_N_LGL     = gvar.u[-1, :, t_n]
+    u_iplus1_0    = af.shift(u_t_n[0, :], 0, -1)
+    u_i_N_LGL     = u_t_n[-1, :]
     flux_iplus1_0 = flux_x(u_iplus1_0)
     flux_i_N_LGL  = flux_x(u_i_N_LGL)
     
-    laxFriedrichsFlux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
+    boundary_flux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
                         - gvar.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
     
     
-    return laxFriedrichsFlux
+    return boundary_flux 
 
 
-def surface_term(t_n):
+def surface_term(u_t_n):
     '''
     A function which is used to calculate the surface term,
     :math:`L_p (1) f_i - L_p (-1) f_{i - 1}`
-    using the laxFriedrichsFlux function and the dLp_xi_LGL function in gvar
-    module.
+    using the lax_friedrichs_flux function and lagrange_basis_value
+    from gvar module.
     
     Parameters
     ----------
-    t_n : double
+    u_t_n : arrayfire.Array [N M 1 1]
           The timestep at which the surface term is to be calculated.
     
     Returns
@@ -279,12 +252,13 @@ def surface_term(t_n):
     ---------
     Link to PDF describing the algorithm to obtain the surface term.
     
-    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
     /PM\_2\_5/wave\_equation/documents/surface\_term/surface\_term.pdf
     '''
-    L_p_minus1   = gvar.lagrange_basis_function()[:, 0]
-    L_p_1        = gvar.lagrange_basis_function()[:, -1]
-    f_i          = laxFriedrichsFlux(t_n)
+
+    L_p_minus1   = gvar.lagrange_basis_value[:, 0]
+    L_p_1        = gvar.lagrange_basis_value[:, -1]
+    f_i          = lax_friedrichs_flux(u_t_n)
     f_iminus1    = af.shift(f_i, 0, 1)
     surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,\
                                                                     f_iminus1)
@@ -292,22 +266,22 @@ def surface_term(t_n):
     return surface_term
 
 
-def b_vector(t_n):
+def b_vector(u_t_n):
     '''
     A function which returns the b vector for N_Elements number of elements.
     
     Parameters
     ----------
-    t_n : double
+    t_n            : double
     
     Returns
     -------
     b_vector_array : arrayfire.Array
     '''
-    volume_integral = volumeIntegralFlux(gvar.u[:, :, t_n])
-    surfaceTerm     = surface_term(t_n)
-    b_vector_array  = gvar.delta_t * (volume_integral - surfaceTerm)
-    
+
+    volume_integral = volume_integral_flux(u_t_n)
+    Surface_term    = surface_term(u_t_n)
+    b_vector_array  = gvar.delta_t * (volume_integral - Surface_term)
     
     return b_vector_array
 
@@ -323,28 +297,30 @@ def time_evolution():
     A_inverse   = af.inverse(A_matrix())
     element_LGL = gvar.element_LGL
     delta_t     = gvar.delta_t
+    amplitude   = gvar.u 
+    time        = gvar.time
     
-    
-    for t_n in trange(0, gvar.time.shape[0] - 1):
+    for t_n in trange(0, time.shape[0] - 1):
         
-        gvar.u[:, :, t_n + 1] = gvar.u[:, :, t_n] + af.blas.matmul(A_inverse,\
-                                                                b_vector(t_n))
+        amplitude[:, :, t_n + 1] = amplitude[:, :, t_n] + af.blas.matmul(A_inverse,\
+                b_vector(amplitude[:, :, t_n]))
     
     print('u calculated!')
     
-    for t_n in trange(0, gvar.time.shape[0] - 1):
+    for t_n in trange(0, time.shape[0] - 1):
         
         if t_n % 100 == 0:
             
             fig = plt.figure()
             x   = gvar.element_LGL
-            y   = gvar.u[:, :, t_n]
+            y   = amplitude[:, :, t_n]
             
             plt.plot(x, y)
             plt.xlabel('x')
             plt.ylabel('Amplitude')
             plt.title('Time = %f' % (t_n * delta_t))
-            fig.savefig('1D_Wave_images/%04d' %(t_n / 100) + '.png')
+            fig.savefig('results/1D_Wave_images/%04d' %(t_n / 100) + '.png')
             plt.close('all')
                 
     return
+

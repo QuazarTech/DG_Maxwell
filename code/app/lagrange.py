@@ -4,33 +4,6 @@ import arrayfire as af
 from utils import utils
 from app import global_variables as gvar
 
-def LGL_points(N):
-    '''
-    Returns the :math: `N` Legendre-Gauss-Laguere points which are
-    the roots of the equation
-    :math::
-        (1 - x^2)L'_N = 0
-    
-    Parameters
-    ----------
-    N : int
-        Number of LGL-points to be generated.
-        2 < N < 16
-    
-    Returns
-    -------
-    lgl : arrayfire.Array
-          An array of :math: `N` LGL points.
-    '''
-    if N > 16 or N < 2:
-        print('Skipping! This function can only return from ',
-              '2 to 16 LGL points.')
-    
-    n = N - 2
-
-    lgl = af.Array(gvar.LGL_list[n])
-    return lgl
-
 
 def lagrange_basis_coeffs(x):    
     '''
@@ -100,3 +73,51 @@ def lagrange_basis(i, x):
     l_xi_j      = af.blas.matmul(gvar.lBasisArray[i], x_pow)
     
     return l_xi_j
+
+
+def lagrange_basis_function(lagrange_coeff_array):
+    '''
+    Funtion which calculates the value of lagrange basis functions over LGL
+    nodes.
+    
+    Returns
+    -------
+    L_i    : arrayfire.Array [N 1 1 1]
+             The value of lagrange basis functions calculated over the LGL
+             nodes.
+    '''
+    xi_tile    = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL))
+    power      = af.flip(af.range(gvar.N_LGL))
+    power_tile = af.tile(power, 1, gvar.N_LGL)
+    xi_pow     = af.arith.pow(xi_tile, power_tile)
+    index      = af.range(gvar.N_LGL)
+    L_i        = af.blas.matmul(lagrange_coeff_array[index], xi_pow)
+    
+    return L_i
+
+
+def dLp_xi_LGL(lagrange_coeff_array):
+    '''
+    Function to calculate :math: `\\frac{d L_p(\\xi_{LGL})}{d\\xi}`
+    as a 2D array of :math: `L_i' (\\xi_{LGL})`. Where i varies along rows
+    and the nodes vary along the columns.
+    
+    Returns
+    -------
+    dLp_xi        : arrayfire.Array [N N 1 1]
+                    A 2D array :math: `L_i (\\xi_p)`, where i varies
+                    along dimension 1 and p varies along second dimension.
+    '''
+    differentiation_coeffs = (af.transpose(af.flip(af.tile\
+                             (af.range(gvar.N_LGL), 1, gvar.N_LGL)))
+                             * lagrange_coeff_array)[:, :-1]
+    
+    nodes_tile         = af.transpose(af.tile(gvar.xi_LGL, 1, gvar.N_LGL - 1))
+    power_tile         = af.flip(af.tile(af.range(gvar.N_LGL - 1), 1, gvar.N_LGL))
+    nodes_power_tile   = af.pow(nodes_tile, power_tile)
+    
+    dLp_xi = af.blas.matmul(differentiation_coeffs, nodes_power_tile)
+    
+    return dLp_xi
+
+
