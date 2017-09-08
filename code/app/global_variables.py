@@ -10,8 +10,8 @@ import math
 
 # This module is used to change the parameters of the simulation.
 
-# The functions to calculate Legendre-Gauss-Lobatto points as well
-# as the Lobatto weights used for integration are given below.
+# The functions to calculate Legendre-Gauss-Lobatto points and
+# the Lobatto weights used for integration are given below.
 
 def LGL_points(N):
     '''
@@ -140,7 +140,7 @@ delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 delta_t = delta_x / (20 * c)
 
 # Array of timesteps seperated by delta_t.
-time       = utils.linspace(0, int(total_time / delta_t) * delta_t,
+time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
                                             int(total_time / delta_t))
 
 # Initializing the amplitudes. Change u_init to required initial conditions.

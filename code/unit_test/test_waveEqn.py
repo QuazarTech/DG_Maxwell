@@ -46,7 +46,7 @@ def test_dx_dxi():
 def test_dx_dxi_analytical():
     '''
     Test to check the dx_dxi_analytical in wave equation module for an element
-    and compare it with an analytical value
+    and compare it with an analytical value.
     '''
     threshold = 1e-14
 
@@ -56,9 +56,9 @@ def test_dx_dxi_analytical():
     assert check_analytical_dx_dxi
 
 
-def test_lBasisArray():
+def test_lagrange_coeffs():
     '''
-    Function to test the lBasisArray function in global_variables module by
+    Function to test the lagrange_coeffs in global_variables module by
     passing 8 LGL points and comparing the numerically obtained basis function
     coefficients to analytically calculated ones.
     
@@ -66,7 +66,7 @@ def test_lBasisArray():
     ---------
     The link to the sage worksheet where the calculations were carried out.
     
-    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
     /PM_2_5/wave_equation/worksheets/l_basis_array.sagews
     '''
     threshold = 6e-10 
@@ -145,7 +145,7 @@ def test_lBasisArray():
     assert af.sum(af.abs(basis_array_analytical - gvar.lagrange_coeffs)) < threshold
 
 
-def test_Integral_Li_Lp():
+def test_integral_Li_Lp():
     '''
     Test function to check the A_matrix function in wave_equation module.
     
@@ -195,13 +195,13 @@ def test_A_matrix():
 
 def test_dLp_xi():
     '''
-    Test function to check the dLp_xi calculated in gvar mdule with a
+    Test function to check the dLp_xi calculated in gvar module with a
     numerically obtained one.
 
     Refrence
     --------
     The link to the sage worksheet where the calculations were carried out.
-    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
     /PM_2_5/wave_equation/worksheets/dLp_xi.sagews
     '''
     threshold = 4e-11
@@ -245,7 +245,7 @@ def test_volume_integral_flux():
     ---------
     The link to the sage worksheet where the calculations were caried out is
     given below.
-    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files\
+    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
     /PM_2_5/wave_equation/worksheets/volume_integral_flux.sagews
     
     '''
@@ -323,7 +323,7 @@ def test_surface_term():
 def test_b_vector():
     '''
     A test function to check the b vector obtained analytically and compare it
-    with the one returned by b_vector function in wave_equation module
+    with the one returned by b_vector function in wave_equation module.
     '''
     threshold = 1e-13
     gvar.c = 1

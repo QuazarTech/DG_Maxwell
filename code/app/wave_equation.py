@@ -236,9 +236,9 @@ def surface_term(u_t_n):
     
     Parameters
     ----------
-    u_t_n : arrayfire.Array [N M 1 1]
-          The timestep at which the surface term is to be calculated.
-    
+    u_t_n        : arrayfire.Array [N_LGL N_Elements 1 1]
+                   A 2D array consisting of the amplitude of the wave at the LGL nodes
+                   at each element.
     Returns
     -------
     surface_term : arrayfire.Array [N_LGL N_Elements 1 1]
@@ -272,8 +272,9 @@ def b_vector(u_t_n):
     
     Parameters
     ----------
-    t_n            : double
-    
+    u_t_n          : arrayfire.Array [N_LGL N_Elements 1 1]
+                     A 2D array consisting of the amplitude of the wave at the
+                     LGL nodes at each element.
     Returns
     -------
     b_vector_array : arrayfire.Array
