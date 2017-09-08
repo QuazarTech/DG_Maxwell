@@ -5,19 +5,25 @@ af.set_device(1)
 def add(a, b):
     '''
     '''
-    return a + b
+    sum = a + b
+    
+    return sum
 
 
 def divide(a, b):
     '''
     '''
-    return a / b
+    quotient = a / b
+    
+    return quotient
 
 
 def multiply(a, b):
     '''
     '''
-    return a * b
+    product = a* b
+    
+    return product
 
 
 def linspace(start, end, number_of_points):

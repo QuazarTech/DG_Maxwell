@@ -11,4 +11,5 @@ from app import lagrange
 
 if __name__ == '__main__':
     
+
     wave_equation.time_evolution()

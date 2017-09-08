@@ -119,5 +119,3 @@ def dLp_xi_LGL(lagrange_coeff_array):
     dLp_xi = af.blas.matmul(differentiation_coeffs, nodes_power_tile)
     
     return dLp_xi
-
-

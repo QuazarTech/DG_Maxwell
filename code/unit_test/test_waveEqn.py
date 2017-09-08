@@ -9,6 +9,7 @@ from utils import utils
 af.set_backend('opencl')
 
 
+
 def test_mapping_xi_to_x():
     '''
     A test function to check the mapping_xi_to_x function in wave_equation module,
@@ -21,10 +22,10 @@ def test_mapping_xi_to_x():
     test_element_nodes = af.interop.np_to_af_array(np.array([7, 11]))
     test_xi            = 0
     analytical_x_value = 9
+
     numerical_x_value  = wave_equation.mapping_xi_to_x(test_element_nodes, test_xi)
     
     assert af.abs(analytical_x_value - numerical_x_value) <= threshold
-
 
 def test_dx_dxi():
     '''
@@ -32,7 +33,9 @@ def test_dx_dxi():
     passing nodes of an element and using the LGL points. Analytically, the
     differential would be a constant. The check has a tolerance 1e-7.
     '''
+
     threshold = 1e-14
+
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
@@ -56,6 +59,7 @@ def test_dx_dxi_analytical():
     assert check_analytical_dx_dxi
 
 
+
 def test_lagrange_coeffs():
     '''
     Function to test the lagrange_coeffs in global_variables module by
@@ -69,6 +73,7 @@ def test_lagrange_coeffs():
     https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
     /PM_2_5/wave_equation/worksheets/l_basis_array.sagews
     '''
+
     threshold = 6e-10 
     basis_array_analytical = np.zeros([8, 8])
     
@@ -142,6 +147,7 @@ def test_lagrange_coeffs():
                 
     basis_array_analytical = af.interop.np_to_af_array(basis_array_analytical)
     
+
     assert af.sum(af.abs(basis_array_analytical - gvar.lagrange_coeffs)) < threshold
 
 
@@ -153,6 +159,7 @@ def test_integral_Li_Lp():
     all elements above a certain threshold to be 1 and plotting it.
     '''
     threshold = 1e-5
+
     A_matrix_structure = np.zeros([gvar.N_LGL, gvar.N_LGL])
     non_zero_indices  = np.where(np.array(wave_equation.A_matrix()) > threshold)
     
@@ -178,6 +185,7 @@ def test_A_matrix():
     The A matrix calculated analytically gives a different matrix.
     
     '''
+
     threshold = 3e-10
     
     reference_A_matrix = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)\
@@ -188,6 +196,7 @@ def test_A_matrix():
     test_A_matrix = wave_equation.A_matrix()
     error_array   = af.abs(reference_A_matrix - test_A_matrix)
     
+
     print(af.max(error_array))
     
     assert af.algorithm.max(error_array) < threshold
@@ -235,7 +244,6 @@ def test_dLp_xi():
         
     assert af.max(reference_d_Lp_xi - gvar.dLp_xi) < threshold
 
-
 def test_volume_integral_flux():
     '''
     A test function to check the volume_integral_flux function in wave_equation
@@ -245,6 +253,7 @@ def test_volume_integral_flux():
     ---------
     The link to the sage worksheet where the calculations were caried out is
     given below.
+
     https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
     /PM_2_5/wave_equation/worksheets/volume_integral_flux.sagews
     
@@ -273,6 +282,7 @@ def test_volume_integral_flux():
         [-0.102576031756, 0.0154359890788, 0.0209837936827, 0.019612124119, \
         0.0144355176966, 0.00882630935977, 0.00431252844519, 0.018969769374],\
         [-0.0176615086879, 0.00344551201015 ,0.00432019709409, 0.00362050204766,\
+
         0.00236838757932, 0.00130167737191, 0.000588597708116, 0.00201663487667\
             ]])))
     

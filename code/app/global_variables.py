@@ -43,7 +43,6 @@ def LGL_points(N):
 
     return lgl_points
 
-
 def lobatto_weight_function(n, x):
     '''
     Calculates and returns the weight function for an index :math:`n`
@@ -64,9 +63,10 @@ def lobatto_weight_function(n, x):
     
     Returns
     -------
+
     gauss_lobatto_weights : arrayfire.Array
-                          An array of lobatto weight functions for
-                          the given :math: `x` points and index.
+                            An array of lobatto weight functions for
+                            the given :math: `x` points and index.
     Reference
     ---------
     Gauss-Lobatto weights Wikipedia link-

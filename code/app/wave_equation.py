@@ -38,7 +38,6 @@ plt.rcParams['ytick.labelsize'] = 'medium'
 plt.rcParams['ytick.direction'] = 'in'
 
 
-
 def mapping_xi_to_x(x_nodes, xi):
     '''
     Maps points in :math: `\\xi` space to :math:`x` space using the formula
@@ -63,6 +62,7 @@ def mapping_xi_to_x(x_nodes, xi):
     N_0 = (1 - xi) / 2
     N_1 = (1 + xi) / 2
     
+
     N0_x0 = af.broadcast(utils.multiply, N_0, x_nodes[0])
     N1_x1 = af.broadcast(utils.multiply, N_1, x_nodes[1])
     
@@ -70,8 +70,7 @@ def mapping_xi_to_x(x_nodes, xi):
     
     return x
 
-
-
+  
 def dx_dxi_numerical(x_nodes, xi):
     '''
     Differential :math: `\\frac{dx}{d \\xi}` calculated by central differential
@@ -92,6 +91,7 @@ def dx_dxi_numerical(x_nodes, xi):
              :math:`\\frac{dx}{d \\xi}`. 
     '''
     dxi = 1e-7
+
     x2  = mapping_xi_to_x(x_nodes, xi + dxi)
     x1  = mapping_xi_to_x(x_nodes, xi - dxi)
     
@@ -119,7 +119,6 @@ def dx_dxi_analytical(x_nodes, xi):
     analytical_dx_dxi = (x_nodes[1] - x_nodes[0]) / 2
     
     return analytical_dx_dxi
-
 
 def A_matrix():
     '''
@@ -153,13 +152,13 @@ def A_matrix():
 
 def flux_x(u):
     '''
-    A function which returns the value of flux for a given wave function u.
-    :math:`f(u) = c u^k`
+    A function which calcultes and returns the value of flux for a given
+    wave function u. :math:`f(u) = c u^k`
     
     Parameters
     ----------
-    u    : arrayfire.Array
-           A 1-D array which contains the value of wave function.
+    u : arrayfire.Array [N 1 1 1]
+        A 1-D array which contains the value of wave function.
     
     Returns
     -------
@@ -181,6 +180,7 @@ def volume_integral_flux(u):
     
     Parameters
     ----------
+
     u             : arrayfire.Array [N_LGL N_Elements 1 1]
                     A 1-D array containing the value of the wave function at
                     the mapped LGL nodes in the element.
@@ -192,6 +192,7 @@ def volume_integral_flux(u):
                     for various lagrange basis functions.
     '''
     
+
     dLp_xi        = gvar.dLp_xi
     weight_tile   = af.transpose(af.tile(gvar.lobatto_weights, 1, gvar.N_LGL))
     dLp_xi       *= weight_tile
@@ -324,4 +325,3 @@ def time_evolution():
             plt.close('all')
                 
     return
-
