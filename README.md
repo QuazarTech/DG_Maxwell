@@ -27,4 +27,4 @@ python3 main.py
 * **Mani Chandra** - [GitHub Profile](https://github.com/mchandra)
 
 ## Note for developers:
-* Use tab spaces for indentation.
+* Use spaces for indentation.
