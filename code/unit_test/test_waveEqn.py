@@ -1,14 +1,17 @@
+#! /usr/bin/env python3
+import math
+
 import numpy as np
 import arrayfire as af
-import math
 from matplotlib import pyplot as plt
-from app import global_variables as gvar
+af.set_backend('opencl')
+
+from app import params
 from app import lagrange
 from app import wave_equation
 from utils import utils
-af.set_backend('opencl')
 
-
+# This test uses the initial paramters N_LGL = 8, N_Elements = 10
 
 def test_mapping_xi_to_x():
     '''
@@ -22,10 +25,10 @@ def test_mapping_xi_to_x():
     test_element_nodes = af.interop.np_to_af_array(np.array([7, 11]))
     test_xi            = 0
     analytical_x_value = 9
-
     numerical_x_value  = wave_equation.mapping_xi_to_x(test_element_nodes, test_xi)
     
     assert af.abs(analytical_x_value - numerical_x_value) <= threshold
+
 
 def test_dx_dxi():
     '''
@@ -33,15 +36,13 @@ def test_dx_dxi():
     passing nodes of an element and using the LGL points. Analytically, the
     differential would be a constant. The check has a tolerance 1e-7.
     '''
-
     threshold = 1e-14
-
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
     
     check_dx_dxi = (af.statistics.mean(wave_equation.dx_dxi_numerical
-                    (test_nodes,gvar.xi_LGL)) - analytical_dx_dxi) <= threshold
+                    (test_nodes,params.xi_LGL)) - analytical_dx_dxi) <= threshold
     
     assert check_dx_dxi
 
@@ -59,7 +60,6 @@ def test_dx_dxi_analytical():
     assert check_analytical_dx_dxi
 
 
-
 def test_lagrange_coeffs():
     '''
     Function to test the lagrange_coeffs in global_variables module by
@@ -70,10 +70,8 @@ def test_lagrange_coeffs():
     ---------
     The link to the sage worksheet where the calculations were carried out.
     
-    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
-    /PM_2_5/wave_equation/worksheets/l_basis_array.sagews
+    `https://goo.gl/6EFX5S`
     '''
-
     threshold = 6e-10 
     basis_array_analytical = np.zeros([8, 8])
     
@@ -147,71 +145,18 @@ def test_lagrange_coeffs():
                 
     basis_array_analytical = af.interop.np_to_af_array(basis_array_analytical)
     
-
-    assert af.sum(af.abs(basis_array_analytical - gvar.lagrange_coeffs)) < threshold
-
-
-def test_integral_Li_Lp():
-    '''
-    Test function to check the A_matrix function in wave_equation module.
-    
-    Obtaining the A_matrix from the function and setting the value of
-    all elements above a certain threshold to be 1 and plotting it.
-    '''
-    threshold = 1e-5
-
-    A_matrix_structure = np.zeros([gvar.N_LGL, gvar.N_LGL])
-    non_zero_indices  = np.where(np.array(wave_equation.A_matrix()) > threshold)
-    
-    A_matrix_structure[non_zero_indices] = 1.
-    
-    plt.gca().invert_yaxis()
-    plt.contourf(A_matrix_structure, 100, cmap = 'Blues')
-    plt.axes().set_aspect('equal')
-    plt.colorbar()
-    plt.show()
-    
-    return
-
-
-def test_A_matrix():
-    '''
-    Test function to check the A matrix obtained from wave_equation module with
-    one obtained by numerical integral solvers.
-    
-    NOTE
-    ----
-    A diagonal A-matrix is used as a reference in this unit test.
-    The A matrix calculated analytically gives a different matrix.
-    
-    '''
-
-    threshold = 3e-10
-    
-    reference_A_matrix = af.tile(gvar.lobatto_weights, 1, gvar.N_LGL)\
-        * af.identity(gvar.N_LGL, gvar.N_LGL, dtype = af.Dtype.f64)\
-        * af.mean(wave_equation.dx_dxi_numerical((gvar.element_mesh_nodes[0 : 2])\
-            ,gvar.xi_LGL))
-    
-    test_A_matrix = wave_equation.A_matrix()
-    error_array   = af.abs(reference_A_matrix - test_A_matrix)
-    
-
-    print(af.max(error_array))
-    
-    assert af.algorithm.max(error_array) < threshold
+    assert af.sum(af.abs(basis_array_analytical - params.lagrange_coeffs)) < threshold
 
 
 def test_dLp_xi():
     '''
-    Test function to check the dLp_xi calculated in gvar module with a
+    Test function to check the dLp_xi calculated in params module with a
     numerically obtained one.
 
     Refrence
     --------
     The link to the sage worksheet where the calculations were carried out.
-    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
-    /PM_2_5/wave_equation/worksheets/dLp_xi.sagews
+    `https://goo.gl/Xxp3PT`
     '''
     threshold = 4e-11
     
@@ -242,7 +187,8 @@ def test_dLp_xi():
     0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
     ]))
         
-    assert af.max(reference_d_Lp_xi - gvar.dLp_xi) < threshold
+    assert af.max(reference_d_Lp_xi - params.dLp_xi) < threshold
+
 
 def test_volume_integral_flux():
     '''
@@ -253,13 +199,10 @@ def test_volume_integral_flux():
     ---------
     The link to the sage worksheet where the calculations were caried out is
     given below.
-
-    https://cocalc.com/projects/1b7f404c-87ba-40d0-816c-2eba17466aa8/files
-    /PM_2_5/wave_equation/worksheets/volume_integral_flux.sagews
-    
+    `https://goo.gl/5Mub8M`
     '''
     threshold = 4e-8
-    gvar.c = 1
+    params.c = 1
     
     referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array([
         [-0.002016634876668093, -0.000588597708116113, -0.0013016773719126333,\
@@ -282,11 +225,10 @@ def test_volume_integral_flux():
         [-0.102576031756, 0.0154359890788, 0.0209837936827, 0.019612124119, \
         0.0144355176966, 0.00882630935977, 0.00431252844519, 0.018969769374],\
         [-0.0176615086879, 0.00344551201015 ,0.00432019709409, 0.00362050204766,\
-
         0.00236838757932, 0.00130167737191, 0.000588597708116, 0.00201663487667\
             ]])))
     
-    numerical_flux = wave_equation.volume_integral_flux(gvar.u[:, :, 0])
+    numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
     assert (af.max(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
 
 def test_lax_friedrichs_flux():
@@ -296,10 +238,10 @@ def test_lax_friedrichs_flux():
     '''
     threshold = 1e-14
     
-    gvar.c = 1
+    params.c = 1
     
-    f_i = wave_equation.lax_friedrichs_flux(gvar.u[:, :, 0])
-    analytical_lax_friedrichs_flux = gvar.u[-1, :, 0]
+    f_i = wave_equation.lax_friedrichs_flux(params.u[:, :, 0])
+    analytical_lax_friedrichs_flux = params.u[-1, :, 0]
     assert af.max(af.abs(analytical_lax_friedrichs_flux - f_i)) < threshold
 
 
@@ -309,22 +251,22 @@ def test_surface_term():
     module using analytical Lax-Friedrichs flux.
     '''
     threshold = 1e-13
-    gvar.c = 1
+    params.c = 1
     
     
-    analytical_f_i        = (gvar.u[-1, :, 0])
-    analytical_f_i_minus1 = (af.shift(gvar.u[-1, :, 0], 0, 1))
+    analytical_f_i        = (params.u[-1, :, 0])
+    analytical_f_i_minus1 = (af.shift(params.u[-1, :, 0], 0, 1))
     
-    L_p_1                 = af.constant(0, gvar.N_LGL, dtype = af.Dtype.f64)
-    L_p_1[gvar.N_LGL - 1] = 1 
+    L_p_1                 = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
+    L_p_1[params.N_LGL - 1] = 1 
     
-    L_p_minus1    = af.constant(0, gvar.N_LGL, dtype = af.Dtype.f64)
+    L_p_minus1    = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
     L_p_minus1[0] = 1
     
     analytical_surface_term = af.blas.matmul(L_p_1, analytical_f_i)\
         - af.blas.matmul(L_p_minus1, analytical_f_i_minus1)
     
-    numerical_surface_term = (wave_equation.surface_term(gvar.u[:, :, 0]))
+    numerical_surface_term = (wave_equation.surface_term(params.u[:, :, 0]))
     assert af.max(af.abs(analytical_surface_term - numerical_surface_term)) \
         < threshold
     return analytical_surface_term
@@ -336,13 +278,13 @@ def test_b_vector():
     with the one returned by b_vector function in wave_equation module.
     '''
     threshold = 1e-13
-    gvar.c = 1
+    params.c = 1
     
-    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(), gvar.u[:, :, 0])
-    volume_integral_flux = wave_equation.volume_integral_flux(gvar.u[:, :, 0])
+    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(), params.u[:, :, 0])
+    volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
     surface_term         = test_surface_term()
     b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\
-                                    (surface_term)) * gvar.delta_t
-    b_vector_array       = wave_equation.b_vector(gvar.u[:, :, 0])
+                                    (surface_term)) * params.delta_t
+    b_vector_array       = wave_equation.b_vector(params.u[:, :, 0])
     
     assert (b_vector_analytical - b_vector_array) < threshold

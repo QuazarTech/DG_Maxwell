@@ -22,9 +22,9 @@ python3 main.py
 
 ## Authors
 
-* **Balavarun P** - [GitHub Profile](https://github.com/Balavarun5)
+* **Balavarun P**          - [GitHub Profile](https://github.com/Balavarun5)
 * **Aman Abhishek Tiwari** - [GitHub Profile](https://github.com/amanabt)
-* **Mani Chandra** - [GitHub Profile](https://github.com/mchandra)
+* **Mani Chandra**         - [GitHub Profile](https://github.com/mchandra)
 
 ## Note for developers:
 * Use spaces for indentation.
