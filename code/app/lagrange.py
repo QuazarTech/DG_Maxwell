@@ -72,8 +72,43 @@ def lobatto_weights(n, x):
 
     return gauss_lobatto_weights
 
+def gauss_nodes(N):
+    '''
+    '''
+    legendre = sp.legendre(N)
+    gauss_nodes = legendre.r
+    gauss_nodes.sort()
+    
+    
+    return gauss_nodes
 
-def lagrange_basis_coeffs(x):    
+def gaussian_weights(N, i):
+    '''
+    Returns the gaussian weights for :math: `N` Gaussian Nodes at index
+     :math: `i`.
+    
+    Parameters
+    ----------
+    N     : int
+            Number of Gaussian nodes for which the weight is t be calculated.
+            
+    i     : int
+            Index for which the Gaussian weight is required.
+    
+    Returns
+    -------
+    gaussian_weight : double 
+                      The gaussian weight.
+    
+    '''
+    
+    gaussian_nodes = gauss_nodes(N)
+    gaussian_weight  = 2 / ((1 - (gaussian_nodes[i]) ** 2) * (np.polyder(sp.legendre(N))(gaussian_nodes[i])) ** 2)
+    
+    
+    return gaussian_weight
+
+def lagrange_polynomials(x):    
     '''
     A function to get the coefficients of the Lagrange basis polynomials for
     a given set of x nodes.
@@ -90,14 +125,20 @@ def lagrange_basis_coeffs(x):
 
     Returns
     -------
-    lagrange_basis_poly : numpy.ndarray
-                          A :math: `N \\times N` matrix containing the
-                          coefficients of the Lagrange basis polynomials such
-                          that :math:`i^{th}` lagrange polynomial will be the
-                          :math:`i^{th}` row of the matrix.
+    lagrange_basis_poly   : list
+                            A list of size `x.shape[0]` containing the analytical
+                            form of the Lagrange basis polynomials in numpy.poly1d
+                            form. This list is used in Integrate() function which
+                            requires the analytical form of the integrand.
+    lagrange_basis_coeffs : numpy.ndarray
+                            A :math: `N \\times N` matrix containing the
+                            coefficients of the Lagrange basis polynomials such
+                            that :math:`i^{th}` lagrange polynomial will be the
+                            :math:`i^{th}` row of the matrix.
     '''
     X = np.array(x)
-    lagrange_basis_poly = np.zeros([X.shape[0], X.shape[0]])
+    lagrange_basis_poly   = []
+    lagrange_basis_coeffs = np.zeros([X.shape[0], X.shape[0]])
     
     for j in np.arange(X.shape[0]):
         lagrange_basis_j = np.poly1d([1])
@@ -106,10 +147,10 @@ def lagrange_basis_coeffs(x):
             if m != j:
                 lagrange_basis_j *= np.poly1d([1, -X[m]]) \
                                     / (X[j] - X[m])
-        lagrange_basis_poly[j] = lagrange_basis_j.c
+        lagrange_basis_poly.append(lagrange_basis_j)
+        lagrange_basis_coeffs[j] = lagrange_basis_j.c
     
-    return lagrange_basis_poly
-
+    return lagrange_basis_poly, lagrange_basis_coeffs
 
 def lagrange_basis(i, x):
     '''
@@ -187,10 +228,47 @@ def dLp_xi_LGL(lagrange_coeff_array):
     
     return dLp_xi
 
+def product_lagrange_poly(x):
+    '''
+    Calculates the product of Lagrange basis polynomials in 'np.poly1d' in a 
+    2D array. This analytical form of the product of the Lagrange basis is used
+    in the calculation of A matrix using the Integrate() function.
+    '''
+    poly1d_list = lagrange_polynomials(x)[0]
+
+    poly1d_product_list = []
+
+    for i in range (x.shape[0]):
+        for j in range(x.shape[0]):
+            poly1d_product_list.append(poly1d_list[i] * poly1d_list[j])
+
+        
+    return poly1d_product_list
+
 
 
 def Integrate(integrand, N_quad, scheme):
     '''
+    Integrates an analytical form of the integrand and integrates it using either
+    gaussian or lobatto quadrature.
+    
+    Parameters
+    ----------
+    integrand : numpy.poly1d
+                The analytical form of the integrand in numpy.poly1d form
+
+    N_quad    : int
+                The number of quadrature points to be used for Integration using
+                either Gaussian or Lobatto quadrature.    
+    scheme    : string
+                Specifies the method of integration to be used. Can take values
+                'gauss_quadrature' and 'lobatto_quadrature'.
+
+    Returns
+    -------
+    Integral : numpy.float64
+               The value o the definite integration performed using the specified
+               quadrature method.
     '''
     if (scheme == 'gauss_quadrature'):
         gaussian_nodes = gauss_nodes(N_quad)
@@ -203,9 +281,25 @@ def Integrate(integrand, N_quad, scheme):
         
     if (scheme == 'lobatto_quadrature'):
         lobatto_nodes = LGL_points(N_quad)
-        lobatto_weights  = lobatto_weight_function(N_quad)
+        weights  = af.np_to_af_array(lobatto_weights(N_quad, lobatto_nodes))
         value_at_lobatto_nodes = af.np_to_af_array(integrand(lobatto_nodes))
-        Integral = af.sum(value_at_lobatto_nodes * lobatto_weights)
+        Integral = af.sum(value_at_lobatto_nodes * weights)
     
     
     return Integral
+
+
+def wave_equation_lagrange_basis(u, element_no):
+    '''
+    Calculates the wave equation for a single element using the amplitude of the wave at
+    the mapped LGL points.
+    [TODO] - Explain math.
+    '''
+    amplitude_at_element_LGL = u[:, element_no]
+    lagrange_basis_polynomials = params.lagrange_poly1d_list
+    
+    wave_equation_element = np.poly1d([0])
+    for i in range(0, params.N_LGL):
+        wave_equation_element += af.sum(amplitude_at_element_LGL[i]) * lagrange_basis_polynomials[i]
+
+    return wave_equation_element

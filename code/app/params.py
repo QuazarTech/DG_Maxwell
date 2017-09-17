@@ -26,7 +26,7 @@ scheme     = 'lobatto_quadrature'
 c          = 1
 
 # The total time for which the wave is to be evolved by the simulation. 
-total_time = 1
+total_time = 10
 
 # The c_lax to be used in the Lax-Friedrichs flux.
 c_lax      = 1
@@ -38,7 +38,7 @@ xi_LGL     = lagrange.LGL_points(N_LGL)
 lobatto_weights = af.np_to_af_array(lagrange.lobatto_weights(N_LGL, xi_LGL))
 
 # An array containing the coefficients of the lagrange basis polynomials.
-lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_basis_coeffs(xi_LGL))
+lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
 
 # Refer corresponding functions.
 dLp_xi               = lagrange.dLp_xi_LGL(lagrange_coeffs)
@@ -76,3 +76,26 @@ u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
+
+
+
+
+
+lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
+
+poly1d_product_list = lagrange.product_lagrange_poly(xi_LGL)
+
+
+
+N_Gauss = 10
+
+gauss_points  = lagrange.gauss_nodes(N_Gauss)
+gauss_weights = af.np_to_af_array(np.zeros([N_Gauss]))
+
+for i in range(0, N_Gauss):
+    gauss_weights[i] = lagrange.gaussian_weights(N_Gauss, i)
+
+differential_lagrange_polynomial = []
+for i in range (0, N_LGL):
+    test_diff = np.poly1d.deriv(lagrange_poly1d_list[i])
+    differential_lagrange_polynomial.append(test_diff)

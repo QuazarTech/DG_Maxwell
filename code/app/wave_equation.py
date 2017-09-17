@@ -139,14 +139,24 @@ def A_matrix():
                obtained by LGL points, using Gauss-Lobatto quadrature method
                using :math: `N_LGL` points.
     '''
-    dx_dxi          = dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),
-                                                                   params.xi_LGL)
-    dx_dxi_tile     = af.tile(dx_dxi, 1, params.N_LGL)
-    identity_matrix = af.identity(params.N_LGL, params.N_LGL, dtype = af.Dtype.f64)
-    A_matrix        = af.broadcast(utils.multiply, params.lobatto_weights,
-                                                 identity_matrix) * dx_dxi_tile
+    A_matrix = np.zeros([params.N_LGL, params.N_LGL])
+
+    for i in range (params.N_LGL):
+        for j in range(params.N_LGL):
+            A_matrix[i][j] = lagrange.Integrate(\
+                    params.poly1d_product_list[params.N_LGL * i + j],\
+                    9, 'lobatto_quadrature')
+
+    dx_dxi = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
+                                                        params.xi_LGL))
+
+    A_matrix *= dx_dxi
+
+    A_matrix = af.np_to_af_array(A_matrix)
+    
 
     return A_matrix
+
 
 
 def flux_x(u):
@@ -168,8 +178,19 @@ def flux_x(u):
 
     return flux
 
+def wave_equation_lagrange_polynomials(u):
+    '''
+    '''
+    wave_equation_in_lagrange_basis = []
 
-def volume_integral_flux(u):
+    for i in range(0, params.N_Elements):
+        element_wave_equation = lagrange.wave_equation_lagrange_basis(u, i)
+        wave_equation_in_lagrange_basis.append(element_wave_equation)  
+
+    return wave_equation_in_lagrange_basis
+
+
+def volume_integral_flux(u_n):
     '''
     Calculates the volume integral of flux in the wave equation.
     :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -189,14 +210,17 @@ def volume_integral_flux(u):
                     A 1-D array of the value of the flux integral calculated
                     for various lagrange basis functions.
     '''
-    
-    dLp_xi        = params.dLp_xi
-    weight_tile   = af.transpose(af.tile(params.lobatto_weights, 1, params.N_LGL))
-    dLp_xi       *= weight_tile
-    flux          = flux_x(u)
-    weight_flux   = flux
-    flux_integral = af.blas.matmul(dLp_xi, weight_flux)
-    
+    wave_equation_in_lagrange_polynomials = wave_equation_lagrange_polynomials(u_n)
+    differential_lagrange_poly = params.differential_lagrange_polynomial
+    flux_integral = np.zeros([params.N_LGL, params.N_Elements])
+
+    for i in range(params.N_LGL):
+        for j in range(params.N_Elements):
+            integrand = wave_equation_in_lagrange_polynomials[j] * differential_lagrange_poly[i]
+            flux_integral[i][j] = lagrange.Integrate(integrand, 9, 'gauss_quadrature')
+
+    flux_integral = af.np_to_af_array(flux_integral)
+
     return flux_integral
 
 
@@ -209,8 +233,8 @@ def lax_friedrichs_flux(u_n):
     Parameters
     ----------
     u_n : arrayfire.Array [N_LGL N_Elements 1 1]
-            A 2D array consisting of the amplitude of the wave at the LGL nodes
-            at each element.
+          A 2D array consisting of the amplitude of the wave at the LGL nodes
+          at each element.
     '''
     
     u_iplus1_0    = af.shift(u_n[0, :], 0, -1)
