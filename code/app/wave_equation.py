@@ -75,21 +75,21 @@ def mapping_xi_to_x(x_nodes, xi):
 
 def dx_dxi_numerical(x_nodes, xi):
     '''
-    Differential :math: `\\frac{dx}{d \\xi}` calculated by central differential
-    method about xi using the mapping_xi_to_x function.
+    Differential :math: `\\frac{dx}{d \\xi}` calculated by central
+    differential method about xi using the mapping_xi_to_x function.
     
     Parameters
     ----------
     
-    x_nodes : arrayfire.Array
-              Contains the nodes of elements
+    x_nodes : arrayfire.Array [N_Elements 1 1 1]
+              Contains the nodes of elements.
     
     xi      : float
               Value of :math: `\\xi`
     
     Returns
     -------
-    dx_dxi : arrayfire.Array
+    dx_dxi : arrayfire.Array [N_Elements 1 1 1]
              :math:`\\frac{dx}{d \\xi}`. 
     '''
     dxi = 1e-7
@@ -107,12 +107,12 @@ def dx_dxi_analytical(x_nodes, xi):
     :math: `\\frac{x_1 - x_0}{2}`
     Parameters
     ----------
-    x_nodes : arrayfire.Array
-              An array containing the nodes of an element.
-    
+    x_nodes : arrayfire.Array [N_Elements 1 1 1]
+              Contains the nodes of elements.
+
     Returns
     -------
-    analytical_dx_dxi : arrayfire.Array
+    analytical_dx_dxi : arrayfire.Array [N_Elements 1 1 1]
                         The analytical solution of :math:
                         `\\frac{dx}{d\\xi}` for an element.
     
@@ -134,10 +134,9 @@ def A_matrix():
     `https://goo.gl/Cw6tnw`
     Returns
     -------
-    A_matrix : arrayfire.Array
+    A_matrix : arrayfire.Array [N_LGL N_LGL 1 1]
                The value of integral of product of lagrange basis functions
-               obtained by LGL points, using Gauss-Lobatto quadrature method
-               using :math: `N_LGL` points.
+               obtained by LGL points, using the Integrate() function
     '''
     A_matrix = np.zeros([params.N_LGL, params.N_LGL])
 
@@ -145,7 +144,7 @@ def A_matrix():
         for j in range(params.N_LGL):
             A_matrix[i][j] = lagrange.Integrate(\
                     params.poly1d_product_list[params.N_LGL * i + j],\
-                    9, 'lobatto_quadrature')
+                    params.N_LGL + 1, 'lobatto_quadrature')
 
     dx_dxi = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
                                                         params.xi_LGL))
@@ -166,29 +165,18 @@ def flux_x(u):
     
     Parameters
     ----------
-    u    : arrayfire.Array
-           A 1-D array which contains the value of wave function.
-    
+    u : list [N_Elements]
+        The analytical form of the wave equation for each element arranged in
+        a list of numpy.poly1d polynomials.
     Returns
     -------
-    flux : arrayfire.Array
-           The value of the flux for given u.
+    flux : list [N_Elements] 
+           The analytical value of the flux for each element arranged in a list
+           of numpy.poly1d polynomials.
     '''
     flux = params.c * u
 
     return flux
-
-def wave_equation_lagrange_polynomials(u):
-    '''
-    '''
-    wave_equation_in_lagrange_basis = []
-
-    for i in range(0, params.N_Elements):
-        element_wave_equation = lagrange.wave_equation_lagrange_basis(u, i)
-        wave_equation_in_lagrange_basis.append(element_wave_equation)  
-
-    return wave_equation_in_lagrange_basis
-
 
 def volume_integral_flux(u_n):
     '''
@@ -196,28 +184,29 @@ def volume_integral_flux(u_n):
     :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
     This will give N values of flux integral as p varies from 0 to N - 1.
     
-    This integral is carried out over an element with LGL nodes mapped onto it.
+    This integral is carried out using the analytical form of the integrand
+    This integrand is the used in the Integrate() function.
     
     Parameters
     ----------
     u : arrayfire.Array [N_LGL N_Elements 1 1]
-        A 2D array containing the value of the wave function at
-        the mapped LGL nodes in all the elements.
-    
+        Amplitude of the wave at the mapped LGL nodes of each element.
+            
     Returns
     -------
     flux_integral : arrayfire.Array [N_LGL N_Elements 1 1]
-                    A 1-D array of the value of the flux integral calculated
-                    for various lagrange basis functions.
+                    Value of the volume integral flux. It contains the integral
+                    of all N_LGL * N_Element integrands.
     '''
-    wave_equation_in_lagrange_polynomials = wave_equation_lagrange_polynomials(u_n)
+    analytical_form_flux       = flux_x(lagrange.wave_equation_lagrange(u_n))
     differential_lagrange_poly = params.differential_lagrange_polynomial
-    flux_integral = np.zeros([params.N_LGL, params.N_Elements])
+    flux_integral              = np.zeros([params.N_LGL, params.N_Elements])
 
     for i in range(params.N_LGL):
         for j in range(params.N_Elements):
-            integrand = wave_equation_in_lagrange_polynomials[j] * differential_lagrange_poly[i]
-            flux_integral[i][j] = lagrange.Integrate(integrand, 9, 'gauss_quadrature')
+            integrand = analytical_form_flux[j] * differential_lagrange_poly[i]
+            flux_integral[i][j] = lagrange.Integrate(integrand, params.N_LGL,\
+                                                           'gauss_quadrature')
 
     flux_integral = af.np_to_af_array(flux_integral)
 
@@ -229,13 +218,17 @@ def lax_friedrichs_flux(u_n):
     A function which calculates the lax-friedrichs_flux :math:`f_i` using.
     :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \frac
                 {\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
-    
+
+    The algorithm used is explained in the link given below
+    `https://goo.gl/sNsXXK`
+
     Parameters
     ----------
     u_n : arrayfire.Array [N_LGL N_Elements 1 1]
-          A 2D array consisting of the amplitude of the wave at the LGL nodes
-          at each element.
+          Amplitude of the wave at the mapped LGL nodes of each element.
+          
     '''
+
     
     u_iplus1_0    = af.shift(u_n[0, :], 0, -1)
     u_i_N_LGL     = u_n[-1, :]
@@ -259,15 +252,14 @@ def surface_term(u_n):
     Parameters
     ----------
     u_n : arrayfire.Array [N_LGL N_Elements 1 1]
-          A 2D array consisting of the amplitude of the wave at the LGL nodes
-          at each element.
-
+          Amplitude of the wave at the mapped LGL nodes of each element.
+          
     Returns
     -------
     surface_term : arrayfire.Array [N_LGL N_Elements 1 1]
                    The surface term represented in the form of an array,
-                   :math:`L_p (1) f_i - L_p (-1) f_{i - 1}`, where p varies from
-                   zero to :math:`N_{LGL}` and i from zero to
+                   :math:`L_p (1) f_i - L_p (-1) f_{i - 1}`, where p varies
+                   from zero to :math:`N_{LGL}` and i from zero to
                    :math:`N_{Elements}`. p varies along the rows and i along
                    columns.
     
@@ -295,11 +287,18 @@ def b_vector(u_n):
     Parameters
     ----------
     u_n : arrayfire.Array [N_LGL N_Elements 1 1]
-          A 2D array consisting of the amplitude of the wave at the
-          LGL nodes at each element.
+          Amplitude of the wave at the mapped LGL nodes of each element.
+
     Returns
     -------
-    b_vector_array : arrayfire.Array
+    b_vector_array : arrayfire.Array [N_LGL N_Elements 1 1]
+                     Contains the b vector(of shape [N_LGL 1 1 1])
+                     for each element.
+
+    Reference
+    ---------
+    A report for the b-vector can be found here
+    `https://goo.gl/sNsXXK`
     '''
 
     volume_integral = volume_integral_flux(u_n)

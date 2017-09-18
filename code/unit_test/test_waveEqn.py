@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+
 import math
 
 import numpy as np
@@ -11,7 +12,7 @@ from app import lagrange
 from app import wave_equation
 from utils import utils
 
-# This test uses the initial paramters N_LGL = 8, N_Elements = 10
+# This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
 def test_mapping_xi_to_x():
     '''
@@ -147,48 +148,6 @@ def test_lagrange_coeffs():
     
     assert af.sum(af.abs(basis_array_analytical - params.lagrange_coeffs)) < threshold
 
-
-def test_dLp_xi():
-    '''
-    Test function to check the dLp_xi calculated in params module with a
-    numerically obtained one.
-
-    Refrence
-    --------
-    The link to the sage worksheet where the calculations were carried out.
-    `https://goo.gl/Xxp3PT`
-    '''
-    threshold = 4e-11
-    
-    reference_d_Lp_xi = af.np_to_af_array(np.array([\
-    [-14.0000000000226,-3.20991570302344,0.792476681323880,-0.372150435728984,\
-    0.243330712724289,-0.203284568901545,0.219957514771985, -0.500000000000000],
-    
-    [18.9375986071129, 3.31499272476776e-11, -2.80647579473469,1.07894468878725\
-    ,-0.661157350899271,0.537039586158262, -0.573565414940005,1.29768738831567],
-
-    [-7.56928981931106, 4.54358506455201, -6.49524878326702e-12, \
-    -2.37818723350641, 1.13535801687865, -0.845022556506714, 0.869448098330221,\
-    -1.94165942553537],
-
-    [4.29790816425547,-2.11206121431525,2.87551740597844,-1.18896004153157e-11,\
-    -2.38892435916370, 1.37278583181113, -1.29423205091574, 2.81018898925442],
-
-    [-2.81018898925442, 1.29423205091574, -1.37278583181113, 2.38892435916370, \
-    1.18892673484083e-11,-2.87551740597844, 2.11206121431525,-4.29790816425547],
-
-    [1.94165942553537, -0.869448098330221, 0.845022556506714,-1.13535801687865,\
-     2.37818723350641, 6.49524878326702e-12,-4.54358506455201,7.56928981931106],\
-
-    [-1.29768738831567, 0.573565414940005,-0.537039586158262,0.661157350899271,\
-    -1.07894468878725,2.80647579473469,-3.31498162253752e-11,-18.9375986071129],
-
-    [0.500000000000000,-0.219957514771985,0.203284568901545,-0.243330712724289,\
-    0.372150435728984, -0.792476681323880, 3.20991570302344, 14.0000000000226]
-    ]))
-        
-    assert af.max(reference_d_Lp_xi - params.dLp_xi) < threshold
-
 def test_A_matrix():
     '''
     Test function to check the A matrix obtained from wave_equation module with
@@ -247,7 +206,7 @@ def test_volume_integral_flux():
     given below.
     `https://goo.gl/5Mub8M`
     '''
-    threshold = 4e-8
+    threshold = 8e-9
     params.c = 1
     
     referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array([

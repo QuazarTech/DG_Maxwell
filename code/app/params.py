@@ -37,12 +37,37 @@ xi_LGL     = lagrange.LGL_points(N_LGL)
 # Array of the lobatto weights used during integration.
 lobatto_weights = af.np_to_af_array(lagrange.lobatto_weights(N_LGL, xi_LGL))
 
+
+# The number of Gaussian nodes for Gauss quadrature
+N_Gauss = 10
+
+# N_Gauss number of Gauss nodes.
+gauss_points  = lagrange.gauss_nodes(N_Gauss)
+
+# The Gaussian weights.
+gauss_weights = af.np_to_af_array(np.zeros([N_Gauss]))
+
+for i in range(0, N_Gauss):
+    gauss_weights[i] = lagrange.gaussian_weights(N_Gauss, i)
+
+
+# A list of the Lagrange polynomials in poly1d form.
+lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
+
+# List of the product of the Lagrange basis polynomials. Used in
+# the calculation of A matrix.
+poly1d_product_list = lagrange.product_lagrange_poly(xi_LGL)
+
+# list containing the poly1d forms of the differential of Lagrange
+# basis polynomials.
+differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
+
+
 # An array containing the coefficients of the lagrange basis polynomials.
 lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
 
 # Refer corresponding functions.
-dLp_xi               = lagrange.dLp_xi_LGL(lagrange_coeffs)
-lagrange_basis_value = lagrange.lagrange_basis_function(lagrange_coeffs)
+lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)
 
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
@@ -58,7 +83,8 @@ element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
                                     af.sum(x_nodes[1]), N_Elements + 1)
 
 element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
-element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array), xi_LGL)
+element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
+                                                                   xi_LGL)
 
 
 # The minimum distance between 2 mapped LGL points.
@@ -76,26 +102,3 @@ u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
-
-
-
-
-
-lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
-
-poly1d_product_list = lagrange.product_lagrange_poly(xi_LGL)
-
-
-
-N_Gauss = 10
-
-gauss_points  = lagrange.gauss_nodes(N_Gauss)
-gauss_weights = af.np_to_af_array(np.zeros([N_Gauss]))
-
-for i in range(0, N_Gauss):
-    gauss_weights[i] = lagrange.gaussian_weights(N_Gauss, i)
-
-differential_lagrange_polynomial = []
-for i in range (0, N_LGL):
-    test_diff = np.poly1d.deriv(lagrange_poly1d_list[i])
-    differential_lagrange_polynomial.append(test_diff)
