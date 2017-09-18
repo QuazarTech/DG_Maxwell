@@ -1,13 +1,16 @@
 #! /usr/bin/env python3
 
 import arrayfire as af
-af.set_backend('opencl')
 import numpy as np
-from app import global_variables as gvar
+af.set_backend('opencl')
+
+from app import params
 from unit_test import test_waveEqn
 from app import wave_equation
 from app import lagrange
+
+
 if __name__ == '__main__':
-    
-    gvar.populateGlobalVariables(8)
-    print(wave_equation.volumeIntegralFlux(gvar.u[:, :, 0]))
+    #print(lagrange.product_lagrange_poly(params.xi_LGL))
+    wave_equation.time_evolution()
+    print(params.lagrange_basis_value)
