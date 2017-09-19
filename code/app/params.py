@@ -13,14 +13,14 @@ from app import wave_equation
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8
+N_LGL      = 8 
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
-scheme     = 'lobatto_quadrature'
+scheme     = 'gauss_quadrature'
 
 # Wave speed.
 c          = 1
@@ -51,23 +51,28 @@ for i in range(0, N_Gauss):
     gauss_weights[i] = lagrange.gaussian_weights(N_Gauss, i)
 
 
+
+
+
+
 # A list of the Lagrange polynomials in poly1d form.
-lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
-
-# List of the product of the Lagrange basis polynomials. Used in
-# the calculation of A matrix.
-poly1d_product_list = lagrange.product_lagrange_poly(xi_LGL)
-
-# list containing the poly1d forms of the differential of Lagrange
-# basis polynomials.
-differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
-
+lagrange_product = lagrange.product_lagrange_poly(xi_LGL)
 
 # An array containing the coefficients of the lagrange basis polynomials.
 lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
 
 # Refer corresponding functions.
 lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)
+
+# A list of the Lagrange polynomials in poly1d form.
+lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
+
+
+# list containing the poly1d forms of the differential of Lagrange
+# basis polynomials.
+differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
+
+
 
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
@@ -102,3 +107,13 @@ u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
+
+
+
+
+
+
+
+
+
+

@@ -122,7 +122,7 @@ def dx_dxi_analytical(x_nodes, xi):
     return analytical_dx_dxi
 
 
-def A_matrix():
+def A_matrix(N_quad, scheme):
     '''
     Calculates A matrix whose elements :math:`A_{p i}` are given by
     :math: `A_{p i} &= \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
@@ -138,20 +138,14 @@ def A_matrix():
                The value of integral of product of lagrange basis functions
                obtained by LGL points, using the Integrate() function
     '''
-    A_matrix = np.zeros([params.N_LGL, params.N_LGL])
-
-    for i in range (params.N_LGL):
-        for j in range(params.N_LGL):
-            A_matrix[i][j] = lagrange.Integrate(\
-                    params.poly1d_product_list[params.N_LGL * i + j],\
-                    params.N_LGL + 1, 'lobatto_quadrature')
-
+    int_Li_Lp = lagrange.Integrate(params.lagrange_product, N_quad, scheme)
+    
     dx_dxi = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
                                                         params.xi_LGL))
 
-    A_matrix *= dx_dxi
+    A_matrix_flat = dx_dxi * int_Li_Lp
 
-    A_matrix = af.np_to_af_array(A_matrix)
+    A_matrix = af.moddims(A_matrix_flat, params.N_LGL, params.N_LGL)
     
 
     return A_matrix
@@ -200,15 +194,15 @@ def volume_integral_flux(u_n):
     '''
     analytical_form_flux       = flux_x(lagrange.wave_equation_lagrange(u_n))
     differential_lagrange_poly = params.differential_lagrange_polynomial
-    flux_integral              = np.zeros([params.N_LGL, params.N_Elements])
+    integrand = np.zeros(([params.N_LGL * params.N_Elements, 2 * params.N_LGL - 2]))
 
     for i in range(params.N_LGL):
         for j in range(params.N_Elements):
-            integrand = analytical_form_flux[j] * differential_lagrange_poly[i]
-            flux_integral[i][j] = lagrange.Integrate(integrand, params.N_LGL,\
-                                                           'gauss_quadrature')
+            integrand[i + params.N_LGL * j] = (analytical_form_flux[j] * differential_lagrange_poly[i]).c
 
-    flux_integral = af.np_to_af_array(flux_integral)
+    integrand = af.np_to_af_array(integrand)
+    flux_integral = lagrange.Integrate(integrand, 9, 'lobatto_quadrature')
+    flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
 
     return flux_integral
 
@@ -316,7 +310,7 @@ def time_evolution():
     of the wave. The images are then stored in Wave folder.
     '''
     
-    A_inverse   = af.inverse(A_matrix())
+    A_inverse   = af.inverse(A_matrix(9, 'gauss_quadrature'))
     element_LGL = params.element_LGL
     delta_t     = params.delta_t
     amplitude   = params.u 

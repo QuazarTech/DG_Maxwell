@@ -101,7 +101,6 @@ def gauss_nodes(n):
     gauss_nodes = legendre.r
     gauss_nodes.sort()
     
-    
     return gauss_nodes
 
 def gaussian_weights(N, i):
@@ -139,7 +138,7 @@ def gaussian_weights(N, i):
 
 def lagrange_polynomials(x):    
     '''
-    A function to get the analytical form and thr coefficients of 
+    A function to get the analytical form and the coefficients of 
     Lagrange basis polynomials evaluated using x nodes.
     
     It calculates the Lagrange basis polynomials using the formula:
@@ -242,58 +241,82 @@ def product_lagrange_poly(x):
                           Contains the poly1d form of the product of the Lagrange
                           basis polynomials.
     '''
-    poly1d_list = lagrange_polynomials(x)[0]
+    poly1d_list = lagrange_polynomials(params.xi_LGL)[0] 
+    poly1d_product_coeffs = np.zeros([params.N_LGL ** 2, params.N_LGL * 2 - 1])
 
-    poly1d_product_list = []
+    for i in range (params.N_LGL):
+        for j in range (params.N_LGL):
+            poly1d_product_coeffs[params.N_LGL * i + j] = ((poly1d_list[i] * poly1d_list[j]).c)
 
-    for i in range (x.shape[0]):
-        for j in range(x.shape[0]):
-            poly1d_product_list.append(poly1d_list[i] * poly1d_list[j])
+    poly1d_product_coeffs = af.np_to_af_array(poly1d_product_coeffs)
 
-        
-    return poly1d_product_list
-
+    return poly1d_product_coeffs
 
 
-def Integrate(integrand, N_quad, scheme):
+
+def Integrate(integrand_coeffs, N_quad, scheme):
     '''
-    Integrates an analytical form of the integrand and integrates it using
-    either gaussian or lobatto quadrature.
+    Performs integration according to the given quadrature method
+    by taking in the coefficients of the polynomial and the number of
+    quadrature points.
     
     Parameters
     ----------
-    integrand : numpy.poly1d
-                The analytical form of the integrand in numpy.poly1d form
+    integrand_coeffs : arrayfire.Array [M N 1 1]
+                       The coefficients of M number of polynomials of order N
+                       arranged in a 2D array.
 
-    N_quad    : int
-                The number of quadrature points to be used for Integration
-                using either Gaussian or Lobatto quadrature.    
+    N_quad           : int
+                       The number of quadrature points to be used for Integration
+                       using either Gaussian or Lobatto quadrature.    
 
-    scheme    : string
-                Specifies the method of integration to be used. Can take values
-                'gauss_quadrature' and 'lobatto_quadrature'.
+    scheme           : string
+                       Specifies the method of integration to be used. Can take values
+                       'gauss_quadrature' and 'lobatto_quadrature'.
 
     Returns
     -------
-    Integral : numpy.float64
+    Integral : arrayfire.Array [M 1 1 1]
                The value of the definite integration performed using the
-               specified quadrature method.
+               specified quadrature method for M polynomials.
     '''
     if (scheme == 'gauss_quadrature'):
-        gaussian_nodes = gauss_nodes(N_quad)
+        integrand  = (integrand_coeffs)
+        gaussian_nodes = af.np_to_af_array(gauss_nodes(N_quad))
         gauss_weights  = af.np_to_af_array(np.zeros([N_quad]))
+        
         
         for i in range(0, N_quad):
             gauss_weights[i] = gaussian_weights(N_quad, i)
-        value_at_gauss_nodes = af.np_to_af_array(integrand(gaussian_nodes))
-        Integral = af.sum(value_at_gauss_nodes * gauss_weights)
+
+         
+        nodes_tile  = af.transpose(af.tile(gaussian_nodes, 1, integrand.shape[1]))
+        power       = af.flip(af.range(integrand.shape[1]))
+        nodes_power = af.broadcast(utils.power, nodes_tile, power)
+        weights_tile = af.transpose(af.tile(gauss_weights, 1, integrand.shape[1]))
+        nodes_weight = nodes_power * weights_tile
+
+        
+        value_at_gauss_nodes = af.matmul(integrand, nodes_weight)
+        Integral = af.sum(value_at_gauss_nodes, 1)
         
     if (scheme == 'lobatto_quadrature'):
-        lobatto_nodes = LGL_points(N_quad)
-        weights  = af.np_to_af_array(lobatto_weights(N_quad, lobatto_nodes))
-        value_at_lobatto_nodes = af.np_to_af_array(integrand(lobatto_nodes))
-        Integral = af.sum(value_at_lobatto_nodes * weights)
-    
+
+        integrand  = (integrand_coeffs)
+        lobatto_nodes = (LGL_points(N_quad))
+        Lobatto_weights  = af.np_to_af_array(lobatto_weights(N_quad, lobatto_nodes))
+        
+       
+        nodes_tile  = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
+        power       = af.flip(af.range(integrand.shape[1]))
+        nodes_power = af.broadcast(utils.power, nodes_tile, power)
+        weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
+        nodes_weight = nodes_power * weights_tile
+
+        
+        value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
+        Integral = af.sum(value_at_lobatto_nodes, 1)
+
     
     return Integral
 

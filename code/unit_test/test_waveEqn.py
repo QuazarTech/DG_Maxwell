@@ -189,7 +189,7 @@ def test_A_matrix():
     0.0057831752019652065, 0.033333333333321946]
     ]))
     
-    test_A_matrix = wave_equation.A_matrix()
+    test_A_matrix = wave_equation.A_matrix(9, 'gauss_quadrature')
     print(test_A_matrix.shape, reference_A_matrix.shape)
     error_array = af.abs(reference_A_matrix - test_A_matrix)
     
@@ -285,7 +285,7 @@ def test_b_vector():
     threshold = 1e-13
     params.c = 1
     
-    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(), params.u[:, :, 0])
+    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(9, 'gauss_quadrature'), params.u[:, :, 0])
     volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
     surface_term         = test_surface_term()
     b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\

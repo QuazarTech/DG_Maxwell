@@ -77,6 +77,32 @@ def multiply(a, b):
     
     return product
 
+def power(a, b):
+    '''
+       
+    For broadcasting purposes, To divide two arrays of different
+    shapes, A function which can sum two variables is required.
+    
+    Parameters
+    ----------
+    a : arrayfire.Array [N M 1 1]
+        One of the arrays which need to be broadcasted and multiplying.
+    
+    b : arrayfire.Array [1 M L 1]
+        One of the arrays which need to be broadcasted and multiplying.
+    
+    Returns
+    -------
+    product : arrayfire.Array
+              returns the quotient a / b. When used along with af.broadcast
+              can be used to give quotient of two different size arrays
+              by multiplying elements of the broadcasted array.
+    '''
+    pow = a ** b
+    
+    return pow
+
+
 
 def linspace(start, end, number_of_points):
     '''
