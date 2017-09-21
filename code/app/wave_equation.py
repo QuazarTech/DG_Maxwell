@@ -111,7 +111,7 @@ def dx_dxi_analytical(x_nodes, xi):
               Contains the nodes of elements.
  
     xi      : arrayfire.Array [N_LGL 1 1 1]
-              Values of :math: `\\xi`
+              Values of :math: `\\xi`.
 
     Returns
     -------
@@ -174,7 +174,7 @@ def flux_x(u):
     return flux
 
 
-def volume_integral_flux(u_n, N_quad = 8):
+def volume_integral_flux(u_n):
     '''
     Calculates the volume integral of flux in the wave equation.
     :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -182,6 +182,9 @@ def volume_integral_flux(u_n, N_quad = 8):
     
     This integral is carried out using the analytical form of the integrand
     This integrand is the used in the Integrate() function.
+
+    Calculation of volume integral flux using 8 Lobatto quadrature points
+    can be vectorized and is much faster.
     
     Parameters
     ----------
@@ -194,19 +197,40 @@ def volume_integral_flux(u_n, N_quad = 8):
                     Value of the volume integral flux. It contains the integral
                     of all N_LGL * N_Element integrands.
     '''
-    analytical_form_flux       = flux_x(lagrange.wave_equation_lagrange(u_n))
-    differential_lagrange_poly = params.differential_lagrange_polynomial
+    if(params.volume_integral_scheme == 'lobatto_quadrature'\
+        and params.N_quad == params.N_LGL):
 
-    integrand = np.zeros(([params.N_LGL * params.N_Elements, 2 * params.N_LGL - 2]))
+        integrand       = params.volume_integrand_8_LGL
+        lobatto_nodes   = params.lobatto_quadrature_nodes
+        Lobatto_weights = params.lobatto_weights_quadrature
 
-    for i in range(params.N_LGL):
-        for j in range(params.N_Elements):
-            integrand[i + params.N_LGL * j] = (analytical_form_flux[j] *\
-                                                differential_lagrange_poly[i]).c
+        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
+        power        = af.flip(af.range(integrand.shape[1]))
+        power_tile   = af.tile(power, 1, params.N_quad)
+        nodes_power  = nodes_tile ** power_tile
+        weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
+        nodes_weight = nodes_power * weights_tile
 
-    integrand     = af.np_to_af_array(integrand)
-    flux_integral = lagrange.Integrate(integrand)
-    flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
+        value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
+        F_u_n                  = af.reorder(u_n, 2, 0, 1)
+        integral_expansion     = af.broadcast(utils.multiply, value_at_lobatto_nodes, F_u_n)
+        flux_integral          = af.sum(integral_expansion, 1)
+        flux_integral          = af.reorder(flux_integral, 0, 2, 1)
+
+    else:
+        analytical_form_flux       = flux_x(lagrange.wave_equation_lagrange(u_n))
+        differential_lagrange_poly = params.differential_lagrange_polynomial
+
+        integrand = np.zeros(([params.N_LGL * params.N_Elements, 2 * params.N_LGL - 2]))
+
+        for i in range(params.N_LGL):
+            for j in range(params.N_Elements):
+                integrand[i + params.N_LGL * j] = (analytical_form_flux[j] *\
+                                                  differential_lagrange_poly[i]).c
+
+        integrand     = af.np_to_af_array(integrand)
+        flux_integral = lagrange.Integrate(integrand)
+        flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
 
     return flux_integral
 
@@ -272,6 +296,7 @@ def surface_term(u_n):
     
     `https://goo.gl/Nhhgzx`
     '''
+
     L_p_minus1   = params.lagrange_basis_value[:, 0]
     L_p_1        = params.lagrange_basis_value[:, -1]
     f_i          = lax_friedrichs_flux(u_n)
@@ -302,7 +327,6 @@ def b_vector(u_n):
     A report for the b-vector can be found here
     `https://goo.gl/sNsXXK`
     '''
-
     volume_integral = volume_integral_flux(u_n)
     Surface_term    = surface_term(u_n)
     b_vector_array  = params.delta_t * (volume_integral - Surface_term)
@@ -317,7 +341,6 @@ def time_evolution():
     iterated over time steps t_n and then plots :math: `x` against the amplitude
     of the wave. The images are then stored in Wave folder.
     '''
-    
     A_inverse   = af.inverse(A_matrix())
     element_LGL = params.element_LGL
     delta_t     = params.delta_t

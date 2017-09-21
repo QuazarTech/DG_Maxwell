@@ -20,7 +20,13 @@ N_Elements = 10
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
-scheme     = 'lobatto_quadrature'
+scheme     = 'gauss_quadrature'
+
+# The scheme to integrate the volume integral flux
+volume_integral_scheme = 'lobatto_quadrature'
+
+# The number quadrature points to be used for integration.
+N_quad = 8
 
 # Wave speed.
 c          = 1
@@ -34,15 +40,11 @@ c_lax      = 1
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
 
-# The number quadrature points to be used for integration.
-N_quad = 10
-
 # N_Gauss number of Gauss nodes.
 gauss_points  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
 
 # The Gaussian weights.
 gauss_weights = lagrange.gaussian_weights(N_quad)
-
 
 # The lobatto nodes to be used for integration.
 lobatto_quadrature_nodes = lagrange.LGL_points(N_quad)
@@ -50,7 +52,6 @@ lobatto_quadrature_nodes = lagrange.LGL_points(N_quad)
 # The lobatto weights to be used for integration.
 lobatto_weights_quadrature = lagrange.lobatto_weights\
                                     (N_quad)
-
 
 # A list of the Lagrange polynomials in poly1d form.
 lagrange_product = lagrange.product_lagrange_poly(xi_LGL)
@@ -70,6 +71,17 @@ lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
 differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
 
 
+# While evaluating the volume integral using N_LGL
+# lobatto quadrature points, The integration can be vectorized
+# and in this case the coefficients of the differential of the
+# Lagrange polynomials is required
+volume_integrand_8_LGL = np.zeros(([N_LGL, N_LGL - 1]))
+
+for i in range(N_LGL):
+    volume_integrand_8_LGL[i] = (differential_lagrange_polynomial[i]).c
+
+volume_integrand_8_LGL= af.np_to_af_array(volume_integrand_8_LGL)
+
 # Obtaining an array consisting of the LGL points mapped onto the elements.
 element_size    = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
 elements_xi_LGL = af.constant(0, N_Elements, N_LGL)
@@ -85,7 +97,6 @@ element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
 element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
 element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
                                                                    xi_LGL)
-
 
 # The minimum distance between 2 mapped LGL points.
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])

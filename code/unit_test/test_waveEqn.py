@@ -14,6 +14,56 @@ from utils import utils
 
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
+
+def test_LGL_points():
+    '''
+    Comparing the LGL nodes obtained by LGL_points with
+    the reference nodes for N = 6
+    '''
+    reference_nodes  = \
+        af.np_to_af_array(np.array([-1.,                 -0.7650553239294647,\
+                                    -0.28523151648064504, 0.28523151648064504,\
+                                     0.7650553239294647,  1. \
+                                   ] \
+                                  ) \
+                         )
+        
+    calculated_nodes = (lagrange.LGL_points(6))
+    assert(af.max(af.abs(reference_nodes - calculated_nodes)) <= 1e-14)
+
+
+def test_gauss_nodes():
+    '''
+    The Gauss points obtained by the function above is compared to
+    analytical values.
+    Reference
+    ---------
+    `https://goo.gl/9gqLpe` 
+    '''
+    threshold = 1e-10
+    analytical_gauss_nodes = np.array([-0.906179845938664, -0.5384693101056831,\
+                                        0, 0.5384693101056831, 0.906179845938664])
+    calculated_gauss_nodes = lagrange.gauss_nodes(5)
+    
+    assert np.max(abs(analytical_gauss_nodes - calculated_gauss_nodes)) <= threshold
+
+
+def test_gauss_weights():
+    '''
+    Test to check the gaussian weights calculated.
+    '''
+    threshold = 2e-8
+    analytical_gauss_weights = af.Array([0.23692688505618908, 0.47862867049936647,\
+                                         0.5688888888888889, 0.47862867049936647, \
+                                         0.23692688505618908
+                                        ]
+                                       )
+    calculated_gauss_weights = lagrange.gaussian_weights(5)
+
+    assert af.max(af.abs(analytical_gauss_weights - calculated_gauss_weights))\
+                                                                  <= threshold
+
+
 def test_mapping_xi_to_x():
     '''
     A test function to check the mapping_xi_to_x function in wave_equation module,
@@ -146,7 +196,8 @@ def test_lagrange_coeffs():
                 
     basis_array_analytical = af.interop.np_to_af_array(basis_array_analytical)
     
-    assert af.sum(af.abs(basis_array_analytical - params.lagrange_coeffs)) < threshold
+    assert af.sum(af.abs(basis_array_analytical - params.lagrange_coeffs))\
+                                                               < threshold
 
 def test_A_matrix():
     '''
@@ -156,6 +207,7 @@ def test_A_matrix():
     threshold = 1e-8
     
     reference_A_matrix = 0.1 * af.interop.np_to_af_array(np.array([\
+
     [0.03333333333332194, 0.005783175201965206, -0.007358427761753982, \
     0.008091331778355441, -0.008091331778233877, 0.007358427761705623, \
     -0.00578317520224949, 0.002380952380963754], \
@@ -187,6 +239,7 @@ def test_A_matrix():
     [0.002380952380963754, -0.005783175202249493, 0.007358427761705624, \
     -0.008091331778233875, 0.008091331778355443, -0.0073584277617539835, \
     0.0057831752019652065, 0.033333333333321946]
+
     ]))
     
     test_A_matrix = wave_equation.A_matrix()
@@ -296,7 +349,8 @@ def test_b_vector():
     threshold = 1e-13
     params.c = 1
     
-    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(), params.u[:, :, 0])
+    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(),\
+                                                  params.u[:, :, 0])
     volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
     surface_term         = test_surface_term()
     b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\
@@ -305,47 +359,16 @@ def test_b_vector():
     
     assert (b_vector_analytical - b_vector_array) < threshold
 
-
-
-def test_gauss_nodes():
-    '''
-    The Gauss points obtained by the function above is compared to
-    analytical values.
-    Reference
-    ---------
-    `https://goo.gl/9gqLpe` 
-    '''
-    threshold = 1e-10
-    analytical_gauss_nodes = np.array([-0.906179845938664, -0.5384693101056831,\
-                                        0, 0.5384693101056831, 0.906179845938664])
-    calculated_gauss_nodes = lagrange.gauss_nodes(5)
-    
-    assert np.max(abs(analytical_gauss_nodes - calculated_gauss_nodes)) <= threshold
-
-def test_gauss_weights():
-    '''
-    Test to check the gaussian weights calculated.
-    '''
-    threshold = 2e-8
-    analytical_gauss_weights = af.Array([0.23692688505618908, 0.47862867049936647,\
-                                         0.5688888888888889, 0.47862867049936647, \
-                                         0.23692688505618908
-                                        ]
-                                       )
-    calculated_gauss_weights = lagrange.gaussian_weights(5)
-
-    assert af.max(af.abs(analytical_gauss_weights - calculated_gauss_weights)) <= threshold
-
-
 def test_Integrate():
     '''
-    Testing the Integrate() function by passing coefficients of a polynomial and comparing
-    it to the analytical result.
+    Testing the Integrate() function by passing coefficients 
+    of a polynomial and comparing it to the analytical result.
     '''
     threshold = 1e-14
 
     test_coeffs = af.np_to_af_array(np.array([7., 6, 4, 2, 1, 3, 9, 2]))
-    # The coefficients of a test polynomial `7x^7 + 6x^6 + 4x^5 + 2x^4 + x^3 + 3x^2 + 9x + 2`
+    # The coefficients of a test polynomial 
+    # `7x^7 + 6x^6 + 4x^5 + 2x^4 + x^3 + 3x^2 + 9x + 2`
 
     # Using Integrate() function.
 
@@ -354,4 +377,3 @@ def test_Integrate():
     analytical_integral = 8.514285714285714
 
     assert (calculated_integral - analytical_integral) <= threshold
-    

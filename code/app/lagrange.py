@@ -59,8 +59,8 @@ def lobatto_weights(n):
     Gauss-Lobatto weights Wikipedia link-
     https://en.wikipedia.org/wiki/
     Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules
-    
-    
+
+
     Examples
     --------
     lobatto_weight_function(4) returns the Gauss-Lobatto weights
@@ -322,14 +322,13 @@ def Integrate(integrand_coeffs):
         
         value_at_gauss_nodes = af.matmul(integrand, nodes_weight)
         Integral             = af.sum(value_at_gauss_nodes, 1)
-        
+ 
     if (params.scheme == 'lobatto_quadrature'):
 
         integrand       = integrand_coeffs
         lobatto_nodes   = params.lobatto_quadrature_nodes
         Lobatto_weights = params.lobatto_weights_quadrature
-        
-       
+
         nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
         power        = af.flip(af.range(integrand.shape[1]))
         nodes_power  = af.broadcast(utils.power, nodes_tile, power)
