@@ -37,40 +37,45 @@ def LGL_points(N):
 
     return lgl_points
 
-
-def lobatto_weights(n, x):
+def lobatto_weights(n):
     '''
-    Calculates the weight function for an index :math:`n`
-    and points :math: `x`.
+    Calculates and returns the weight function for an index n
+    and points x.
     
-    :math::
-        `w_{n} = \\frac{2 P(x)^2}{n (n - 1)}`,
-        Where P(x) is $ (n - 1)^th $ index.
     
     Parameters
     ----------
     n : int
-        Index for which lobatto weight function
-    
-    x : arrayfire.Array [N 1 1 1]
-        Points where weight function is to be calculated.
+        Lobatto weights for n quadrature points.
     
     
     Returns
     -------
-    gauss_lobatto_weights : numpy.ndarray [N 1 1 1]
-                            Lobatto weight for the given :math: `x`
-                            points and index `i`.
+    Lobatto_weights : arrayfire.Array
+                      An array of lobatto weight functions for
+                      the given x points and index.
     Reference
     ---------
     Gauss-Lobatto weights Wikipedia link-
-    `https://goo.gl/o7WE4K`
+    https://en.wikipedia.org/wiki/
+    Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules
+    
+    
+    Examples
+    --------
+    lobatto_weight_function(4) returns the Gauss-Lobatto weights
+    which are to be used with the Lobatto nodes 'LGL_points(4)'
+    to integrate using Lobatto quadrature. 
     '''
+    xi_LGL = LGL_points(n)
+    
     P = sp.legendre(n - 1)
+    
+    Lobatto_weights = (2 / (n * (n - 1)) / (P(xi_LGL))**2)
+    Lobatto_weights = af.np_to_af_array(Lobatto_weights)
+    
+    return Lobatto_weights
 
-    gauss_lobatto_weights = (2 / (n * (n - 1)) / (P(x))**2)
-
-    return gauss_lobatto_weights
 
 def gauss_nodes(n):
     '''
@@ -103,7 +108,8 @@ def gauss_nodes(n):
     
     return gauss_nodes
 
-def gaussian_weights(N, i):
+
+def gaussian_weights(N):
     '''
     Returns the gaussian weights :math:`w_i` for :math: `N` Gaussian Nodes
     at index :math: `i`. They are given by
@@ -112,29 +118,29 @@ def gaussian_weights(N, i):
 
     Where :math:`x_i` are the Gaussian nodes and :math: `P_{n}(\\xi)` 
     are the Legendre polynomials.
-
     
+
     Parameters
     ----------
     N : int
         Number of Gaussian nodes for which the weight is t be calculated.
             
-    i : int
-        Index for which the Gaussian weight is required.
-    
+   
     Returns
     -------
-    gaussian_weight : double 
-                      The gaussian weight.
-    
+    gaussian_weight : arrayfire.Array [N_quad 1 1 1] 
+                      The gaussian weights.
     '''
+    index = np.arange(N) # Index `i` in `w_i`, varies from 0 to N_quad - 1
     
     gaussian_nodes = gauss_nodes(N)
-    gaussian_weight  = 2 / ((1 - (gaussian_nodes[i]) ** 2) *\
-                       (np.polyder(sp.legendre(N))(gaussian_nodes[i])) ** 2)
-    
+    gaussian_weight  = 2 / ((1 - (gaussian_nodes[index]) ** 2) *\
+                       (np.polyder(sp.legendre(N))(gaussian_nodes[index])) ** 2)
+
+    gaussian_weight = af.np_to_af_array(gaussian_weight)
     
     return gaussian_weight
+
 
 def lagrange_polynomials(x):    
     '''
@@ -165,6 +171,18 @@ def lagrange_polynomials(x):
                             coefficients of the Lagrange basis polynomials such
                             that :math:`i^{th}` lagrange polynomial will be the
                             :math:`i^{th}` row of the matrix.
+    Examples
+    --------
+    lagrange_polynomials(4)[0] gives the lagrange polynomials obtained using
+    4 LGL points in poly1d form
+
+    lagrange_polynomials(4)[0][2] is :math: `L_2(\\xi)`
+
+    lagrange_polynomials(4)[1] gives the coefficients of the above mentioned
+    lagrange basis polynomials in a 2D array.
+
+    lagrange_polynomials(4)[1][2] gives the coefficients of :math:`L_2(\\xi)`
+    in the form [a^2_3, a^2_2, a^2_1, a^2_0]
     '''
     X = np.array(x)
     lagrange_basis_poly   = []
@@ -224,12 +242,18 @@ def lagrange_function_value(lagrange_coeff_array):
     
     return L_i
 
+
 def product_lagrange_poly(x):
     '''
-    Calculates the product of Lagrange basis polynomials in 'np.poly1d' in a 
-    2D array. This analytical form of the product of the Lagrange basis is used
-    in the calculation of A matrix using the Integrate() function.
-    
+    Used to obtain the coefficients of the product of Lagrange polynomials.
+
+    A matrix involves integrals of the product of the Lagrange polynomials.
+    The Integrate() function requires the coefficients of the integrand to
+    compute the integral.
+
+    This function takes the poly1d form of the Lagrange basis polynomials,
+    multiplies them and stores the coefficients in a 2D array.
+
     Parameters
     ----------
     x : arrayfire.Array[N_LGL 1 1 1]
@@ -237,85 +261,84 @@ def product_lagrange_poly(x):
 
     Returns
     -------
-    poly1d_product_list : list [N_LGL ** 2]
-                          Contains the poly1d form of the product of the Lagrange
-                          basis polynomials.
+    lagrange_product_coeffs : arrayfire.Array [N_LGL**2 N_LGL*2-1 1 1]
+                              Contains the coefficients of the product of the
+                              Lagrange polynomials.
+
+    Examples
+    --------
+    product_lagrange_poly(xi_LGL)[0] gives the coefficients of the product
+    `L_0(\\xi) * L_0(\\xi)`.
+
+
+    product_lagrange_poly(xi_LGL)[1] gives the coefficients of the product
+    `L_0(\\xi) * L_1(\\xi)`.
+                              
     '''
-    poly1d_list = lagrange_polynomials(params.xi_LGL)[0] 
-    poly1d_product_coeffs = np.zeros([params.N_LGL ** 2, params.N_LGL * 2 - 1])
+    poly1d_list             = lagrange_polynomials(params.xi_LGL)[0] 
+    lagrange_product_coeffs = np.zeros([params.N_LGL ** 2, params.N_LGL * 2 - 1])
 
     for i in range (params.N_LGL):
         for j in range (params.N_LGL):
-            poly1d_product_coeffs[params.N_LGL * i + j] = ((poly1d_list[i] * poly1d_list[j]).c)
+            lagrange_product_coeffs[params.N_LGL * i + j] = ((poly1d_list[i] * poly1d_list[j]).c)
 
-    poly1d_product_coeffs = af.np_to_af_array(poly1d_product_coeffs)
+    lagrange_product_coeffs = af.np_to_af_array(lagrange_product_coeffs)
 
-    return poly1d_product_coeffs
+    return lagrange_product_coeffs
 
 
-
-def Integrate(integrand_coeffs, N_quad, scheme):
+def Integrate(integrand_coeffs):
     '''
     Performs integration according to the given quadrature method
     by taking in the coefficients of the polynomial and the number of
     quadrature points.
+
+    The number of quadrature points and the quadrature scheme are set
+    in params.py module.
     
     Parameters
     ----------
     integrand_coeffs : arrayfire.Array [M N 1 1]
                        The coefficients of M number of polynomials of order N
                        arranged in a 2D array.
-
-    N_quad           : int
-                       The number of quadrature points to be used for Integration
-                       using either Gaussian or Lobatto quadrature.    
-
-    scheme           : string
-                       Specifies the method of integration to be used. Can take values
-                       'gauss_quadrature' and 'lobatto_quadrature'.
-
     Returns
     -------
     Integral : arrayfire.Array [M 1 1 1]
                The value of the definite integration performed using the
                specified quadrature method for M polynomials.
     '''
-    if (scheme == 'gauss_quadrature'):
-        integrand  = (integrand_coeffs)
-        gaussian_nodes = af.np_to_af_array(gauss_nodes(N_quad))
-        gauss_weights  = af.np_to_af_array(np.zeros([N_quad]))
-        
-        
-        for i in range(0, N_quad):
-            gauss_weights[i] = gaussian_weights(N_quad, i)
 
-         
-        nodes_tile  = af.transpose(af.tile(gaussian_nodes, 1, integrand.shape[1]))
-        power       = af.flip(af.range(integrand.shape[1]))
-        nodes_power = af.broadcast(utils.power, nodes_tile, power)
-        weights_tile = af.transpose(af.tile(gauss_weights, 1, integrand.shape[1]))
+    if (params.scheme == 'gauss_quadrature'):
+        integrand      = integrand_coeffs
+        gaussian_nodes = params.gauss_points
+        Gauss_weights  = params.gauss_weights
+        
+        nodes_tile   = af.transpose(af.tile(gaussian_nodes, 1, integrand.shape[1]))
+        power        = af.flip(af.range(integrand.shape[1]))
+        nodes_power  = af.broadcast(utils.power, nodes_tile, power)
+        weights_tile = af.transpose(af.tile(Gauss_weights, 1, integrand.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
         
         value_at_gauss_nodes = af.matmul(integrand, nodes_weight)
-        Integral = af.sum(value_at_gauss_nodes, 1)
+        Integral             = af.sum(value_at_gauss_nodes, 1)
         
-    if (scheme == 'lobatto_quadrature'):
+    if (params.scheme == 'lobatto_quadrature'):
 
-        integrand  = (integrand_coeffs)
-        lobatto_nodes = (LGL_points(N_quad))
-        Lobatto_weights  = af.np_to_af_array(lobatto_weights(N_quad, lobatto_nodes))
+        integrand       = integrand_coeffs
+        lobatto_nodes   = params.lobatto_quadrature_nodes
+        Lobatto_weights = params.lobatto_weights_quadrature
         
        
-        nodes_tile  = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
-        power       = af.flip(af.range(integrand.shape[1]))
-        nodes_power = af.broadcast(utils.power, nodes_tile, power)
+        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
+        power        = af.flip(af.range(integrand.shape[1]))
+        nodes_power  = af.broadcast(utils.power, nodes_tile, power)
         weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
         
         value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
-        Integral = af.sum(value_at_lobatto_nodes, 1)
+        Integral               = af.sum(value_at_lobatto_nodes, 1)
 
     
     return Integral

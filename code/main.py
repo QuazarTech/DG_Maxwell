@@ -3,6 +3,7 @@
 import arrayfire as af
 import numpy as np
 af.set_backend('opencl')
+from matplotlib import pyplot as plt
 
 from app import params
 from unit_test import test_waveEqn

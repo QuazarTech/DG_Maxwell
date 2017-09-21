@@ -20,7 +20,7 @@ N_Elements = 10
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
-scheme     = 'gauss_quadrature'
+scheme     = 'lobatto_quadrature'
 
 # Wave speed.
 c          = 1
@@ -34,25 +34,22 @@ c_lax      = 1
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
 
-# Array of the lobatto weights used during integration.
-lobatto_weights = af.np_to_af_array(lagrange.lobatto_weights(N_LGL, xi_LGL))
-
-
-# The number of Gaussian nodes for Gauss quadrature
-N_Gauss = 10
+# The number quadrature points to be used for integration.
+N_quad = 10
 
 # N_Gauss number of Gauss nodes.
-gauss_points  = lagrange.gauss_nodes(N_Gauss)
+gauss_points  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
 
 # The Gaussian weights.
-gauss_weights = af.np_to_af_array(np.zeros([N_Gauss]))
-
-for i in range(0, N_Gauss):
-    gauss_weights[i] = lagrange.gaussian_weights(N_Gauss, i)
+gauss_weights = lagrange.gaussian_weights(N_quad)
 
 
+# The lobatto nodes to be used for integration.
+lobatto_quadrature_nodes = lagrange.LGL_points(N_quad)
 
-
+# The lobatto weights to be used for integration.
+lobatto_weights_quadrature = lagrange.lobatto_weights\
+                                    (N_quad)
 
 
 # A list of the Lagrange polynomials in poly1d form.
@@ -71,8 +68,6 @@ lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
 # list containing the poly1d forms of the differential of Lagrange
 # basis polynomials.
 differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
-
-
 
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
@@ -107,13 +102,3 @@ u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
-
-
-
-
-
-
-
-
-
-
