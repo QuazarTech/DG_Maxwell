@@ -21,10 +21,10 @@ cd DG_Maxwell
 cd DG_Maxwell/code
 python3 main.py
 ```
-* The parameters of the simulation are stored in global_variables.py in
+* The parameters of the simulation are stored in params.py in
   the app folder, These can be changed accordingly.
   
-* The images of the wave are stored in the folder 1D_wave_images folder.
+* The images of the wave are stored in the `1D_wave_images` folder.
 
 * To stitch the images in the folder and obtain a video of the simulation,
   use the command in the terminal -
@@ -37,5 +37,5 @@ python3 main.py
 * **Mani Chandra**         - [GitHub Profile](https://github.com/mchandra)
 
 ## Note for developers:
-* Use tab spaces for indentation.
+* Use spaces for indentation.
 
