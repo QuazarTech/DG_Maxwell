@@ -49,10 +49,10 @@ def mapping_xi_to_x(x_nodes, xi):
     Parameters
     ----------
     
-    x_nodes : arrayfire.Array
+    x_nodes : arrayfire.Array [2 1 1 1]
               Element nodes.
     
-    xi      : numpy.float64
+    xi      : arrayfire.Array [N 1 1 1]
               Value of :math: `\\xi`coordinate for which the corresponding
               :math: `x` coordinate is to be found.
     
@@ -72,7 +72,6 @@ def mapping_xi_to_x(x_nodes, xi):
     return x
 
 
-
 def dx_dxi_numerical(x_nodes, xi):
     '''
     Differential :math: `\\frac{dx}{d \\xi}` calculated by central
@@ -84,8 +83,8 @@ def dx_dxi_numerical(x_nodes, xi):
     x_nodes : arrayfire.Array [N_Elements 1 1 1]
               Contains the nodes of elements.
     
-    xi      : float
-              Value of :math: `\\xi`
+    xi      : arrayfire.Array [N_LGL 1 1 1]
+              Values of :math: `\\xi`
     
     Returns
     -------
@@ -105,10 +104,14 @@ def dx_dxi_analytical(x_nodes, xi):
     '''
     The analytical result for :math:`\\frac{dx}{d \\xi}` for a 1D element is
     :math: `\\frac{x_1 - x_0}{2}`
+
     Parameters
     ----------
     x_nodes : arrayfire.Array [N_Elements 1 1 1]
               Contains the nodes of elements.
+ 
+    xi      : arrayfire.Array [N_LGL 1 1 1]
+              Values of :math: `\\xi`.
 
     Returns
     -------
@@ -126,36 +129,27 @@ def A_matrix():
     '''
     Calculates A matrix whose elements :math:`A_{p i}` are given by
     :math: `A_{p i} &= \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
-    These elements are to be arranged in an :math:`N \times N` array with p
-    varying from 0 to N - 1 along the rows and i along the columns.
-    The integration is carried out using Gauss-Lobatto quadrature.
+
+    The integrals are computed using the Integrate() function.
+
+    Since elements are taken to be of equal size, :math: `\\frac {dx}{dxi}
+    is same everywhere
     
-    Full description of the algorithm can be found here-
-    `https://goo.gl/Cw6tnw`
+
     Returns
     -------
     A_matrix : arrayfire.Array [N_LGL N_LGL 1 1]
                The value of integral of product of lagrange basis functions
                obtained by LGL points, using the Integrate() function
     '''
-    A_matrix = np.zeros([params.N_LGL, params.N_LGL])
-
-    for i in range (params.N_LGL):
-        for j in range(params.N_LGL):
-            A_matrix[i][j] = lagrange.Integrate(\
-                    params.poly1d_product_list[params.N_LGL * i + j],\
-                    params.N_LGL + 1, 'lobatto_quadrature')
-
-    dx_dxi = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
+    int_Li_Lp = lagrange.Integrate(params.lagrange_product)
+    dx_dxi    = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
                                                         params.xi_LGL))
 
-    A_matrix *= dx_dxi
-
-    A_matrix = af.np_to_af_array(A_matrix)
+    A_matrix_flat = dx_dxi * int_Li_Lp
+    A_matrix      = af.moddims(A_matrix_flat, params.N_LGL, params.N_LGL)
     
-
     return A_matrix
-
 
 
 def flux_x(u):
@@ -168,6 +162,7 @@ def flux_x(u):
     u : list [N_Elements]
         The analytical form of the wave equation for each element arranged in
         a list of numpy.poly1d polynomials.
+
     Returns
     -------
     flux : list [N_Elements] 
@@ -178,6 +173,7 @@ def flux_x(u):
 
     return flux
 
+
 def volume_integral_flux(u_n):
     '''
     Calculates the volume integral of flux in the wave equation.
@@ -186,6 +182,9 @@ def volume_integral_flux(u_n):
     
     This integral is carried out using the analytical form of the integrand
     This integrand is the used in the Integrate() function.
+
+    Calculation of volume integral flux using 8 Lobatto quadrature points
+    can be vectorized and is much faster.
     
     Parameters
     ----------
@@ -198,25 +197,48 @@ def volume_integral_flux(u_n):
                     Value of the volume integral flux. It contains the integral
                     of all N_LGL * N_Element integrands.
     '''
-    analytical_form_flux       = flux_x(lagrange.wave_equation_lagrange(u_n))
-    differential_lagrange_poly = params.differential_lagrange_polynomial
-    flux_integral              = np.zeros([params.N_LGL, params.N_Elements])
+    if(params.volume_integral_scheme == 'lobatto_quadrature'\
+        and params.N_quad == params.N_LGL):
 
-    for i in range(params.N_LGL):
-        for j in range(params.N_Elements):
-            integrand = analytical_form_flux[j] * differential_lagrange_poly[i]
-            flux_integral[i][j] = lagrange.Integrate(integrand, params.N_LGL,\
-                                                           'gauss_quadrature')
+        integrand       = params.volume_integrand_8_LGL
+        lobatto_nodes   = params.lobatto_quadrature_nodes
+        Lobatto_weights = params.lobatto_weights_quadrature
 
-    flux_integral = af.np_to_af_array(flux_integral)
+        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
+        power        = af.flip(af.range(integrand.shape[1]))
+        power_tile   = af.tile(power, 1, params.N_quad)
+        nodes_power  = nodes_tile ** power_tile
+        weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
+        nodes_weight = nodes_power * weights_tile
+
+        value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
+        F_u_n                  = af.reorder(u_n, 2, 0, 1)
+        integral_expansion     = af.broadcast(utils.multiply, value_at_lobatto_nodes, F_u_n)
+        flux_integral          = af.sum(integral_expansion, 1)
+        flux_integral          = af.reorder(flux_integral, 0, 2, 1)
+
+    else:
+        analytical_form_flux       = flux_x(lagrange.wave_equation_lagrange(u_n))
+        differential_lagrange_poly = params.differential_lagrange_polynomial
+
+        integrand = np.zeros(([params.N_LGL * params.N_Elements, 2 * params.N_LGL - 2]))
+
+        for i in range(params.N_LGL):
+            for j in range(params.N_Elements):
+                integrand[i + params.N_LGL * j] = (analytical_form_flux[j] *\
+                                                  differential_lagrange_poly[i]).c
+
+        integrand     = af.np_to_af_array(integrand)
+        flux_integral = lagrange.Integrate(integrand)
+        flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
 
     return flux_integral
 
 
 def lax_friedrichs_flux(u_n):
     '''
-    A function which calculates the lax-friedrichs_flux :math:`f_i` using.
-    :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \frac
+    Calculates the lax-friedrichs_flux :math:`f_i` using.
+    :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \\frac
                 {\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
 
     The algorithm used is explained in the link given below
@@ -226,7 +248,12 @@ def lax_friedrichs_flux(u_n):
     ----------
     u_n : arrayfire.Array [N_LGL N_Elements 1 1]
           Amplitude of the wave at the mapped LGL nodes of each element.
-          
+    
+    Returns
+    -------
+    boundary_flux : arrayfire.Array [1 N_Elements 1 1]
+                    Contains the value of the flux at the boundary elements.
+                    Periodic boundary conditions are used.
     '''
 
     
@@ -244,8 +271,8 @@ def lax_friedrichs_flux(u_n):
 
 def surface_term(u_n):
     '''
-    A function which is used to calculate the surface term,
-    :math:`L_p (1) f_i - L_p (-1) f_{i - 1}`
+    Calculates the surface term,
+    :math:`L_p(1) f_i - L_p(-1) f_{i - 1}`
     using the lax_friedrichs_flux function and lagrange_basis_value
     from params module.
     
@@ -300,7 +327,6 @@ def b_vector(u_n):
     A report for the b-vector can be found here
     `https://goo.gl/sNsXXK`
     '''
-
     volume_integral = volume_integral_flux(u_n)
     Surface_term    = surface_term(u_n)
     b_vector_array  = params.delta_t * (volume_integral - Surface_term)
@@ -310,12 +336,11 @@ def b_vector(u_n):
 
 def time_evolution():
     '''
-    Function which solves the wave equation
+    Solves the wave equation
     :math: `u^{t_n + 1} = b(t_n) \\times A`
     iterated over time steps t_n and then plots :math: `x` against the amplitude
     of the wave. The images are then stored in Wave folder.
     '''
-    
     A_inverse   = af.inverse(A_matrix())
     element_LGL = params.element_LGL
     delta_t     = params.delta_t
@@ -324,8 +349,9 @@ def time_evolution():
     
     for t_n in trange(0, time.shape[0] - 1):
         
-        amplitude[:, :, t_n + 1] = amplitude[:, :, t_n] + af.blas.matmul(A_inverse,\
-                b_vector(amplitude[:, :, t_n]))
+        amplitude[:, :, t_n + 1] =   amplitude[:, :, t_n]\
+                                   + af.blas.matmul(A_inverse,\
+                                     b_vector(amplitude[:, :, t_n]))
     
     print('u calculated!')
     

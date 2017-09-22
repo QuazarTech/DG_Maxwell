@@ -13,14 +13,20 @@ from app import wave_equation
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8
+N_LGL      = 8 
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
-scheme     = 'lobatto_quadrature'
+scheme     = 'gauss_quadrature'
+
+# The scheme to integrate the volume integral flux
+volume_integral_scheme = 'lobatto_quadrature'
+
+# The number quadrature points to be used for integration.
+N_quad = 8
 
 # Wave speed.
 c          = 1
@@ -34,34 +40,21 @@ c_lax      = 1
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
 
-# Array of the lobatto weights used during integration.
-lobatto_weights = af.np_to_af_array(lagrange.lobatto_weights(N_LGL, xi_LGL))
-
-
-# The number of Gaussian nodes for Gauss quadrature
-N_Gauss = 10
-
 # N_Gauss number of Gauss nodes.
-gauss_points  = lagrange.gauss_nodes(N_Gauss)
+gauss_points  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
 
 # The Gaussian weights.
-gauss_weights = af.np_to_af_array(np.zeros([N_Gauss]))
+gauss_weights = lagrange.gaussian_weights(N_quad)
 
-for i in range(0, N_Gauss):
-    gauss_weights[i] = lagrange.gaussian_weights(N_Gauss, i)
+# The lobatto nodes to be used for integration.
+lobatto_quadrature_nodes = lagrange.LGL_points(N_quad)
 
+# The lobatto weights to be used for integration.
+lobatto_weights_quadrature = lagrange.lobatto_weights\
+                                    (N_quad)
 
 # A list of the Lagrange polynomials in poly1d form.
-lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
-
-# List of the product of the Lagrange basis polynomials. Used in
-# the calculation of A matrix.
-poly1d_product_list = lagrange.product_lagrange_poly(xi_LGL)
-
-# list containing the poly1d forms of the differential of Lagrange
-# basis polynomials.
-differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
-
+lagrange_product = lagrange.product_lagrange_poly(xi_LGL)
 
 # An array containing the coefficients of the lagrange basis polynomials.
 lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
@@ -69,6 +62,25 @@ lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
 # Refer corresponding functions.
 lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)
 
+# A list of the Lagrange polynomials in poly1d form.
+lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
+
+
+# list containing the poly1d forms of the differential of Lagrange
+# basis polynomials.
+differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
+
+
+# While evaluating the volume integral using N_LGL
+# lobatto quadrature points, The integration can be vectorized
+# and in this case the coefficients of the differential of the
+# Lagrange polynomials is required
+volume_integrand_8_LGL = np.zeros(([N_LGL, N_LGL - 1]))
+
+for i in range(N_LGL):
+    volume_integrand_8_LGL[i] = (differential_lagrange_polynomial[i]).c
+
+volume_integrand_8_LGL= af.np_to_af_array(volume_integrand_8_LGL)
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
 element_size    = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
@@ -85,7 +97,6 @@ element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
 element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
 element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
                                                                    xi_LGL)
-
 
 # The minimum distance between 2 mapped LGL points.
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
