@@ -124,3 +124,12 @@ ENV/
 # Kdev
 *kdev*
 *.ipynb
+
+# Results
+results
+
+# Temporary files
+*~
+
+# Exceptions
+!bug_reproduce_amplitude_blowing.ipynb
