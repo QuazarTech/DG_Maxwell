@@ -12,7 +12,7 @@ from app import lagrange
 from utils import utils
 
 plt.rcParams['figure.figsize'  ] = 9.6, 6.
-plt.rcParams['figure.dpi'      ] = 100
+plt.rcParams['figure.dpi'      ] = 300
 plt.rcParams['image.cmap'      ] = 'jet'
 plt.rcParams['lines.linewidth' ] = 1.5
 plt.rcParams['font.family'     ] = 'serif'
@@ -347,26 +347,54 @@ def time_evolution():
     amplitude   = params.u 
     time        = params.time
     
+    element_boundaries = af.np_to_af_array(params.np_element_array)
+
+    element_discontinuities = af.constant(0, 2, params.N_Elements, time.shape[0], dtype=af.Dtype.f64)
+
     for t_n in trange(0, time.shape[0] - 1):
+
+        element_discontinuities[:, :, t_n] = amplitude[::params.N_LGL - 1, :, t_n]
         
         amplitude[:, :, t_n + 1] =   amplitude[:, :, t_n]\
                                    + af.blas.matmul(A_inverse,\
                                      b_vector(amplitude[:, :, t_n]))
+        
     
     print('u calculated!')
-    
+    element_discontinuities[1,:,:] = af.shift(element_discontinuities[1,:,:], 0, 1)
+
+    x   = np.array(element_boundaries)
+    element_discontinuities = np.array(element_discontinuities)
+
+    fig, ax = plt.subplots(nrows=1, ncols=2)
+
     for t_n in trange(0, time.shape[0] - 1):
         
         if t_n % 100 == 0:
             
             fig = plt.figure()
-            x   = params.element_LGL
-            y   = amplitude[:, :, t_n]
+            fig.suptitle('Time = %f' % (t_n * delta_t))
+
+            flux_left  = element_discontinuities[1, :, t_n]
+            flux_right = element_discontinuities[0, :, t_n]
             
-            plt.plot(x, y)
+            ax = plt.subplot(1, 2, 1)
+            plt.scatter(x[0, :], flux_left , label='left boundary flux')
+            plt.scatter(x[0, :], flux_right, label='right boundary flux')
             plt.xlabel('x')
             plt.ylabel('Amplitude')
-            plt.title('Time = %f' % (t_n * delta_t))
+            plt.ylim(-1, 2)
+
+            plt.subplot(1, 2, 2)
+            plt.scatter(x[0, :], flux_left - flux_right)
+            plt.xlabel('x')
+            plt.ylabel('discontinuity')
+            plt.ylim(-1, 1)
+
+
+
+
+
             fig.savefig('results/1D_Wave_images/%04d' %(t_n / 100) + '.png')
             plt.close('all')
                 

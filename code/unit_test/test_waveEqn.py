@@ -262,7 +262,7 @@ def test_volume_integral_flux():
     threshold = 8e-9
     params.c = 1
     
-    referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array
+    reference_flux_integral = af.transpose(af.interop.np_to_af_array(np.array
         ([
         [-0.002016634876668093, -0.000588597708116113, -0.0013016773719126333,\
         -0.002368387579324652, -0.003620502047659841, -0.004320197094090966,
@@ -298,7 +298,7 @@ def test_volume_integral_flux():
          ])))
     
     numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
-    assert (af.max(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
+    assert (af.max(af.abs(numerical_flux - reference_flux_integral)) < threshold)
 
 def test_lax_friedrichs_flux():
     '''
