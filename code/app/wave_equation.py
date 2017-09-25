@@ -174,7 +174,7 @@ def flux_x(u):
     return flux
 
 
-def volume_integral_flux(u_n):
+def volume_integral_flux(u_n, t_n):
     '''
     Calculates the volume integral of flux in the wave equation.
     :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -197,7 +197,28 @@ def volume_integral_flux(u_n):
                     Value of the volume integral flux. It contains the integral
                     of all N_LGL * N_Element integrands.
     '''
-    if(params.volume_integral_scheme == 'lobatto_quadrature'\
+    if(params.volume_integral_scheme == 'analytical'):
+
+        integrand       = params.volume_integrand_8_LGL
+        lobatto_nodes   = params.lobatto_quadrature_nodes
+        Lobatto_weights = params.lobatto_weights_quadrature
+
+        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
+        power        = af.flip(af.range(integrand.shape[1]))
+        power_tile   = af.tile(power, 1, params.N_quad)
+        nodes_power  = nodes_tile ** power_tile
+        weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
+        nodes_weight = nodes_power * weights_tile
+
+        value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
+        analytical_u_n         = amplitude_quadrature_points(t_n)
+        F_u_n                  = af.reorder(analytical_u_n, 2, 0, 1)
+        integral_expansion     = af.broadcast(utils.multiply, value_at_lobatto_nodes, F_u_n)
+        flux_integral          = af.sum(integral_expansion, 1)
+        flux_integral          = af.reorder(flux_integral, 0, 2, 1)
+
+
+    elif(params.volume_integral_scheme == 'lobatto_quadrature'\
         and params.N_quad == params.N_LGL):
 
         integrand       = params.volume_integrand_8_LGL
@@ -268,6 +289,12 @@ def lax_friedrichs_flux(u_n):
     
     return boundary_flux 
 
+def amplitude_quadrature_points(t_n):
+    '''
+    '''
+    time  = t_n * params.delta_t 
+    u_t_n = af.sin(2 * np.pi * (params.element_LGL - params.c * time)) 
+    return u_t_n
 
 def surface_term(u_n):
     '''
@@ -307,7 +334,7 @@ def surface_term(u_n):
     return surface_term
 
 
-def b_vector(u_n):
+def b_vector(u_n, t_n):
     '''
     Calculates the b vector for N_Elements number of elements.
     
@@ -327,7 +354,7 @@ def b_vector(u_n):
     A report for the b-vector can be found here
     `https://goo.gl/sNsXXK`
     '''
-    volume_integral = volume_integral_flux(u_n)
+    volume_integral = volume_integral_flux(u_n, t_n)
     Surface_term    = surface_term(u_n)
     b_vector_array  = params.delta_t * (volume_integral - Surface_term)
     
@@ -339,7 +366,7 @@ def time_evolution():
     Solves the wave equation
     :math: `u^{t_n + 1} = b(t_n) \\times A`
     iterated over time steps t_n and then plots :math: `x` against the amplitude
-    of the wave. The images are then stored in Wave folder.
+    of the wave.
     '''
     A_inverse   = af.inverse(A_matrix())
     element_LGL = params.element_LGL
@@ -357,7 +384,7 @@ def time_evolution():
         
         amplitude[:, :, t_n + 1] =   amplitude[:, :, t_n]\
                                    + af.blas.matmul(A_inverse,\
-                                     b_vector(amplitude[:, :, t_n]))
+                                     b_vector(amplitude[:, :, t_n], t_n))
         
     
     print('u calculated!')
@@ -366,36 +393,21 @@ def time_evolution():
     x   = np.array(element_boundaries)
     element_discontinuities = np.array(element_discontinuities)
 
-    fig, ax = plt.subplots(nrows=1, ncols=2)
+    ax = plt.subplot(111)
 
     for t_n in trange(0, time.shape[0] - 1):
         
-        if t_n % 100 == 0:
-            
+        if t_n % 50 == 0:
             fig = plt.figure()
-            fig.suptitle('Time = %f' % (t_n * delta_t))
-
-            flux_left  = element_discontinuities[1, :, t_n]
-            flux_right = element_discontinuities[0, :, t_n]
+            x   = params.element_LGL
+            y   = amplitude[:, :, t_n]
             
-            ax = plt.subplot(1, 2, 1)
-            plt.scatter(x[0, :], flux_left , label='left boundary flux')
-            plt.scatter(x[0, :], flux_right, label='right boundary flux')
+            plt.plot(x, y)
             plt.xlabel('x')
             plt.ylabel('Amplitude')
-            plt.ylim(-1, 2)
+            plt.ylim(-2, 2)
+            plt.title('Time = %f' % (t_n * delta_t))
+            fig.savefig('results/1D_Wave_images/%04d' %(t_n / 50) + '.png')
+            plt.close('all')            
 
-            plt.subplot(1, 2, 2)
-            plt.scatter(x[0, :], flux_left - flux_right)
-            plt.xlabel('x')
-            plt.ylabel('discontinuity')
-            plt.ylim(-1, 1)
-
-
-
-
-
-            fig.savefig('results/1D_Wave_images/%04d' %(t_n / 100) + '.png')
-            plt.close('all')
-                
     return

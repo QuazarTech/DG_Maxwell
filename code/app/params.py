@@ -23,7 +23,7 @@ N_Elements = 10
 scheme     = 'gauss_quadrature'
 
 # The scheme to integrate the volume integral flux
-volume_integral_scheme = 'lobatto_quadrature'
+volume_integral_scheme = 'analytical'
 
 # The number quadrature points to be used for integration.
 N_quad = 8
@@ -109,7 +109,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
                                                     int(total_time / delta_t))
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
-u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+u_init     = af.sin(2 * np.pi * element_LGL)#np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
