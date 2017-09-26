@@ -9,6 +9,7 @@ from app import params
 from unit_test import test_waveEqn
 from app import wave_equation
 from app import lagrange
+from utils import utils
 
 if __name__ == '__main__':
     wave_equation.time_evolution()

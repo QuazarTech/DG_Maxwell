@@ -35,7 +35,7 @@ c          = 1
 total_time = 10
 
 # The c_lax to be used in the Lax-Friedrichs flux.
-c_lax      = 1
+c_lax      = c
 
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
@@ -102,7 +102,7 @@ element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 
 # The value of time-step.
-delta_t = delta_x / (20 * c)
+delta_t = delta_x / (5 * c)
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
