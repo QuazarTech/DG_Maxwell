@@ -133,3 +133,6 @@ results
 
 # Exceptions
 !bug_reproduce_amplitude_blowing.ipynb
+
+!.svgs/*
+
