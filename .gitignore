@@ -2,7 +2,28 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+*.mp4
+*.m4p
+*.m4v
+*.mpg 
+*.mp2
+*.mpeg
+*.mpe
+*.mpv
+*.mpg
+*.mpeg
+*.m2v
+*.m4v
+*.3gp
+*.flv 
+*.f4v
+*.f4p
+*.f4a 
+*.f4b
+*.jpeg
+*.jpg
+*.png
+*.svg
 # C extensions
 *.so
 
@@ -99,3 +120,16 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Kdev
+*kdev*
+*.ipynb
+
+# Results
+results
+
+# Temporary files
+*~
+
+# Exceptions
+!bug_reproduce_amplitude_blowing.ipynb
