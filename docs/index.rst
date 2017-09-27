@@ -12,9 +12,10 @@ Contents:
    :maxdepth: 2
    
    intro
+   submodules
    
 .. include:: intro.rst
-
+.. include:: submodules.rst
 
 Indices and tables
 ==================
