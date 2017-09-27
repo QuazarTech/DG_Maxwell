@@ -36,8 +36,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
-    'numpydoc',
-    'sphinx.ext.autosummary'
+    'numpydoc'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -56,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'DG Maxwell'
-copyright = u'2017, Aman Abhishek Tiwari, Balavarun P., and Manichandra Morunpudi'
+copyright = u'2017, Research Division, Quazar Technologies, Delhi'
 author = u'Aman Abhishek Tiwari, Balavarun P., and Manichandra Morunpudi'
 
 # The version info for the project you're documenting, acts as replacement for

@@ -3,7 +3,6 @@
 This is a `Sphinx` generated documentation for DG Maxwell code.
 
 ## Dependencies
-------------
 
 - [sphinx](http://www.sphinx-doc.org/en/stable/install.html)
 - [numpydoc](https://pypi.python.org/pypi/numpydoc)
