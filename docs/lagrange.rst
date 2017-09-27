@@ -1,9 +1,9 @@
 .. _lagrange:
 
 ======================
-2d_solver.lib.lagrange
+2d_solver.lagrange
 ======================
 
 .. automodule::
-   2d_solver.lib.lagrange
+   lagrange
    :members:

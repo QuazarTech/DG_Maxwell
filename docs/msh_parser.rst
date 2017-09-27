@@ -1,9 +1,9 @@
 .. _msh_parser:
 
 ========================
-2d_solver.lib.msh_parser
+2d_solver.msh_parser
 ========================
 
 .. automodule::
-   2d_solver.lib.msh_parser
+   msh_parser
    :members:

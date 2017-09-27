@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import matplotlib.lines as lines
 import gmshtranslator.gmshtranslator as gmsh
 
-import lib.isoparam as isoparam
+import isoparam
 
 plt.rcParams['figure.figsize']  = 12, 7.5
 plt.rcParams['lines.linewidth'] = 1.5
@@ -80,9 +80,15 @@ def read_order_2_msh(msh_file):
 
     def save_element (eletag, eletype,
                       physgrp, node_tags):
-         # The node tag starts from 1, but now they will start from 0
-         # because the nodes array indices represent the node tag.
-         # Therefore (node_tags - 1) instead of (node_tags)
+        
+        temp_nodes = node_tags.copy()
+        for j, k in zip(np.arange (0,8,2), np.arange(4)):
+            node_tags[j]     = temp_nodes[k]
+            node_tags[j + 1] = temp_nodes[k + 4]
+        
+        # The node tag starts from 1, but now they will start from 0
+        # because the nodes array indices represent the node tag.
+        # Therefore (node_tags - 1) instead of (node_tags)
         elements.append(node_tags - 1)
     
     msh_handler.add_nodes_rule (is_node, save_node)
@@ -98,8 +104,55 @@ def read_order_2_msh(msh_file):
     return nodes, elements
 
 
-def plot_grid(x_nodes, y_nodes, xi_LGL, eta_LGL, axes_handler, grid_width = 1., grid_color = 'red'):
+def plot_element_grid(x_nodes, y_nodes, xi_LGL, eta_LGL, axes_handler,
+                      grid_width = 1., grid_color = 'red'):
     '''
+    Uses the :math:`\\xi_{LGL}` and :math:`\\eta_{LGL}` points to plot a grid
+    in the :math:`x-y` plane using the points corresponding to the
+    :math:`(\\xi_{LGL}, \\eta_{LGL})` points.
+    
+    **Usage**::
+    
+      N_LGL        = 8
+      xi_LGL       = lagrange.LGL_points(N)
+      eta_LGL      = lagrange.LGL_points(N)
+      
+      axes_handler = pyplot.axes()
+      plot_element_grid(nodes[element, 0], nodes[element, 1],
+                        xi_LGL, eta_LGL, axes_handler)
+                        
+      pyplot.show()
+    
+    Parameters
+    ----------
+    
+    x_nodes : np.array [8]
+              x_nodes of the element.
+              
+    y_nodes : np.array [8]
+              y_nodes of the element.
+              
+    xi_LGL  : np.array [N_LGL]
+              LGL points on the :math:`\\xi` axis
+
+    eta_LGL  : np.array [N_LGL]
+               LGL points on the :math:`\\eta` axis
+
+    axes_handler : matplotlib.axes.Axes
+                   The plot handler you are using to plot the element grid.
+                   You may generate it by calling the function pyplot.axes()
+                   
+    grid_width : float
+                 Width of grid line.
+                 
+    grid_color : str
+                 Grid color
+                 
+                 
+    Returns
+    -------
+    
+    None
     '''
     
     axes_handler.set_aspect('equal')

@@ -1,9 +1,9 @@
 .. _utils:
 
 ===================
-2d_solver.lib.utils
+2d_solver.utils
 ===================
 
 .. automodule::
-   2d_solver.lib.utils
+   utils
    :members:

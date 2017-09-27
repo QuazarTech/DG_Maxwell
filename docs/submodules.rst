@@ -10,4 +10,5 @@ Submodules
 |:ref:`lagrange`  | Functions related to Lagrange polynomials, LGL_points. |
 +-----------------+--------------------------------------------------------+
 |:ref:`msh_parser`| Functions for parsing the **.msh** files               |
+|                 | and plotting meshes.                                   |
 +-----------------+--------------------------------------------------------+
