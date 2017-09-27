@@ -12,19 +12,8 @@ Contents:
    :maxdepth: 2
    
    intro
-
+   
 .. include:: intro.rst
-
-.. automodule::
-    2d_solver
-
-.. automodule::
-   2d_solver.lib.lagrange
-   :members:
-
-.. automodule::
-   2d_solver.lib.utils
-   :members:
 
 
 Indices and tables
