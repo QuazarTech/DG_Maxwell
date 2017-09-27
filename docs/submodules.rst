@@ -12,3 +12,5 @@ Submodules
 |:ref:`msh_parser`| Functions for parsing the **.msh** files               |
 |                 | and plotting meshes.                                   |
 +-----------------+--------------------------------------------------------+
+|:ref:`isoparam`  | Functions for isoparametric mapping.                   |
++-----------------+--------------------------------------------------------+

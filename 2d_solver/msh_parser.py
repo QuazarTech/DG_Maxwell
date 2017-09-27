@@ -111,17 +111,20 @@ def plot_element_grid(x_nodes, y_nodes, xi_LGL, eta_LGL, axes_handler,
     in the :math:`x-y` plane using the points corresponding to the
     :math:`(\\xi_{LGL}, \\eta_{LGL})` points.
     
-    **Usage**::
+    **Usage**
     
-      N_LGL        = 8
-      xi_LGL       = lagrange.LGL_points(N)
-      eta_LGL      = lagrange.LGL_points(N)
-      
-      axes_handler = pyplot.axes()
-      plot_element_grid(nodes[element, 0], nodes[element, 1],
-                        xi_LGL, eta_LGL, axes_handler)
-                        
-      pyplot.show()
+    .. code-block:: python
+       :linenos:
+       
+       N_LGL        = 8
+       xi_LGL       = lagrange.LGL_points(N)
+       eta_LGL      = lagrange.LGL_points(N)
+       
+       axes_handler = pyplot.axes()
+       plot_element_grid(nodes[element, 0], nodes[element, 1],
+                         xi_LGL, eta_LGL, axes_handler)
+                         
+       pyplot.show()
     
     Parameters
     ----------
