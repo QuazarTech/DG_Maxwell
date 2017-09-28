@@ -51,7 +51,7 @@ from the `docs` directory. You may read the instructions
 
 ## Unit tests
 The unit tests are located in the
-[2d_solver/tests](https://github.com/amanabt/DG_Maxwell/edit/2d_wave_solver/2d_solver)
+[2d_solver/tests](https://github.com/amanabt/DG_Maxwell/edit/2d_wave_solver/2d_solver/tests)
 directory.
 
 ### Dependencies
