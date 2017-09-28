@@ -37,6 +37,18 @@ equation solver. Currently the 2D wave equation solver will focus on
 solving the wave equation in a rectangular domain in the
 ![xy](./.svgs/x_y.svg "x_y") plane, with periodic boundary conditions.
 
+## Dependencies
+- [matplotlib](https://matplotlib.org/)
+- [numpy](http://www.numpy.org/)
+- [arrayfire](http://arrayfire.org)
+- [gmshtranslate](https://github.com/amanabt/gmshtranslator)
+
+## Documentation
+The documenation for the project can be generated using `sphinx`
+from the `docs` directory. You may read the instructions
+[here](./docs/README.md)
+
+
 ## Maintainers
 - Aman Abhishek Tiwari - ![aman@quazartech.com](aman@quazartech.com)
 - Balavarun P - ![Github Profile](https://github.com/balavarun5)
