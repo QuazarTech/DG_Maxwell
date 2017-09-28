@@ -363,6 +363,24 @@ def time_evolution():
 
     time_one_pass = int(2 / delta_t)
 
+  #  for t_n in range(0, time.shape[0] - 1):
+  #      if(t_n == time_one_pass):
+  #          fig = plt.figure()
+  #          x   = params.element_LGL
+  #          y   = amplitude[:, :, t_n]
+  #          
+  #          y_analytical = amplitude_quadrature_points(t_n)
+
+  #          #plt.plot(af.flat(x), af.flat(y), label='advected wave')
+  #          #plt.plot(af.flat(x), af.flat(y_analytical),'k--',  label='analytical solution')
+  #          plt.semilogy(af.flat(x), af.flat(af.abs(y - y_analytical)), marker='o')
+  #          plt.xlabel('x')
+  #          plt.ylabel('$\|u_{num}$(x) - $u_{analytical}$(x)$\|$')
+  #          plt.ylim(-2, 2)
+  #          plt.title('Spatial plot of error after 1 full advection')
+  #          fig.savefig('results/10_advection'+'.png')
+  #          plt.show()
+
    # for t_n in trange(0, time.shape[0] - 1):
 
    #     if t_n % 100 == 0:
@@ -402,7 +420,7 @@ def time_evolution():
     return L1_norm 
 
 
-def change_parameters(LGL):
+def change_parameters(LGL, Elements):
     '''
     '''
     # The domain of the function.
@@ -410,6 +428,9 @@ def change_parameters(LGL):
 
     # The number of LGL points into which an element is split.
     params.N_LGL      = LGL
+
+    # Number of elements the domain is to be divided into.
+    params.N_Elements = Elements
 
 
     # The number quadrature points to be used for integration.
@@ -501,17 +522,19 @@ def convergence_test():
     '''
     fig = plt.figure()
 
-    int_u_calculated = np.zeros([23])
-    index            = np.arange(23) + 3
+    int_u_calculated = np.zeros([22])
+    index            = np.arange(22) + 3
 
-    for i in range(3, 26):
-        change_parameters(i)
+    for i in range(3, 25):
+        change_parameters(8, i)
         int_u_calculated[i - 3] = (time_evolution())
 
     L1_norm = int_u_calculated 
     plt.semilogy(index, L1_norm, marker='o')
-    plt.xlabel('LGL points')
-    plt.ylabel('L1 norm')
-    plt.title('L1 norm v/s No. of LGL points')
+    plt.xlabel('Number of Elements')
+    plt.ylabel('L1 norm of error')
+    plt.title('L1 norm v/s No. of Elements')
     plt.show()
     fig.savefig('results/L1_norm.png')
+
+    return
