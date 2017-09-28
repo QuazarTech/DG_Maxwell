@@ -184,3 +184,8 @@ Thumbs.db
 # Mesh files
 *.msh
 
+# Exception for mesh folder
+!2d_solver/tests/msh_parser/mesh/rectangular.msh
+
+# Vim swp file
+*.swp
