@@ -320,7 +320,6 @@ def Integrate(integrand_coeffs):
         weights_tile = af.transpose(af.tile(Gauss_weights, 1, integrand.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
-        
         value_at_gauss_nodes = af.matmul(integrand, nodes_weight)
         Integral             = af.sum(value_at_gauss_nodes, 1)
  
@@ -434,14 +433,13 @@ def max_amplitude(u_t_n):
     '''
     '''
     element_function   = wave_equation_lagrange(u_t_n)
-    linspace_nos       = utils.linspace(0, 1, 1000)
+    linspace_nos       = utils.linspace(-1, 1, 100)
     linspace_tile      = af.transpose(af.tile(linspace_nos, 1, params.N_Elements))
     random_nos         = linspace_tile
-    element_random_nos = af.broadcast(utils.add, random_nos / 5, params.element_array[:, 0])
 
     amp = 0
     for i in range(0, params.N_Elements):
-        element_max = max(max(abs(element_function[i](element_random_nos[i, :]))))
+        element_max = max(max(abs(element_function[i](random_nos[i, :]))))
         if amp < element_max:
             amp = element_max
 

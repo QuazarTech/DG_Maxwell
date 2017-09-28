@@ -23,16 +23,17 @@ N_Elements = 10
 scheme     = 'gauss_quadrature'
 
 # The scheme to integrate the volume integral flux
-volume_integral_scheme = 'analytical'
+volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
+# [TODO]- refer amplitude_quadrature_points before changing.
 N_quad = 8
 
 # Wave speed.
 c          = 1
 
 # The total time for which the wave is to be evolved by the simulation. 
-total_time = 10
+total_time = 2.01
 
 # The c_lax to be used in the Lax-Friedrichs flux.
 c_lax      = c
@@ -83,6 +84,7 @@ for i in range(N_LGL):
 volume_integrand_8_LGL= af.np_to_af_array(volume_integrand_8_LGL)
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
+
 element_size    = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
 elements_xi_LGL = af.constant(0, N_Elements, N_LGL)
 elements        = utils.linspace(af.sum(x_nodes[0]),
@@ -102,7 +104,7 @@ element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 
 # The value of time-step.
-delta_t = delta_x / (5 * c)
+delta_t = delta_x / (10 * c)
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
