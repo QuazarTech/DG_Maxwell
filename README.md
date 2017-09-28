@@ -46,7 +46,7 @@ solving the wave equation in a rectangular domain in the
 ## Documentation
 The documenation for the project can be generated using `sphinx`
 from the `docs` directory. You may read the instructions
-[here](./docs/README.md)
+[here](./docs/README.md).
 
 
 ## Maintainers
