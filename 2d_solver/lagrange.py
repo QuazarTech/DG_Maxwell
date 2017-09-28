@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import arrayfire as af
 from scipy import special as sp
 
 def LGL_points(N):
