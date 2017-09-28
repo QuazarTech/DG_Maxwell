@@ -189,3 +189,8 @@ Thumbs.db
 
 # Vim swp file
 *.swp
+
+# Except ipynb for example directory
+!examples/*
+!examples/read_and_plot_mesh/*
+!examples/read_and_plot_mesh/mesh/*

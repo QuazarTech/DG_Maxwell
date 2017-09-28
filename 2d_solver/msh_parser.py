@@ -72,7 +72,6 @@ def read_order_2_msh(msh_file):
         return True
     
     def save_node (tag, x, y, z):
-        print ("Node ", tag, x, y, z)
         nodes.append([x, y])
         return
 
