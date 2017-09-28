@@ -20,7 +20,7 @@ def LGL_points(N):
     
     Returns
     -------
-    lgl : arrayfire.Array [N 1 1 1]
+    lgl : np.ndarray [N]
           The Lagrange-Gauss-Lobatto Nodes.
                           
     See `link`_
@@ -32,6 +32,5 @@ def LGL_points(N):
     legendre_N_minus_1 = N * (xi * sp.legendre(N - 1) - sp.legendre(N))
     lgl_points         = legendre_N_minus_1.r
     lgl_points.sort()
-    #lgl_points         = af.np_to_af_array(lgl_points)
-
+    
     return lgl_points
