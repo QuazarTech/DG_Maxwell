@@ -49,6 +49,17 @@ The documenation for the project can be generated using `sphinx`
 from the `docs` directory. You may read the instructions
 [here](./docs/README.md).
 
+## Unit tests
+### Dependencies
+- [pytest](https://docs.pytest.org/en/latest/#)
+
+### Running Unit Tests
+To run the unit tests, enter the following commands
+```
+$ cd path/to/the/DG_Maxwell/repo
+$ pytest
+```
+
 
 ## Maintainers
 - Aman Abhishek Tiwari - ![aman@quazartech.com](aman@quazartech.com)
