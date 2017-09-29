@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import arrayfire as af
 from scipy import special as sp
 
-from utils import utils
-from app import params
+import utils
+import params
 
 def LGL_points(N):
     '''

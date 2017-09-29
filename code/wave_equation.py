@@ -1,15 +1,17 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import arrayfire as af
-af.set_backend('opencl')
+af.set_backend('cuda')
 import numpy as np
 from matplotlib import pyplot as plt
 import pylab as pl
 from tqdm import trange
 
-from app import params
-from app import lagrange
-from utils import utils
+import params
+import lagrange
+import utils
+import isoparam
 
 plt.rcParams['figure.figsize'  ] = 9.6, 6.
 plt.rcParams['figure.dpi'      ] = 100
@@ -39,43 +41,10 @@ plt.rcParams['ytick.labelsize' ] = 'medium'
 plt.rcParams['ytick.direction' ] = 'in'
 
 
-
-
-def mapping_xi_to_x(x_nodes, xi):
-    '''
-    Maps points in :math: `\\xi` space to :math:`x` space using the formula
-    :math:  `x = \\frac{1 - \\xi}{2} x_0 + \\frac{1 + \\xi}{2} x_1`
-    
-    Parameters
-    ----------
-    
-    x_nodes : arrayfire.Array [2 1 1 1]
-              Element nodes.
-    
-    xi      : arrayfire.Array [N 1 1 1]
-              Value of :math: `\\xi`coordinate for which the corresponding
-              :math: `x` coordinate is to be found.
-    
-    Returns
-    -------
-    x : arrayfire.Array
-        :math: `x` value in the element corresponding to :math:`\\xi`.
-    '''
-    N_0 = (1 - xi) / 2
-    N_1 = (1 + xi) / 2
-    
-    N0_x0 = af.broadcast(utils.multiply, N_0, x_nodes[0])
-    N1_x1 = af.broadcast(utils.multiply, N_1, x_nodes[1])
-    
-    x = N0_x0 + N1_x1
-    
-    return x
-
-
 def dx_dxi_numerical(x_nodes, xi):
     '''
     Differential :math: `\\frac{dx}{d \\xi}` calculated by central
-    differential method about xi using the mapping_xi_to_x function.
+    differential method about xi using the isoparam.isoparam_1D function.
     
     Parameters
     ----------
@@ -92,8 +61,8 @@ def dx_dxi_numerical(x_nodes, xi):
              :math:`\\frac{dx}{d \\xi}`. 
     '''
     dxi = 1e-7
-    x2  = mapping_xi_to_x(x_nodes, xi + dxi)
-    x1  = mapping_xi_to_x(x_nodes, xi - dxi)
+    x2  = isoparam.isoparam_1D(x_nodes, xi + dxi)
+    x1  = isoparam.isoparam_1D(x_nodes, xi - dxi)
     
     dx_dxi = (x2 - x1) / (2 * dxi)
     
