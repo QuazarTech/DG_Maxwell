@@ -5,11 +5,11 @@ import numpy as np
 import matplotlib.lines as lines
 import gmshtranslator.gmshtranslator as gmsh
 import arrayfire as af
-af.set_backend('opencl')
+af.set_backend('cpu')
 
-from code import msh_parser
-from code import isoparam
-from code import utils
+from dg_maxwell import msh_parser
+from dg_maxwell import isoparam
+from dg_maxwell import utils
 
 def read_order_2_msh(msh_file):
     '''

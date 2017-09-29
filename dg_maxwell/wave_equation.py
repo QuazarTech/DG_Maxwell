@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('cpu')
 import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import trange
 
-import params
-import lagrange
-import utils
-import isoparam
+from dg_maxwell import params
+from dg_maxwell import lagrange
+from dg_maxwell import utils
+from dg_maxwell import isoparam
 
 plt.rcParams['figure.figsize'  ] = 9.6, 6.
 plt.rcParams['figure.dpi'      ] = 100
@@ -210,8 +210,9 @@ def lax_friedrichs_flux(u_n):
     .. math:: f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} \\\\
         - \\frac{\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})
 
-    The algorithm used is explained in the link given below
-    `https://goo.gl/sNsXXK`
+    The algorithm used is explained in this `document`_
+    
+    .. _document: `https://goo.gl/sNsXXK`
 
     Parameters
     ----------

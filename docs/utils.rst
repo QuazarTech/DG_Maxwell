@@ -5,5 +5,5 @@ utils
 =====
 
 .. automodule::
-   utils
+   dg_maxwell.utils
    :members:

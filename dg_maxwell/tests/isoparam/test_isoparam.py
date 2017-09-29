@@ -3,13 +3,13 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('./code/'))
+sys.path.insert(0, os.path.abspath('./'))
 
 import arrayfire as af
-af.set_backend('cuda')
-
+af.set_backend('cpu')
 import numpy as np
-import isoparam
+
+from dg_maxwell import isoparam
 
 def test_isoparam_x():
     '''

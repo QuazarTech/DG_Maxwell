@@ -5,5 +5,5 @@ wave_equation
 =============
 
 .. automodule::
-   wave_equation
+   dg_maxwell.wave_equation
    :members:

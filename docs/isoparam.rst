@@ -5,5 +5,5 @@ isoparam
 ========
 
 .. automodule::
-   isoparam
+   dg_maxwell.isoparam
    :members:

@@ -5,5 +5,5 @@ msh_parser
 ==========
 
 .. automodule::
-   msh_parser
+   dg_maxwell.msh_parser
    :members:

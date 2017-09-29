@@ -4,10 +4,10 @@
 import numpy as np
 from scipy import special as sp
 import arrayfire as af
-af.set_backend('opencl')
+af.set_backend('cpu')
 
-from code import utils
-from code import params
+from dg_maxwell import utils
+from dg_maxwell import params
 
 def LGL_points(N):
     '''
@@ -29,8 +29,9 @@ def LGL_points(N):
     lgl : arrayfire.Array [N 1 1 1]
           The Lagrange-Gauss-Lobatto Nodes.
                           
-    **See:** `https://goo.gl/KdG2Sv`_
-    _https://goo.gl/KdG2Sv: https://goo.gl/KdG2Sv
+    **See:** `document`_
+    .. _document: https://goo.gl/KdG2Sv
+    
     '''
     xi                 = np.poly1d([1, 0])
     legendre_N_minus_1 = N * (xi * sp.legendre(N - 1) - sp.legendre(N))

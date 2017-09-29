@@ -3,16 +3,16 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('./code/'))
+sys.path.insert(0, os.path.abspath('./'))
 
 import numpy as np
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('cpu')
 
-import params
-import lagrange
-import wave_equation
-import isoparam
+from dg_maxwell import params
+from dg_maxwell import lagrange
+from dg_maxwell import wave_equation
+from dg_maxwell import isoparam
 
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
@@ -65,7 +65,7 @@ def test_gauss_weights():
                                                                   <= threshold
 
 
-def test_mapping_xi_to_x():
+def test_isoparam_1D():
     '''
     A test function to check the mapping_xi_to_x function in wave_equation module,
     The test involves passing trial element nodes and :math: `\\xi` and
@@ -88,13 +88,13 @@ def test_dx_dxi():
     passing nodes of an element and using the LGL points. Analytically, the
     differential would be a constant. The check has a tolerance 1e-7.
     '''
-    threshold = 1e-14
+    threshold = 1e-9
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
-    
-    check_dx_dxi = (af.statistics.mean(wave_equation.dx_dxi_numerical
-                    (test_nodes,params.xi_LGL)) - analytical_dx_dxi) <= threshold
+        
+    check_dx_dxi = abs((af.statistics.mean(wave_equation.dx_dxi_numerical
+                    (test_nodes,params.xi_LGL)) - analytical_dx_dxi)) <= threshold
     
     assert check_dx_dxi
 

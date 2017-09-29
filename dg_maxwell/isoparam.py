@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import arrayfire as af
-af.set_backend('opencl')
-from code import utils
+af.set_backend('cpu')
+from dg_maxwell import utils
 
 def isoparam_1D(x_nodes, xi):
     '''

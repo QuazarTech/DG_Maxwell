@@ -5,5 +5,5 @@ lagrange
 ========
 
 .. automodule::
-   lagrange
+   dg_maxwell.lagrange
    :members:
