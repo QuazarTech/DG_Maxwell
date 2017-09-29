@@ -16,5 +16,5 @@ install:
     - pip install -r requirements.txt
 
 script:
-    - python -c "import solver_2d_wave"
+    - python -c "import code"
 
