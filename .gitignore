@@ -133,3 +133,64 @@ results
 
 # Exceptions
 !bug_reproduce_amplitude_blowing.ipynb
+
+!.svgs/*
+.svgs/*~
+
+# Sphinx gitignore files
+
+# sphinx build folder
+_build
+
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Editor backup files #
+#######################
+*~
+
+# Mesh files
+*.msh
+
+# Exception for mesh folder
+!2d_solver/tests/msh_parser/mesh/rectangular.msh
+
+# Vim swp file
+*.swp
+
+# Except ipynb for example directory
+!examples/*
+!examples/read_and_plot_mesh/*
+!examples/read_and_plot_mesh/mesh/*
