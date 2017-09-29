@@ -7,7 +7,7 @@ from scipy import special as sp
 def LGL_points(N):
     '''
     Calculates : math:`N` Legendre-Gauss-Lobatto (LGL) points.
-    LGL points are the roots of the polynomial 
+    LGL points are the roots of the polynomial
     :math:`(1 - \\xi^2) P_{n - 1}'(\\xi) = 0`
     Where :math:`P_{n}(\\xi)` are the Legendre polynomials.
     This function finds the roots of the above polynomial.

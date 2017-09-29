@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from matplotlib import pyplot as plt
 import matplotlib.lines as lines
 import gmshtranslator.gmshtranslator as gmsh
 
@@ -152,8 +151,6 @@ def plot_element_grid(x_nodes, y_nodes, xi_LGL, eta_LGL, axes_handler,
         for n in np.arange (N):
             xy_map[m][n][0] = isoparam.isoparam_x(x_nodes, xi_LGL[m], eta_LGL[n])
             xy_map[m][n][1] = isoparam.isoparam_y(y_nodes, xi_LGL[m], eta_LGL[n])
-            pass
-        pass
     
     array3d = xy_map.copy()
     N = array3d.shape[0]
