@@ -1,0 +1,20 @@
+sudo: required
+dist: xenial
+language: python
+
+python:
+    - "3.5"
+
+# command to install dependencies
+before_install:
+    - git clone https://github.com/amanabt/gmshtranslator.git
+    - cd gmshtranslator
+    - sudo python setup.py install
+    - cd ..
+
+install:
+    - pip install -r requirement.txt
+
+script:
+    - python -c "import solver_2d_wave"
+
