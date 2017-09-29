@@ -43,7 +43,7 @@ before_install:
     - export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
     - echo $LD_LIBRARY_PATH
     - cd ../../../../
-    - cd DG_Maxwell
+    - echo $PWD
 
 install:
     - pip install -r requirements.txt
