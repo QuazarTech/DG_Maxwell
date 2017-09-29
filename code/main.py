@@ -9,6 +9,11 @@ from app import params
 from unit_test import test_waveEqn
 from app import wave_equation
 from app import lagrange
+from utils import utils
+
+# [TODO] - Set N_Elements = 12
 
 if __name__ == '__main__':
-    wave_equation.time_evolution()
+    #print(wave_equation.time_evolution())
+    wave_equation.convergence_test()
+    #print(wave_equation.amplitude_quadrature_points(0))
