@@ -520,21 +520,23 @@ def change_parameters(LGL, Elements):
 def convergence_test():
     '''
     '''
-    fig = plt.figure()
+    L1_norm_4_LGL = np.zeros([6])
+    L1_norm_8_LGL = np.zeros([6])
+    index         = np.array([8, 16, 32, 64, 128, 256])
 
-    int_u_calculated = np.zeros([22])
-    index            = np.arange(22) + 3
+    for i in range(0, 6):
 
-    for i in range(3, 25):
-        change_parameters(8, i)
-        int_u_calculated[i - 3] = (time_evolution())
+        change_parameters(4, index[i])
+        L1_norm_4_LGL[i] = time_evolution() 
 
-    L1_norm = int_u_calculated 
-    plt.semilogy(index, L1_norm, marker='o')
-    plt.xlabel('Number of Elements')
-    plt.ylabel('L1 norm of error')
-    plt.title('L1 norm v/s No. of Elements')
+        change_parameters(8, index[i])
+        L1_norm_8_LGL[i] = time_evolution()
+
+    plt.semilogy(index, L1_norm_4_LGL, '--', label='$N_{LGL}$ = 4')
+    plt.semilogy(index, L1_norm_8_LGL, '--', label='$N_{LGL}$ = 8')
+
+    plt.legend(loc='best')
     plt.show()
-    fig.savefig('results/L1_norm.png')
+    print(L1_norm_4_LGL)
 
     return
