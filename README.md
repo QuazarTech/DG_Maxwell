@@ -2,6 +2,7 @@
 # DG Maxwell
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/8c3103477eb74f1a9d5a87c6b59c220f)](https://www.codacy.com/app/aman2official/DG_Maxwell?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=amanabt/DG_Maxwell&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/amanabt/DG_Maxwell.svg?branch=2D_wave_travis)](https://travis-ci.org/amanabt/DG_Maxwell)
 
 ```
 _____   _____   __  __                          _ _ 
