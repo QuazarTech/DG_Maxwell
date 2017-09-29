@@ -41,9 +41,8 @@ def test_gauss_nodes():
     '''
     The Gauss points obtained by the function above is compared to
     analytical values.
-    Reference
-    ---------
-    `https://goo.gl/9gqLpe` 
+    
+    **See:** `https://goo.gl/9gqLpe`
     '''
     threshold = 1e-10
     analytical_gauss_nodes = np.array([-0.906179845938664, -0.5384693101056831,\

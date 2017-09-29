@@ -29,10 +29,8 @@ def LGL_points(N):
     lgl : arrayfire.Array [N 1 1 1]
           The Lagrange-Gauss-Lobatto Nodes.
                           
-    Reference
-    ---------
-    
-    `https://goo.gl/KdG2Sv`
+    **See:** `https://goo.gl/KdG2Sv`_
+    _https://goo.gl/KdG2Sv: https://goo.gl/KdG2Sv
     '''
     xi                 = np.poly1d([1, 0])
     legendre_N_minus_1 = N * (xi * sp.legendre(N - 1) - sp.legendre(N))
@@ -63,11 +61,9 @@ def lobatto_weights(n):
                       the given x points and index.
     
     
-    **Reference**
+    **See:** Gauss-Lobatto weights Wikipedia `link`_.
     
-    Gauss-Lobatto weights Wikipedia link-
-    https://en.wikipedia.org/wiki/
-    Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules
+    .. _link: https://goo.gl/kYqTyK
 
 
     **Examples**
@@ -106,11 +102,9 @@ def gauss_nodes(n):
     gauss_nodes : numpy.ndarray
                   The Gauss nodes :math:`x_i`.
 
-    Reference
-    ---------
+    **See:** A Wikipedia article about the Gauss-Legendre quadrature `here`_
     
-    A Wikipedia article about the Gauss-Legendre quadrature
-    `https://goo.gl/9gqLpe`
+    .. _here: https://goo.gl/9gqLpe
     '''
     legendre = sp.legendre(n)
     gauss_nodes = legendre.r

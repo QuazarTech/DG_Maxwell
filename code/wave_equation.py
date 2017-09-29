@@ -43,7 +43,7 @@ plt.rcParams['ytick.direction' ] = 'in'
 
 def dx_dxi_numerical(x_nodes, xi):
     '''
-    Differential :math: `\\frac{dx}{d \\xi}` calculated by central
+    Differential :math:`\\frac{dx}{d \\xi}` calculated by central
     differential method about xi using the isoparam.isoparam_1D function.
     
     Parameters
@@ -53,7 +53,7 @@ def dx_dxi_numerical(x_nodes, xi):
               Contains the nodes of elements.
     
     xi      : arrayfire.Array [N_LGL 1 1 1]
-              Values of :math: `\\xi`
+              Values of :math:`\\xi`
     
     Returns
     -------
@@ -72,7 +72,7 @@ def dx_dxi_numerical(x_nodes, xi):
 def dx_dxi_analytical(x_nodes, xi):
     '''
     The analytical result for :math:`\\frac{dx}{d \\xi}` for a 1D element is
-    :math: `\\frac{x_1 - x_0}{2}`
+    :math:`\\frac{x_1 - x_0}{2}`
 
     Parameters
     ----------
@@ -80,13 +80,13 @@ def dx_dxi_analytical(x_nodes, xi):
               Contains the nodes of elements.
  
     xi      : arrayfire.Array [N_LGL 1 1 1]
-              Values of :math: `\\xi`.
+              Values of :math:`\\xi`.
 
     Returns
     -------
     analytical_dx_dxi : arrayfire.Array [N_Elements 1 1 1]
-                        The analytical solution of :math:
-                        `\\frac{dx}{d\\xi}` for an element.
+                        The analytical solution of :math:`\\frac{dx}{d\\xi}`
+                        for an element.
     
     '''
     analytical_dx_dxi = (x_nodes[1] - x_nodes[0]) / 2
@@ -97,11 +97,11 @@ def dx_dxi_analytical(x_nodes, xi):
 def A_matrix():
     '''
     Calculates A matrix whose elements :math:`A_{p i}` are given by
-    :math: `A_{p i} &= \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
+    :math:`A_{p i} = \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
 
     The integrals are computed using the Integrate() function.
 
-    Since elements are taken to be of equal size, :math: `\\frac {dx}{dxi}
+    Since elements are taken to be of equal size, :math:`\\frac{dx}{d\\xi}`
     is same everywhere
     
 
@@ -207,8 +207,9 @@ def volume_integral_flux(u_n):
 def lax_friedrichs_flux(u_n):
     '''
     Calculates the lax-friedrichs_flux :math:`f_i` using.
-    :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \\frac
-                {\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
+    
+    .. math:: f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} \\\\
+        - \\frac{\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})
 
     The algorithm used is explained in the link given below
     `https://goo.gl/sNsXXK`
@@ -259,11 +260,9 @@ def surface_term(u_n):
                    :math:`N_{Elements}`. p varies along the rows and i along
                    columns.
     
-    Reference
-    ---------
-    Link to PDF describing the algorithm to obtain the surface term.
+    **See:** `PDF`_ describing the algorithm to obtain the surface term.
     
-    `https://goo.gl/Nhhgzx`
+    .. _PDF: https://goo.gl/Nhhgzx
     '''
 
     L_p_minus1   = params.lagrange_basis_value[:, 0]
@@ -291,10 +290,9 @@ def b_vector(u_n):
                      Contains the b vector(of shape [N_LGL 1 1 1])
                      for each element.
 
-    Reference
-    ---------
-    A report for the b-vector can be found here
-    `https://goo.gl/sNsXXK`
+    **See:** `Report`_ for the b-vector can be found here
+    .. _Report: https://goo.gl/sNsXXK
+
     '''
     volume_integral = volume_integral_flux(u_n)
     Surface_term    = surface_term(u_n)
@@ -306,8 +304,8 @@ def b_vector(u_n):
 def time_evolution():
     '''
     Solves the wave equation
-    :math: `u^{t_n + 1} = b(t_n) \\times A`
-    iterated over time steps t_n and then plots :math: `x` against the amplitude
+    :math:`u^{t_n + 1} = b(t_n) \\times A`
+    iterated over time steps t_n and then plots :math:`x` against the amplitude
     of the wave. The images are then stored in Wave folder.
     '''
     A_inverse   = af.inverse(A_matrix())
