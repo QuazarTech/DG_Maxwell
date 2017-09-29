@@ -13,7 +13,7 @@ from app import wave_equation
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8 
+N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
@@ -26,16 +26,17 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
+# [TODO]- refer amplitude_quadrature_points before changing.
 N_quad = 8
 
 # Wave speed.
 c          = 1
 
 # The total time for which the wave is to be evolved by the simulation. 
-total_time = 10
+total_time = 2.01
 
 # The c_lax to be used in the Lax-Friedrichs flux.
-c_lax      = 1
+c_lax      = c
 
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
@@ -83,6 +84,7 @@ for i in range(N_LGL):
 volume_integrand_8_LGL= af.np_to_af_array(volume_integrand_8_LGL)
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
+
 element_size    = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
 elements_xi_LGL = af.constant(0, N_Elements, N_LGL)
 elements        = utils.linspace(af.sum(x_nodes[0]),
@@ -102,14 +104,14 @@ element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 
 # The value of time-step.
-delta_t = delta_x / (20 * c)
+delta_t = delta_x / (10 * c)
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
                                                     int(total_time / delta_t))
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
-u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+u_init     = af.sin(2 * np.pi * element_LGL)#np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init

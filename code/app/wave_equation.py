@@ -174,7 +174,7 @@ def flux_x(u):
     return flux
 
 
-def volume_integral_flux(u_n):
+def volume_integral_flux(u_n, t_n):
     '''
     Calculates the volume integral of flux in the wave equation.
     :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -204,33 +204,21 @@ def volume_integral_flux(u_n):
         lobatto_nodes   = params.lobatto_quadrature_nodes
         Lobatto_weights = params.lobatto_weights_quadrature
 
-        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
+        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1,\
+                                          integrand.shape[1]))
         power        = af.flip(af.range(integrand.shape[1]))
         power_tile   = af.tile(power, 1, params.N_quad)
         nodes_power  = nodes_tile ** power_tile
-        weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
+        weights_tile = af.transpose(af.tile(Lobatto_weights, 1,\
+                       integrand.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
         value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
         F_u_n                  = af.reorder(u_n, 2, 0, 1)
-        integral_expansion     = af.broadcast(utils.multiply, value_at_lobatto_nodes, F_u_n)
+        integral_expansion     = af.broadcast(utils.multiply,\
+                                 value_at_lobatto_nodes, F_u_n)
         flux_integral          = af.sum(integral_expansion, 1)
         flux_integral          = af.reorder(flux_integral, 0, 2, 1)
-
-    else:
-        analytical_form_flux       = flux_x(lagrange.wave_equation_lagrange(u_n))
-        differential_lagrange_poly = params.differential_lagrange_polynomial
-
-        integrand = np.zeros(([params.N_LGL * params.N_Elements, 2 * params.N_LGL - 2]))
-
-        for i in range(params.N_LGL):
-            for j in range(params.N_Elements):
-                integrand[i + params.N_LGL * j] = (analytical_form_flux[j] *\
-                                                  differential_lagrange_poly[i]).c
-
-        integrand     = af.np_to_af_array(integrand)
-        flux_integral = lagrange.Integrate(integrand)
-        flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
 
     return flux_integral
 
@@ -268,6 +256,14 @@ def lax_friedrichs_flux(u_n):
     
     return boundary_flux 
 
+def amplitude_quadrature_points(t_n):
+    '''
+    [TODO]-for the sake of convenience, N_LGL = N_quad
+    '''
+    time  = t_n * params.delta_t 
+    u_t_n = af.sin(2 * np.pi * (params.element_LGL - params.c * time)) 
+
+    return u_t_n
 
 def surface_term(u_n):
     '''
@@ -307,7 +303,7 @@ def surface_term(u_n):
     return surface_term
 
 
-def b_vector(u_n):
+def b_vector(u_n, t_n):
     '''
     Calculates the b vector for N_Elements number of elements.
     
@@ -327,9 +323,9 @@ def b_vector(u_n):
     A report for the b-vector can be found here
     `https://goo.gl/sNsXXK`
     '''
-    volume_integral = volume_integral_flux(u_n)
+    volume_integral = volume_integral_flux(u_n, t_n)
     Surface_term    = surface_term(u_n)
-    b_vector_array  = params.delta_t * (volume_integral - Surface_term)
+    b_vector_array  = (volume_integral - Surface_term)
     
     return b_vector_array
 
@@ -339,7 +335,7 @@ def time_evolution():
     Solves the wave equation
     :math: `u^{t_n + 1} = b(t_n) \\times A`
     iterated over time steps t_n and then plots :math: `x` against the amplitude
-    of the wave. The images are then stored in Wave folder.
+    of the wave.
     '''
     A_inverse   = af.inverse(A_matrix())
     element_LGL = params.element_LGL
@@ -347,27 +343,200 @@ def time_evolution():
     amplitude   = params.u 
     time        = params.time
     
+    element_boundaries = af.np_to_af_array(params.np_element_array)
+
     for t_n in trange(0, time.shape[0] - 1):
-        
+
+        amplitude_n_plus_half =  amplitude[:, :, t_n]\
+                               + af.matmul(A_inverse,\
+                                 b_vector(amplitude[:, :, t_n], t_n))\
+                               * delta_t / 2
+
+
         amplitude[:, :, t_n + 1] =   amplitude[:, :, t_n]\
-                                   + af.blas.matmul(A_inverse,\
-                                     b_vector(amplitude[:, :, t_n]))
-    
+                                   + af.matmul(A_inverse,\
+                                     b_vector(amplitude_n_plus_half, t_n))\
+                                   * delta_t
+
+
     print('u calculated!')
-    
-    for t_n in trange(0, time.shape[0] - 1):
-        
-        if t_n % 100 == 0:
-            
-            fig = plt.figure()
-            x   = params.element_LGL
-            y   = amplitude[:, :, t_n]
-            
-            plt.plot(x, y)
-            plt.xlabel('x')
-            plt.ylabel('Amplitude')
-            plt.title('Time = %f' % (t_n * delta_t))
-            fig.savefig('results/1D_Wave_images/%04d' %(t_n / 100) + '.png')
-            plt.close('all')
-                
+
+    time_one_pass = int(2 / delta_t)
+
+  #  for t_n in range(0, time.shape[0] - 1):
+  #      if(t_n == time_one_pass):
+  #          fig = plt.figure()
+  #          x   = params.element_LGL
+  #          y   = amplitude[:, :, t_n]
+  #          
+  #          y_analytical = amplitude_quadrature_points(t_n)
+
+  #          #plt.plot(af.flat(x), af.flat(y), label='advected wave')
+  #          #plt.plot(af.flat(x), af.flat(y_analytical),'k--',  label='analytical solution')
+  #          plt.semilogy(af.flat(x), af.flat(af.abs(y - y_analytical)), marker='o')
+  #          plt.xlabel('x')
+  #          plt.ylabel('$\|u_{num}$(x) - $u_{analytical}$(x)$\|$')
+  #          plt.ylim(-2, 2)
+  #          plt.title('Spatial plot of error after 1 full advection')
+  #          fig.savefig('results/10_advection'+'.png')
+  #          plt.show()
+
+   # for t_n in trange(0, time.shape[0] - 1):
+
+   #     if t_n % 100 == 0:
+   #         fig = plt.figure()
+   #         x   = params.element_LGL
+   #         y   = amplitude[:, :, t_n]
+   #         
+   #         mod_diff = af.sum(af.abs(amplitude[:, :, t_n] - amplitude_quadrature_points(t_n)))
+   #         plt.plot(x, y)
+   #         plt.xlabel('x')
+   #         plt.ylabel('Amplitude')
+   #         plt.ylim(-2, 2)
+   #         plt.title('Time = %f' % (t_n * delta_t), '     ', 'Error = ', mod_diff)
+   #         fig.savefig('results/1D_Wave_images/%04d' %(t_n / 100) + '.png')
+   #         plt.close('all') 
+
+   # x   = np.array(element_boundaries)
+
+   # ax = plt.subplot(111)
+
+   # fig = plt.figure()
+   # x = (af.range(time.shape[0] - 1)) * delta_t
+   # y = af.constant(0, time.shape[0] - 1)
+
+
+    wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
+
+    calculated_u = params.u[:, :, time_one_pass]
+    analytical_u = amplitude_quadrature_points(time_one_pass)
+
+    for i in range(0, params.N_Elements):
+        wave_equation_coeffs[i, :] = (lagrange.wave_equation_lagrange(af.abs(calculated_u - analytical_u))[i].c)
+
+    L1_norm = (af.sum(lagrange.Integrate(af.np_to_af_array(wave_equation_coeffs))))
+
+
+    return L1_norm 
+
+
+def change_parameters(LGL, Elements):
+    '''
+    '''
+    # The domain of the function.
+    params.x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
+
+    # The number of LGL points into which an element is split.
+    params.N_LGL      = LGL
+
+    # Number of elements the domain is to be divided into.
+    params.N_Elements = Elements
+
+
+    # The number quadrature points to be used for integration.
+    # [TODO]- refer amplitude_quadrature_points before changing.
+    params.N_quad = LGL
+
+    # Array containing the LGL points in xi space.
+    params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
+
+    # N_Gauss number of Gauss nodes.
+    params.gauss_points  = af.np_to_af_array(lagrange.gauss_nodes(params.N_quad))
+
+    # The Gaussian weights.
+    params.gauss_weights = lagrange.gaussian_weights(params.N_quad)
+
+    # The lobatto nodes to be used for integration.
+    params.lobatto_quadrature_nodes = lagrange.LGL_points(params.N_quad)
+
+    # The lobatto weights to be used for integration.
+    params.lobatto_weights_quadrature = lagrange.lobatto_weights\
+                                        (params.N_quad)
+
+    # A list of the Lagrange polynomials in poly1d form.
+    params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
+
+    # An array containing the coefficients of the lagrange basis polynomials.
+    params.lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(params.xi_LGL)[1])
+
+    # Refer corresponding functions.
+    params.lagrange_basis_value = lagrange.lagrange_function_value(params.lagrange_coeffs)
+
+    # A list of the Lagrange polynomials in poly1d form.
+    params.lagrange_poly1d_list = lagrange.lagrange_polynomials(params.xi_LGL)[0]
+
+
+    # list containing the poly1d forms of the differential of Lagrange
+    # basis polynomials.
+    params.differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
+
+
+    # While evaluating the volume integral using N_LGL
+    # lobatto quadrature points, The integration can be vectorized
+    # and in this case the coefficients of the differential of the
+    # Lagrange polynomials is required
+    params.volume_integrand_8_LGL = np.zeros(([params.N_LGL, params.N_LGL - 1]))
+
+    for i in range(params.N_LGL):
+        params.volume_integrand_8_LGL[i] = (params.differential_lagrange_polynomial[i]).c
+
+    params.volume_integrand_8_LGL= af.np_to_af_array(params.volume_integrand_8_LGL)
+
+    # Obtaining an array consisting of the LGL points mapped onto the elements.
+
+    params.element_size    = af.sum((params.x_nodes[1] - params.x_nodes[0]) / params.N_Elements)
+    params.elements_xi_LGL = af.constant(0, params.N_Elements, params.N_LGL)
+    params.elements        = utils.linspace(af.sum(params.x_nodes[0]),
+                      af.sum(params.x_nodes[1] - params.element_size), params.N_Elements)
+
+    params.np_element_array   = np.concatenate((af.transpose(params.elements),
+                                   af.transpose(params.elements + params.element_size)))
+
+    params.element_mesh_nodes = utils.linspace(af.sum(params.x_nodes[0]),
+                                        af.sum(params.x_nodes[1]), params.N_Elements + 1)
+
+    params.element_array = af.transpose(af.interop.np_to_af_array(params.np_element_array))
+    params.element_LGL   = mapping_xi_to_x(af.transpose(params.element_array),\
+                                                                       params.xi_LGL)
+
+    # The minimum distance between 2 mapped LGL points.
+    params.delta_x = af.min((params.element_LGL - af.shift(params.element_LGL, 1, 0))[1:, :])
+
+    # The value of time-step.
+    params.delta_t = params.delta_x / (10 * params.c)
+
+    # Array of timesteps seperated by delta_t.
+    params.time    = utils.linspace(0, int(params.total_time / params.delta_t) * params.delta_t,
+                                                        int(params.total_time / params.delta_t))
+
+    # Initializing the amplitudes. Change u_init to required initial conditions.
+    params.u_init     = af.sin(2 * np.pi * params.element_LGL)#np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+    params.u          = af.constant(0, params.N_LGL, params.N_Elements, params.time.shape[0],\
+                                     dtype = af.Dtype.f64)
+    params.u[:, :, 0] = params.u_init
+                                                     
+    return
+
+def convergence_test():
+    '''
+    '''
+    L1_norm_4_LGL = np.zeros([6])
+    L1_norm_8_LGL = np.zeros([6])
+    index         = np.array([8, 16, 32, 64, 128, 256])
+
+    for i in range(0, 6):
+
+        change_parameters(4, index[i])
+        L1_norm_4_LGL[i] = time_evolution() 
+
+        change_parameters(8, index[i])
+        L1_norm_8_LGL[i] = time_evolution()
+
+    plt.semilogy(index, L1_norm_4_LGL, '--', label='$N_{LGL}$ = 4')
+    plt.semilogy(index, L1_norm_8_LGL, '--', label='$N_{LGL}$ = 8')
+
+    plt.legend(loc='best')
+    plt.show()
+    print(L1_norm_4_LGL)
+
     return

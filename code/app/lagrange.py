@@ -309,6 +309,7 @@ def Integrate(integrand_coeffs):
     '''
 
     if (params.scheme == 'gauss_quadrature'):
+        
         integrand      = integrand_coeffs
         gaussian_nodes = params.gauss_points
         Gauss_weights  = params.gauss_weights
@@ -319,7 +320,6 @@ def Integrate(integrand_coeffs):
         weights_tile = af.transpose(af.tile(Gauss_weights, 1, integrand.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
-        
         value_at_gauss_nodes = af.matmul(integrand, nodes_weight)
         Integral             = af.sum(value_at_gauss_nodes, 1)
  
@@ -426,4 +426,21 @@ def differential_lagrange_poly1d():
         test_diff = np.poly1d.deriv(params.lagrange_poly1d_list[i])
         diff_lagrange_poly1d.append(test_diff)
     
-    return  diff_lagrange_poly1d 
+    return diff_lagrange_poly1d 
+
+
+def max_amplitude(u_t_n):
+    '''
+    '''
+    element_function   = wave_equation_lagrange(u_t_n)
+    linspace_nos       = utils.linspace(-1, 1, 100)
+    linspace_tile      = af.transpose(af.tile(linspace_nos, 1, params.N_Elements))
+    random_nos         = linspace_tile
+
+    amp = 0
+    for i in range(0, params.N_Elements):
+        element_max = max(max(abs(element_function[i](random_nos[i, :]))))
+        if amp < element_max:
+            amp = element_max
+
+    return amp
