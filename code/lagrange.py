@@ -4,7 +4,7 @@
 import numpy as np
 from scipy import special as sp
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 
 from code import utils
 from code import params

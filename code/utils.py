@@ -4,7 +4,7 @@
 import numpy as np
 import matplotlib.lines as lines
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 
 def add(a, b):
     '''

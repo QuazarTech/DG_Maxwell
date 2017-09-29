@@ -3,7 +3,7 @@
 
 import numpy as np
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 
 from code import lagrange
 from code import utils

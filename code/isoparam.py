@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 from code import utils
 
 def isoparam_1D(x_nodes, xi):

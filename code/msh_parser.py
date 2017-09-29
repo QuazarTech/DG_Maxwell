@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.lines as lines
 import gmshtranslator.gmshtranslator as gmsh
 import arrayfire as af
-af.set_backend('cuda')
+af.set_backend('opencl')
 
 from code import msh_parser
 from code import isoparam
