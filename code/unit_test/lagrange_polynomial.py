@@ -1,10 +1,13 @@
-from app import lagrange
-from utils import utils
+#! /usr/bin/env python3
+
 import math
+
 import arrayfire as af
 import numpy as np
 from matplotlib import pyplot as plt
 
+from app import lagrange
+from utils import utils
 from app import global_variables as gvar
 
 plt.rcParams['figure.figsize'] = 9.6, 6.
