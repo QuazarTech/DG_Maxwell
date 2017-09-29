@@ -1,8 +1,8 @@
 .. _utils:
 
-===================
-2d_solver.utils
-===================
+=====
+utils
+=====
 
 .. automodule::
    utils

@@ -1,8 +1,8 @@
 .. _isoparam:
 
-===================
-2d_solver.isoparam
-===================
+========
+isoparam
+========
 
 .. automodule::
    isoparam

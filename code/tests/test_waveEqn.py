@@ -1,16 +1,21 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath('./code/'))
 import math
 
 import numpy as np
-import arrayfire as af
 from matplotlib import pyplot as plt
-af.set_backend('opencl')
+import arrayfire as af
+af.set_backend('cuda')
 
-from app import params
-from app import lagrange
-from app import wave_equation
-from utils import utils
+import params
+import lagrange
+import wave_equation
+import utils
+import isoparam
 
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
@@ -76,7 +81,7 @@ def test_mapping_xi_to_x():
     test_element_nodes = af.interop.np_to_af_array(np.array([7, 11]))
     test_xi            = 0
     analytical_x_value = 9
-    numerical_x_value  = wave_equation.mapping_xi_to_x(test_element_nodes, test_xi)
+    numerical_x_value  = isoparam.isoparam_1D(test_element_nodes, test_xi)
     
     assert af.abs(analytical_x_value - numerical_x_value) <= threshold
 

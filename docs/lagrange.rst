@@ -1,8 +1,8 @@
 .. _lagrange:
 
-======================
-2d_solver.lagrange
-======================
+========
+lagrange
+========
 
 .. automodule::
    lagrange

@@ -1,11 +1,34 @@
+============
 Introduction
-------------
+============
+This projects aims at developing a fast Maxwell's Equation solver using
+the discontinuous Galerkin method. As first steps to develop this solver,
+we are developing a library which allows us to solve the 1D wave equation
+and the 2D wave equation using discontinuous Galerkin method.
 
-This project is a stepping stone to develop a solver for solving
-the 2D Maxwell's equations using the Discontinuous Galerkin method.
-The project to develop 2D wave equation solver is a stepping stone
-to develop the Maxwell's equation solver. The 2D wave equation is
-given by the equation:
+1D Wave Eqaution Solver
+-----------------------
+The 1D wave equation solver is aimed at finding the time evolution of
+the 1D wave equation using the discontinuous Galerkin method.
+The 1D wave equation is given by the equation:
+
+.. math:: \frac{\partial u}{\partial t} + \frac{\partial F}{\partial x} = 0
+    :label: 1d_wave_eq
+
+where,
+
+:math:`u \equiv u(x, t)`
+
+:math:`F(u) = cu`
+
+where :math:`c` is the wave speed.
+
+2D Wave Equation Solver
+-----------------------
+
+The 2D wave equation solver is aimed at finding the time evolution of the
+2D wave equation using the discontinuous Galerkin method.
+The 2D wave equation is given by the equation:
 
 .. math:: \frac{\partial u}{\partial t} + \vec{\nabla} \cdot \vec{F} = 0
     :label: 2d_wave_eq

@@ -1,8 +1,14 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath('./code/'))
 import math
 
 import arrayfire as af
+af.set_backend('cuda')
+
 import numpy as np
 from matplotlib import pyplot as plt
 

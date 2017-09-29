@@ -2,32 +2,36 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import arrayfire as af
 from scipy import special as sp
+import arrayfire as af
+af.set_backend('cuda')
 
 import utils
 import params
 
 def LGL_points(N):
     '''
-    Calculates : math: `N` Legendre-Gauss-Lobatto (LGL) points.
+    Calculates : math:`N` Legendre-Gauss-Lobatto (LGL) points.
     LGL points are the roots of the polynomial 
-    :math: `(1 - \\xi ** 2) P_{n - 1}'(\\xi) = 0`
-    Where :math: `P_{n}(\\xi)` are the Legendre polynomials.
+    :math:`(1 - \\xi^2) P_{n - 1}(\\xi)` = 0`
+    Where :math:`P_{n}(\\xi)` are the Legendre polynomials.
     This function finds the roots of the above polynomial.
 
     Parameters
     ----------
+    
     N : int
         Number of LGL nodes required
     
     Returns
     -------
+    
     lgl : arrayfire.Array [N 1 1 1]
           The Lagrange-Gauss-Lobatto Nodes.
                           
     Reference
     ---------
+    
     `https://goo.gl/KdG2Sv`
     '''
     xi                 = np.poly1d([1, 0])
@@ -46,24 +50,28 @@ def lobatto_weights(n):
     
     Parameters
     ----------
+    
     n : int
         Lobatto weights for n quadrature points.
     
     
     Returns
     -------
+    
     Lobatto_weights : arrayfire.Array
                       An array of lobatto weight functions for
                       the given x points and index.
-    Reference
-    ---------
+    
+    
+    **Reference**
+    
     Gauss-Lobatto weights Wikipedia link-
     https://en.wikipedia.org/wiki/
     Gaussian_quadrature#Gauss.E2.80.93Lobatto_rules
 
 
-    Examples
-    --------
+    **Examples**
+    
     lobatto_weight_function(4) returns the Gauss-Lobatto weights
     which are to be used with the Lobatto nodes 'LGL_points(4)'
     to integrate using Lobatto quadrature. 
@@ -80,26 +88,27 @@ def lobatto_weights(n):
 
 def gauss_nodes(n):
     '''
-    Calculates :math: `N` Gaussian nodes used for Integration by
-    Gaussia quadrature.
+    Calculates :math:`N` Gaussian nodes used for Integration by
+    Gaussian quadrature.
 
-    Gaussian node :math: `x_i` is the `i^{th}` root of
-
-    :math: `P_n(\\xi)`
-    Where :math: `P_{n}(\\xi)` are the Legendre polynomials.
+    Gaussian node :math:`x_i` is the :math:`i^{th}` root of :math:`P_n(\\xi)`.
+    Where, :math:`P_{n}(\\xi)` are the Legendre polynomials.
 
     Parameters
     ----------
+    
     n : int
         The number of Gaussian nodes required.
 
     Returns
     -------
+    
     gauss_nodes : numpy.ndarray
-                  The Gauss nodes :math: `x_i`.
+                  The Gauss nodes :math:`x_i`.
 
     Reference
     ---------
+    
     A Wikipedia article about the Gauss-Legendre quadrature
     `https://goo.gl/9gqLpe`
     '''
@@ -112,23 +121,25 @@ def gauss_nodes(n):
 
 def gaussian_weights(N):
     '''
-    Returns the gaussian weights :math:`w_i` for :math: `N` Gaussian Nodes
-    at index :math: `i`. They are given by
+    Returns the gaussian weights :math:`w_i` for :math:`N` Gaussian Nodes
+    at index :math:`i`. They are given by
 
-    :math: `w_i = \\frac{2}{(1 - x_i^2) P'n(x_i)}`
+    .. math:: w_i = \\frac{2}{(1 - x_i^2) P'n(x_i)}
 
-    Where :math:`x_i` are the Gaussian nodes and :math: `P_{n}(\\xi)` 
+    Where :math:`x_i` are the Gaussian nodes and :math:`P_{n}(\\xi)`
     are the Legendre polynomials.
     
 
     Parameters
     ----------
+    
     N : int
-        Number of Gaussian nodes for which the weight is t be calculated.
+        Number of Gaussian nodes for which the weight is to be calculated.
             
    
     Returns
     -------
+    
     gaussian_weight : arrayfire.Array [N_quad 1 1 1] 
                       The gaussian weights.
     '''
@@ -149,17 +160,20 @@ def lagrange_polynomials(x):
     Lagrange basis polynomials evaluated using x nodes.
     
     It calculates the Lagrange basis polynomials using the formula:
-    :math::
-    `L_i = \\prod_{m = 0, m \\notin i}^{N - 1}\\frac{(x - x_m)}{(x_i - x_m)}`
+    
+    .. math:: \\\\
+        L_i = \\prod_{m = 0, m \\notin i}^{N - 1}\\frac{(x - x_m)}{(x_i - x_m)}
 
     Parameters
     ----------
+    
     x : numpy.array [N_LGL 1 1 1]
         Contains the :math: `x` nodes using which the
         lagrange basis functions need to be evaluated.
 
     Returns
     -------
+    
     lagrange_basis_poly   : list
                             A list of size `x.shape[0]` containing the
                             analytical form of the Lagrange basis polynomials
@@ -172,8 +186,8 @@ def lagrange_polynomials(x):
                             coefficients of the Lagrange basis polynomials such
                             that :math:`i^{th}` lagrange polynomial will be the
                             :math:`i^{th}` row of the matrix.
-    Examples
-    --------
+    **Examples**
+    
     lagrange_polynomials(4)[0] gives the lagrange polynomials obtained using
     4 LGL points in poly1d form
 
@@ -209,18 +223,21 @@ def lagrange_function_value(lagrange_coeff_array):
 
     Parameters
     ----------
+    
     lagrange_coeff_array : arrayfire.Array[N_LGL N_LGL 1 1]
                            Contains the coefficients of the
                            Lagrange basis polynomials
     
     Returns
     -------
+    
     L_i : arrayfire.Array [N 1 1 1]
           The value of lagrange basis functions calculated over the LGL
           nodes.
 
     Examples
     --------
+    
     lagrange_function_value(4) gives the value of the four 
     Lagrange basis functions evaluated over 4 LGL points
     arranged in a 2D array where Lagrange polynomials
@@ -257,11 +274,13 @@ def product_lagrange_poly(x):
 
     Parameters
     ----------
+    
     x : arrayfire.Array[N_LGL 1 1 1]
         Contains N_LGL Gauss-Lobatto nodes.
 
     Returns
     -------
+    
     lagrange_product_coeffs : arrayfire.Array [N_LGL**2 N_LGL*2-1 1 1]
                               Contains the coefficients of the product of the
                               Lagrange polynomials.
@@ -299,11 +318,13 @@ def Integrate(integrand_coeffs):
     
     Parameters
     ----------
+    
     integrand_coeffs : arrayfire.Array [M N 1 1]
                        The coefficients of M number of polynomials of order N
                        arranged in a 2D array.
     Returns
     -------
+    
     Integral : arrayfire.Array [M 1 1 1]
                The value of the definite integration performed using the
                specified quadrature method for M polynomials.
@@ -353,13 +374,14 @@ def wave_equation_lagrange_basis_single_element(u, element_no):
     describes this behaviour is obtained by expressing it as a linear
     combination of the Lagrange basis polynomials.
 
-    :math: ` f(x) = '\\sigma_i a_i L_i(\\xi)`
+    .. math::  f(x) = '\\sigma_i a_i L_i(\\xi)
 
     Where the coefficients a_i are the value of the function at the
     LGL points.
 
     Parameters
     ----------
+    
     u          : arrayfire.Array [N_LGL N_Elements 1 1]
                  The amplitude of the wave at the LGL points for a
                  single element.
@@ -370,6 +392,7 @@ def wave_equation_lagrange_basis_single_element(u, element_no):
 
     Returns
     -------
+    
     wave_equation_element : numpy.poly1d
                             The analytical form of the function which describes
                             the amplitude locally.
@@ -392,11 +415,13 @@ def wave_equation_lagrange(u):
 
     Parameters
     ----------
+    
     u : arrayfire.Array [N_LGL N_Elements 1 1]
         Contains the amplitude of the wave at the LGL points for all elements.
 
     Returns
     -------
+    
     wave_equation_lagrange_basis : list [N_Elements]
                                    Contains the local approximation of the wave
                                    function in the form of a list
@@ -417,6 +442,7 @@ def differential_lagrange_poly1d():
 
     Returns
     -------
+    
     diff_lagrange_poly1d : list [N_LGL]
                            Contains the differential of the Lagrange basis
                            polynomials in numpy.poly1d form.

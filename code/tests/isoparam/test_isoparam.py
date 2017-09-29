@@ -3,7 +3,10 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('./2d_solver/'))
+sys.path.insert(0, os.path.abspath('./code/'))
+
+import arrayfire as af
+af.set_backend('cuda')
 
 import numpy as np
 import isoparam
@@ -34,8 +37,8 @@ def test_isoparam_x():
     x = np.zeros([xi.size, eta.size])
     y = np.zeros([xi.size, eta.size])
     
-    x = isoparam.isoparam_x(x_nodes, Xi, Eta)
-    y = isoparam.isoparam_y(y_nodes, Xi, Eta)
+    x = isoparam.isoparam_x_2D(x_nodes, Xi, Eta)
+    y = isoparam.isoparam_y_2D(y_nodes, Xi, Eta)
     
     test_x = np.array( \
         [[ 0.20047188, 0.22359428, 0.13584604, 0.25215798, 0.80878597],

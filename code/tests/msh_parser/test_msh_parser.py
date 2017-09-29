@@ -3,7 +3,10 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('./2d_solver/'))
+sys.path.insert(0, os.path.abspath('./code/'))
+
+import arrayfire as af
+af.set_backend('cuda')
 
 import numpy as np
 
@@ -44,7 +47,7 @@ def test_read_order_2_msh():
     test_elements = np.array(test_elements)
     
     nodes, elements = msh_parser.read_order_2_msh(
-        os.path.abspath('./2d_solver/tests/msh_parser/mesh/rectangular.msh'))
+        os.path.abspath('./code/tests/msh_parser/mesh/rectangular.msh'))
     
     node_test = np.all((nodes - test_nodes) < threshold)
     element_test = np.all((elements == test_elements))

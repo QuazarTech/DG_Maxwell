@@ -1,8 +1,8 @@
 .. _msh_parser:
 
-========================
-2d_solver.msh_parser
-========================
+==========
+msh_parser
+==========
 
 .. automodule::
    msh_parser

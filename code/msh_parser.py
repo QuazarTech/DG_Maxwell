@@ -4,6 +4,8 @@
 import numpy as np
 import matplotlib.lines as lines
 import gmshtranslator.gmshtranslator as gmsh
+import arrayfire as af
+af.set_backend('cuda')
 
 import msh_parser
 import isoparam
