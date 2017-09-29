@@ -3,8 +3,8 @@
 
 def isoparam_x(x_nodes, xi, eta):
     '''
-    This function allows isoparametric mapping of a :math:`2^{nd}` order
-    element with :math:`8` nodes    
+    Finds the :math:`x` coordinate using isoparametric mapping of a
+    :math:`2^{nd}` order element with :math:`8` nodes
     .. math:: (P_0, P_1, P_2, P_3, P_4, P_5, P_6, P_7)
     
     Here :math:`P_i` corresponds to :math:`(\\xi_i, \\eta_i)` coordinates,

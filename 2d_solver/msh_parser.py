@@ -113,45 +113,45 @@ def plot_element_grid(x_nodes, y_nodes, xi_LGL, eta_LGL, axes_handler,
     Parameters
     ----------
     
-    x_nodes : np.array [8]
-              x_nodes of the element.
-              
-    y_nodes : np.array [8]
-              y_nodes of the element.
-              
-    xi_LGL  : np.array [N_LGL]
-              LGL points on the :math:`\\xi` axis
+    x_nodes      : np.array [8]
+                   x_nodes of the element.
 
-    eta_LGL  : np.array [N_LGL]
-               LGL points on the :math:`\\eta` axis
+    y_nodes      : np.array [8]
+                   y_nodes of the element.
+
+    xi_LGL       : np.array [N_LGL]
+                   LGL points on the :math:`\\xi` axis
+
+    eta_LGL      : np.array [N_LGL]
+                   LGL points on the :math:`\\eta` axis
 
     axes_handler : matplotlib.axes.Axes
                    The plot handler being used to plot the element grid.
                    You may generate it by calling the function pyplot.axes()
-                   
-    grid_width : float
-                 Grid line width.
-                 
-    grid_color : str
-                 Grid line color.
-                 
+
+    grid_width   : float
+                   Grid line width.
+
+    grid_color   : str
+                   Grid line color.
+
     Returns
     -------
-    
+
     None
     '''
-    
+
     axes_handler.set_aspect('equal')
-    
+
     N = xi_LGL.shape[0]
-    
+
     xy_map = np.ndarray ((N, N, 2), float)
-    
+
     for m in np.arange (N):
         for n in np.arange (N):
             xy_map[m][n][0] = isoparam.isoparam_x(x_nodes, xi_LGL[m], eta_LGL[n])
             xy_map[m][n][1] = isoparam.isoparam_y(y_nodes, xi_LGL[m], eta_LGL[n])
-    
+
     array3d = xy_map.copy()
     N = array3d.shape[0]
     #Plot the vertical lines
@@ -160,14 +160,14 @@ def plot_element_grid(x_nodes, y_nodes, xi_LGL, eta_LGL, axes_handler,
             line = [array3d[m][n].tolist(), array3d[m][n-1].tolist()]
             (line1_xs, line1_ys) = zip(*line)
             axes_handler.add_line(lines.Line2D(line1_xs, line1_ys, linewidth=grid_width, color=grid_color))
-    
+
     #Plot the horizontal lines
     for n in np.arange (0, N):
         for m in np.arange (1, N):
             line = [array3d[m][n].tolist(), array3d[m-1][n].tolist()]
             (line1_xs, line1_ys) = zip(*line)
             axes_handler.add_line(lines.Line2D(line1_xs, line1_ys, linewidth=grid_width, color=grid_color))
-    
+
     return
 
 
@@ -179,11 +179,11 @@ def plot_element_boundary(x_nodes, y_nodes, axes_handler,
     Parameters
     ----------
     
-    x_nodes : np.ndarray [8]
-              :math:`x` nodes of the element.
-             
-    y_nodes : np.ndarray [8]
-              :math:`y` nodes of the element.
+    x_nodes      : np.ndarray [8]
+                   :math:`x` nodes of the element.
+                  
+    y_nodes      : np.ndarray [8]
+                   :math:`y` nodes of the element.
              
     axes_handler : matplotlib.axes.Axes
                    The plot handler being used to plot the element grid.
@@ -235,18 +235,18 @@ def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL, axes_handler):
     Parameters
     ----------
     
-    nodes : np.ndarray [N, 2]
-            Array of nodes in the mesh. First column and the second column are
-            the :math:`x` and :math:`y` coordinates respectivily.
-            
-    elements : np.ndarray [N_e, 8]
-               Array of elements.
-               
-    xi_LGL  : np.array [N_LGL]
-              LGL points on the :math:`\\xi` axis
-
-    eta_LGL  : np.array [N_LGL]
-               LGL points on the :math:`\\eta` axis
+    nodes        : np.ndarray [N, 2]
+                   Array of nodes in the mesh. First column and the second column are
+                   the :math:`x` and :math:`y` coordinates respectivily.
+                 
+    elements     : np.ndarray [N_e, 8]
+                   Array of elements.
+                   
+    xi_LGL       : np.array [N_LGL]
+                   LGL points on the :math:`\\xi` axis
+                 
+    eta_LGL      : np.array [N_LGL]
+                   LGL points on the :math:`\\eta` axis
     
     axes_handler : matplotlib.axes.Axes
                    The plot handler being used to plot the element grid.
