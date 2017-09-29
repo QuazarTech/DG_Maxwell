@@ -11,11 +11,32 @@ _____   _____   __  __                          _ _
 ```
 
 ## Introduction
-This project is a stepping stone to develop a solver for solving
-the 2D Maxwell's equations using the Discontinuous Galerkin method.
-The project to develop 2D wave equation solver is a stepping stone
-to develop the Maxwell's equation solver. The 2D wave equation is
-given by the equation:
+This projects aims at developing a fast Maxwell's Equation solver using
+using the discontinuous Galerkin method. As first steps to develop this
+solver, we are developing a library which allows us to solve the
+1D wave equation and the 2D wave equation using discontinuous Galerkin
+method.
+
+### 1D Wave equation
+The 1D wave equation solver is aimed at finding the time evolution of
+the 1D wave equation using the discontinuous Galerkin method. The
+1D wave equation is given by the equation:
+
+![1d_wave_eqn](./.svgs/1d_wave_eqn.svg )
+
+where,
+
+![u](./.svgs/u_1d.svg )
+
+![F](./.svgs/F_1d.svg )
+
+where, ![c](./.svgs/c_1d.svg ) is a number which denotes the wave
+speed.
+
+### 2D Wave Equation Solver
+The 2D wave equation solver is aimed at finding the time evolution
+of the 2D wave equation using the discontinuous Galerkin method.
+The 2D wave equation is given by the equation:
 
 ![2d_wave_eqn](./.svgs/2d_wave_eqn.svg )
 
@@ -51,8 +72,7 @@ from the `docs` directory. You may read the instructions
 
 ## Unit tests
 The unit tests are located in the
-[2d_solver/tests](https://github.com/amanabt/DG_Maxwell/edit/2d_wave_solver/2d_solver/tests)
-directory.
+[code/tests](code/tests/) directory.
 
 ### Dependencies
 - [pytest](https://docs.pytest.org/en/latest/#)
