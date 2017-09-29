@@ -4,17 +4,14 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('./code/'))
-import math
 
 import numpy as np
-from matplotlib import pyplot as plt
 import arrayfire as af
 af.set_backend('cuda')
 
 import params
 import lagrange
 import wave_equation
-import utils
 import isoparam
 
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
@@ -32,7 +29,7 @@ def test_LGL_points():
                                    ] \
                                   ) \
                          )
-        
+
     calculated_nodes = (lagrange.LGL_points(6))
     assert(af.max(af.abs(reference_nodes - calculated_nodes)) <= 1e-14)
 
@@ -127,7 +124,7 @@ def test_lagrange_coeffs():
     
     `https://goo.gl/6EFX5S`
     '''
-    threshold = 6e-10 
+    threshold = 6e-10
     basis_array_analytical = np.zeros([8, 8])
     
     basis_array_analytical[0] = np.array([-3.351562500008004,\
@@ -226,7 +223,7 @@ def test_A_matrix():
     
     [0.008091331778355441, -0.01965330750343234, 0.025006581762566073, \
     0.3849615416814164, 0.027497252976343693, -0.025006581761945083, \
-    0.019653307503020863, -0.008091331778233875],  
+    0.019653307503020863, -0.008091331778233875],
     
     [-0.008091331778233877, 0.019653307503020866, -0.025006581761945083, \
     0.027497252976343693, 0.3849615416814164, 0.025006581762566073, \
@@ -331,7 +328,7 @@ def test_surface_term():
     analytical_f_i_minus1 = (af.shift(params.u[-1, :, 0], 0, 1))
     
     L_p_1                 = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
-    L_p_1[params.N_LGL - 1] = 1 
+    L_p_1[params.N_LGL - 1] = 1
     
     L_p_minus1    = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
     L_p_minus1[0] = 1
@@ -365,13 +362,13 @@ def test_b_vector():
 
 def test_Integrate():
     '''
-    Testing the Integrate() function by passing coefficients 
+    Testing the Integrate() function by passing coefficients
     of a polynomial and comparing it to the analytical result.
     '''
     threshold = 1e-14
 
     test_coeffs = af.np_to_af_array(np.array([7., 6, 4, 2, 1, 3, 9, 2]))
-    # The coefficients of a test polynomial 
+    # The coefficients of a test polynomial
     # `7x^7 + 6x^6 + 4x^5 + 2x^4 + x^3 + 3x^2 + 9x + 2`
 
     # Using Integrate() function.

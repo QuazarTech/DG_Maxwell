@@ -10,7 +10,7 @@ def add(a, b):
     '''
     For broadcasting purposes, To sum two arrays of different
     shapes, A function which can sum two variables is required.
-    
+
     Parameters
     ----------
     a : arrayfire.Array [N M 1 1]
@@ -21,13 +21,11 @@ def add(a, b):
     
     Returns
     -------
-    sum : arrayfire.Array
+    arrayfire.Array
           returns the sum of a and b. When used along with af.broadcast
           can be used to sum different size arrays.
     '''
-    sum = a + b
-    
-    return sum
+    return a + b
 
 
 def divide(a, b):
@@ -97,14 +95,12 @@ def power(a, b):
     
     Returns
     -------
-    product : arrayfire.Array
+    arrayfire.Array
               returns the quotient a / b. When used along with af.broadcast
               can be used to give quotient of two different size arrays
               by multiplying elements of the broadcasted array.
     '''
-    pow = a ** b
-    
-    return pow
+    return a ** b
 
 
 

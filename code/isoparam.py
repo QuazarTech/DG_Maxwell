@@ -9,7 +9,7 @@ def isoparam_1D(x_nodes, xi):
     '''
     Maps points in :math:`\\xi` space to :math:`x` space using the formula
     :math:`x = \\frac{1 - \\xi}{2} x_0 + \\frac{1 + \\xi}{2} x_1`
-    
+
     Parameters
     ----------
     

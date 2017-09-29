@@ -18,7 +18,7 @@ def test_isoparam_x():
     for an element at :math:`5` random :math:`(\\xi, \\eta)` coordinates
     and finds the :math:`L_1` norm of the :math:`x` coordinates got by the
     isoparam_x function.
-    
+
     .. _isoparam.sagews: https://goo.gl/3EP3Pg
     
     '''

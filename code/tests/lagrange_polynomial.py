@@ -9,7 +9,6 @@ import math
 import arrayfire as af
 af.set_backend('cuda')
 
-import numpy as np
 from matplotlib import pyplot as plt
 
 from app import lagrange
@@ -44,37 +43,37 @@ plt.rcParams['ytick.labelsize'] = 'medium'
 plt.rcParams['ytick.direction'] = 'in'
 
 def lagrangePolynomialTest():
-	'''
-	A test function which plots the L1 norm of error against the number of LGL
-	points taken.
-	'''
-	L1_norm = af.costant(0, 15)
-	
-	for n in range (2,16):
-		gvar.populateGlobalVariables(n)
-		
-		y_LGL         = af.arith.sin(2 * math.pi * gvar.xi_LGL)
-		x_random      = utils.linspace(-1, 1, 50)
-		index         = af.range(gvar.N_LGL)
-		Basis_array   = lagrange.lagrange_basis(index, x_random)
-		y_interpolate = af.transpose(af.blas.matmul(af.transpose(y_LGL),\
-										Basis_array))
-		y_analytical  =  af.arith.sin(2 * math.pi * x_random)
-		error         = y_interpolate - y_analytical
-		
-		L1_norm[(n - 2)] = af.sum(af.abs(error))
-	
-	number_LGL_Nodes = utils.linspace(2, 16, 15)
-	
-	plt.title(r'$L_1$ norm of error vs N')
-	plt.xlabel(r'$N_{LGL}$')
-	plt.ylabel(r'$L_1$ Norm.')
-	
-	plt.loglog(number_LGL_Nodes, L1_norm, basex = 2)
-	plt.loglog(number_LGL_Nodes , (number_LGL_Nodes / 9.2) **\
-		(-number_LGL_Nodes * 1.1),basex = 2)
-	plt.legend(['L_1 norm', r'$(\frac{N}{9.3})^{-1.1N}$'])
-	
-	plt.show()
-	
-	return
+    '''
+    A test function which plots the L1 norm of error against the number of LGL
+    points taken.
+    '''
+    L1_norm = af.costant(0, 15)
+
+    for n in range (2,16):
+        gvar.populateGlobalVariables(n)
+        
+        y_LGL         = af.arith.sin(2 * math.pi * gvar.xi_LGL)
+        x_random      = utils.linspace(-1, 1, 50)
+        index         = af.range(gvar.N_LGL)
+        Basis_array   = lagrange.lagrange_basis(index, x_random)
+        y_interpolate = af.transpose(af.blas.matmul(af.transpose(y_LGL),\
+                                        Basis_array))
+        y_analytical  =  af.arith.sin(2 * math.pi * x_random)
+        error         = y_interpolate - y_analytical
+        
+        L1_norm[(n - 2)] = af.sum(af.abs(error))
+
+    number_LGL_Nodes = utils.linspace(2, 16, 15)
+
+    plt.title(r'$L_1$ norm of error vs N')
+    plt.xlabel(r'$N_{LGL}$')
+    plt.ylabel(r'$L_1$ Norm.')
+
+    plt.loglog(number_LGL_Nodes, L1_norm, basex = 2)
+    plt.loglog(number_LGL_Nodes , (number_LGL_Nodes / 9.2) **\
+        (-number_LGL_Nodes * 1.1),basex = 2)
+    plt.legend(['L_1 norm', r'$(\frac{N}{9.3})^{-1.1N}$'])
+
+    plt.show()
+
+    return

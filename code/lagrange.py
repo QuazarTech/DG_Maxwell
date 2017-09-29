@@ -12,14 +12,14 @@ import params
 def LGL_points(N):
     '''
     Calculates : math:`N` Legendre-Gauss-Lobatto (LGL) points.
-    LGL points are the roots of the polynomial 
+    LGL points are the roots of the polynomial
     :math:`(1 - \\xi^2) P_{n - 1}(\\xi)` = 0`
     Where :math:`P_{n}(\\xi)` are the Legendre polynomials.
     This function finds the roots of the above polynomial.
 
     Parameters
     ----------
-    
+
     N : int
         Number of LGL nodes required
     
@@ -70,7 +70,7 @@ def lobatto_weights(n):
     
     lobatto_weight_function(4) returns the Gauss-Lobatto weights
     which are to be used with the Lobatto nodes 'LGL_points(4)'
-    to integrate using Lobatto quadrature. 
+    to integrate using Lobatto quadrature.
     '''
     xi_LGL = LGL_points(n)
     
@@ -134,7 +134,7 @@ def gaussian_weights(N):
     Returns
     -------
     
-    gaussian_weight : arrayfire.Array [N_quad 1 1 1] 
+    gaussian_weight : arrayfire.Array [N_quad 1 1 1]
                       The gaussian weights.
     '''
     index = np.arange(N) # Index `i` in `w_i`, varies from 0 to N_quad - 1
@@ -148,9 +148,9 @@ def gaussian_weights(N):
     return gaussian_weight
 
 
-def lagrange_polynomials(x):    
+def lagrange_polynomials(x):
     '''
-    A function to get the analytical form and the coefficients of 
+    A function to get the analytical form and the coefficients of
     Lagrange basis polynomials evaluated using x nodes.
     
     It calculates the Lagrange basis polynomials using the formula:
@@ -232,7 +232,7 @@ def lagrange_function_value(lagrange_coeff_array):
     Examples
     --------
     
-    lagrange_function_value(4) gives the value of the four 
+    lagrange_function_value(4) gives the value of the four
     Lagrange basis functions evaluated over 4 LGL points
     arranged in a 2D array where Lagrange polynomials
     evaluated at the same LGL point are in the same column.
@@ -289,7 +289,7 @@ def product_lagrange_poly(x):
     `L_0(\\xi) * L_1(\\xi)`.
                               
     '''
-    poly1d_list             = lagrange_polynomials(params.xi_LGL)[0] 
+    poly1d_list             = lagrange_polynomials(params.xi_LGL)[0]
     lagrange_product_coeffs = np.zeros([params.N_LGL ** 2, params.N_LGL * 2 - 1])
 
     for i in range (params.N_LGL):
@@ -425,7 +425,7 @@ def wave_equation_lagrange(u):
     for i in range(0, params.N_Elements):
         element_wave_equation = wave_equation_lagrange_basis_single_element(u, i)
 
-        wave_equation_lagrange_basis.append(element_wave_equation)  
+        wave_equation_lagrange_basis.append(element_wave_equation)
 
     return wave_equation_lagrange_basis
 
@@ -447,4 +447,4 @@ def differential_lagrange_poly1d():
         test_diff = np.poly1d.deriv(params.lagrange_poly1d_list[i])
         diff_lagrange_poly1d.append(test_diff)
     
-    return  diff_lagrange_poly1d 
+    return  diff_lagrange_poly1d

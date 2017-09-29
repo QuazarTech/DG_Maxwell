@@ -5,7 +5,6 @@ import arrayfire as af
 af.set_backend('cuda')
 import numpy as np
 from matplotlib import pyplot as plt
-import pylab as pl
 from tqdm import trange
 
 import params
@@ -45,7 +44,7 @@ def dx_dxi_numerical(x_nodes, xi):
     '''
     Differential :math:`\\frac{dx}{d \\xi}` calculated by central
     differential method about xi using the isoparam.isoparam_1D function.
-    
+
     Parameters
     ----------
     
@@ -58,7 +57,7 @@ def dx_dxi_numerical(x_nodes, xi):
     Returns
     -------
     dx_dxi : arrayfire.Array [N_Elements 1 1 1]
-             :math:`\\frac{dx}{d \\xi}`. 
+             :math:`\\frac{dx}{d \\xi}`.
     '''
     dxi = 1e-7
     x2  = isoparam.isoparam_1D(x_nodes, xi + dxi)
@@ -134,7 +133,7 @@ def flux_x(u):
 
     Returns
     -------
-    flux : list [N_Elements] 
+    flux : list [N_Elements]
            The analytical value of the flux for each element arranged in a list
            of numpy.poly1d polynomials.
     '''
@@ -236,7 +235,7 @@ def lax_friedrichs_flux(u_n):
                         - params.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
     
     
-    return boundary_flux 
+    return boundary_flux
 
 
 def surface_term(u_n):
@@ -309,9 +308,8 @@ def time_evolution():
     of the wave. The images are then stored in Wave folder.
     '''
     A_inverse   = af.inverse(A_matrix())
-    element_LGL = params.element_LGL
     delta_t     = params.delta_t
-    amplitude   = params.u 
+    amplitude   = params.u
     time        = params.time
     
     for t_n in trange(0, time.shape[0] - 1):
