@@ -13,4 +13,4 @@ from utils import utils
 
 
 if __name__ == '__main__':
-    wave_equation.time_evolution()
+    wave_equation.convergence_test()

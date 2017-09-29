@@ -350,6 +350,12 @@ def time_evolution():
 
     for t_n in trange(0, time.shape[0] - 1):
 
+        if (t_n % 20) == 0:
+            h5file = h5py.File('hdf5/dump_timestep_%06d' %(int(t_n)) + '.hdf5', 'w')
+            dset   = h5file.create_dataset('u_i', data = amplitude[:, :], dtype = 'd')
+
+            dset[:, :] = amplitude[:, :]
+
         amplitude_n_plus_half =  amplitude[:, :]\
                                + af.matmul(A_inverse,\
                                  b_vector(amplitude[:, :, t_n], t_n))\
@@ -360,77 +366,24 @@ def time_evolution():
                                  b_vector(amplitude_n_plus_half, t_n))\
                                * delta_t
         
-        if (t_n % 20) == 0:
-            h5file = h5py.File('hdf5/dump_timestep_%06d' %(int(t_n)) + '.hdf5', 'w')
-            dset   = h5file.create_dataset('u_i', data = amplitude, dtype = 'd')
 
-            dset[:, :] = amplitude[:, :]
-
-            h5file.close()
 
 
     print('u calculated!')
     for i in range(0,10):
         test = h5py.File('hdf5/dump_timestep_%06d' %int(20 * i) + '.hdf5', 'r')
         print(test['u_i'] [:].shape)
-        h5file.close()
 
     time_one_pass = int(2 / delta_t)
 
-    if (time_one_pass % 20 != 0):
+    while (time_one_pass % 20 != 0):
         time_one_pass -= 1
 
-    amplitude_one_pass = h5py.File('hdf5/dump_timestep_%06d' %int(time_one_pass) + '.hdf5', 'r')
-
+    h5py_one_pass = h5py.File('hdf5/dump_timestep_%06d' %int(time_one_pass) + '.hdf5', 'r')
     analytical_u = amplitude_quadrature_points(time_one_pass)
-
-  #  for t_n in range(0, time.shape[0] - 1):
-  #      if(t_n == time_one_pass):
-  #          fig = plt.figure()
-  #          x   = params.element_LGL
-  #          y   = amplitude[:, :, t_n]
-  #          
-  #          y_analytical = amplitude_quadrature_points(t_n)
-
-  #          #plt.plot(af.flat(x), af.flat(y), label='advected wave')
-  #          #plt.plot(af.flat(x), af.flat(y_analytical),'k--',  label='analytical solution')
-  #          plt.semilogy(af.flat(x), af.flat(af.abs(y - y_analytical)), marker='o')
-  #          plt.xlabel('x')
-  #          plt.ylabel('$\|u_{num}$(x) - $u_{analytical}$(x)$\|$')
-  #          plt.ylim(-2, 2)
-  #          plt.title('Spatial plot of error after 1 full advection')
-  #          fig.savefig('results/10_advection'+'.png')
-  #          plt.show()
-
-   # for t_n in trange(0, time.shape[0] - 1):
-
-   #     if t_n % 100 == 0:
-   #         fig = plt.figure()
-   #         x   = params.element_LGL
-   #         y   = amplitude[:, :, t_n]
-   #         
-   #         mod_diff = af.sum(af.abs(amplitude[:, :, t_n] - amplitude_quadrature_points(t_n)))
-   #         plt.plot(x, y)
-   #         plt.xlabel('x')
-   #         plt.ylabel('Amplitude')
-   #         plt.ylim(-2, 2)
-   #         plt.title('Time = %f' % (t_n * delta_t), '     ', 'Error = ', mod_diff)
-   #         fig.savefig('results/1D_Wave_images/%04d' %(t_n / 100) + '.png')
-   #         plt.close('all') 
-
-   # x   = np.array(element_boundaries)
-
-   # ax = plt.subplot(111)
-
-   # fig = plt.figure()
-   # x = (af.range(time.shape[0] - 1)) * delta_t
-   # y = af.constant(0, time.shape[0] - 1)
-
+    calculated_u  = af.np_to_af_array(h5py_one_pass['u_i'][:])
 
     wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
-
-    calculated_u = params.u[:, :, time_one_pass]
-    analytical_u = amplitude_quadrature_points(time_one_pass)
 
     for i in range(0, params.N_Elements):
         wave_equation_coeffs[i, :] = (lagrange.wave_equation_lagrange(af.abs(calculated_u - analytical_u))[i].c)
@@ -555,9 +508,11 @@ def convergence_test():
 
     plt.semilogy(index, L1_norm_4_LGL, '--', label='$N_{LGL}$ = 4')
     plt.semilogy(index, L1_norm_8_LGL, '--', label='$N_{LGL}$ = 8')
+    plt.title('$L1 norm$ v/s $N_{Elements}$')
+    plt.xlabel('Number of elements')
+    plt.ylabel('L1 norm of error')
 
     plt.legend(loc='best')
     plt.show()
-    print(L1_norm_4_LGL)
 
     return
