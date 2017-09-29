@@ -6,6 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pylab as pl
 from tqdm import trange
+import h5py
 
 from app import params
 from app import lagrange
@@ -340,28 +341,48 @@ def time_evolution():
     A_inverse   = af.inverse(A_matrix())
     element_LGL = params.element_LGL
     delta_t     = params.delta_t
-    amplitude   = params.u 
+    amplitude   = params.u_init
     time        = params.time
+    u_data      = af.reorder(amplitude[:, :], 2, 0, 1)
+
     
     element_boundaries = af.np_to_af_array(params.np_element_array)
 
     for t_n in trange(0, time.shape[0] - 1):
 
-        amplitude_n_plus_half =  amplitude[:, :, t_n]\
+        amplitude_n_plus_half =  amplitude[:, :]\
                                + af.matmul(A_inverse,\
                                  b_vector(amplitude[:, :, t_n], t_n))\
                                * delta_t / 2
 
 
-        amplitude[:, :, t_n + 1] =   amplitude[:, :, t_n]\
-                                   + af.matmul(A_inverse,\
-                                     b_vector(amplitude_n_plus_half, t_n))\
-                                   * delta_t
+        amplitude[:, :] +=    af.matmul(A_inverse,\
+                                 b_vector(amplitude_n_plus_half, t_n))\
+                               * delta_t
+        
+        if (t_n % 20) == 0:
+            h5file = h5py.File('hdf5/dump_timestep_%06d' %(int(t_n)) + '.hdf5', 'w')
+            dset   = h5file.create_dataset('u_i', data = amplitude, dtype = 'd')
+
+            dset[:, :] = amplitude[:, :]
+
+            h5file.close()
 
 
     print('u calculated!')
+    for i in range(0,10):
+        test = h5py.File('hdf5/dump_timestep_%06d' %int(20 * i) + '.hdf5', 'r')
+        print(test['u_i'] [:].shape)
+        h5file.close()
 
     time_one_pass = int(2 / delta_t)
+
+    if (time_one_pass % 20 != 0):
+        time_one_pass -= 1
+
+    amplitude_one_pass = h5py.File('hdf5/dump_timestep_%06d' %int(time_one_pass) + '.hdf5', 'r')
+
+    analytical_u = amplitude_quadrature_points(time_one_pass)
 
   #  for t_n in range(0, time.shape[0] - 1):
   #      if(t_n == time_one_pass):
