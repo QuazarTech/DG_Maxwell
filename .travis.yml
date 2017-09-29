@@ -13,7 +13,7 @@ before_install:
     - cd ..
 
 install:
-    - pip install -r requirement.txt
+    - pip install -r requirements.txt
 
 script:
     - python -c "import solver_2d_wave"
