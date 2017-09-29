@@ -6,8 +6,8 @@ from scipy import special as sp
 import arrayfire as af
 af.set_backend('cuda')
 
-import utils
-import params
+from code import utils
+from code import params
 
 def LGL_points(N):
     '''

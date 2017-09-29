@@ -7,9 +7,9 @@ import gmshtranslator.gmshtranslator as gmsh
 import arrayfire as af
 af.set_backend('cuda')
 
-import msh_parser
-import isoparam
-import utils
+from code import msh_parser
+from code import isoparam
+from code import utils
 
 def read_order_2_msh(msh_file):
     '''

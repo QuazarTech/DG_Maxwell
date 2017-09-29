@@ -5,9 +5,9 @@ import numpy as np
 import arrayfire as af
 af.set_backend('cuda')
 
-import lagrange
-import utils
-import isoparam
+from code import lagrange
+from code import utils
+from code import isoparam
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))

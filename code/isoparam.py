@@ -3,7 +3,7 @@
 
 import arrayfire as af
 af.set_backend('cuda')
-import utils
+from code import utils
 
 def isoparam_1D(x_nodes, xi):
     '''
