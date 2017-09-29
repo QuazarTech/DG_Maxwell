@@ -44,6 +44,7 @@ before_install:
     - echo $LD_LIBRARY_PATH
     - cd ../../../../
     - cd
+    - cd DG_Maxwell
 
 install:
     - pip install -r requirements.txt
