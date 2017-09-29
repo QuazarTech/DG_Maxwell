@@ -8,7 +8,7 @@ def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
     '''
     Plots curves using the given :math:`(x, y)` points. It joins the
     points using lines in the given order.
-    
+
     Parameters
     ----------
     points       : np.ndarray [N, 2]

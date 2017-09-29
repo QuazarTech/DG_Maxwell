@@ -12,7 +12,7 @@ import utils
 def read_order_2_msh(msh_file):
     '''
     Parses the :math:`2^{nd}` order **.msh** files.
-    
+
     Parameters
     ----------
     

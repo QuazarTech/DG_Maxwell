@@ -16,7 +16,7 @@ def LGL_points(N):
     ----------
     N : int
         Number of LGL nodes required.
-        
+
     Returns
     -------
     lgl : np.ndarray [N]
