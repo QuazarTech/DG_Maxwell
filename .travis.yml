@@ -50,4 +50,5 @@ install:
 
 script:
     - python -c "import code"
+    - pytest
 
