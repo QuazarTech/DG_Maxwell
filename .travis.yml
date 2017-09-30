@@ -7,8 +7,7 @@ python:
 
 # command to install dependencies
 before_install:
-
-udo apt-get update -qq
+    - sudo apt-get update -qq
     - sudo apt-get install -qq build-essential git cmake libfreeimage-dev cmake-curses-gui
     - sudo apt-get install -qq libopenblas-dev libfftw3-dev liblapacke-dev libboost-all-dev
     - sudo apt-get install -qq libfontconfig1-dev
