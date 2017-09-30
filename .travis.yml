@@ -39,7 +39,7 @@ before_install:
     - export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
     - echo $LD_LIBRARY_PATH
     - cd ../../../../
-    - cd arratfire/build
+    - cd arrayfire/build
     - make test
     - cd ../../
     - git clone https://github.com/amanabt/gmshtranslator.git
@@ -49,10 +49,9 @@ before_install:
     - pip install virtualenv
     - virtualenv venv 
     - source venv/bin/activate
+    - ls -al
 
 install:
-    - cd package
-    - export AF_PATH=$PWD
     - pip install -r requirements.txt
 
 script:
