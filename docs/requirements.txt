@@ -1,9 +1,3 @@
-gmshtranslator
-arrayfire
 sphinx
 numpydoc
 sphinx_rtd_theme
-arrayfire
-numpy
-matplotlib
-tqdm
