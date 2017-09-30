@@ -56,14 +56,13 @@ before_install:
     - cd DG_Maxwell
     - pwd
     - ls -al
-#    - virtualenv venv 
-#    - source venv/bin/activate
+    - virtualenv venv 
+    - source venv/bin/activate
 
 install:
     - pip install -r requirements.txt
 
 script:
-    - python -c "import gmshtranslator"
     - python -c "import dg_maxwell"
     - pytest
 
