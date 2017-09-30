@@ -65,4 +65,5 @@ install:
 script:
     - python -c "import arrayfire as af"
     - python -c "import dg_maxwell"
+    - pytest
 
