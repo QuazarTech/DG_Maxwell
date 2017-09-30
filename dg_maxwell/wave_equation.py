@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
+
 import arrayfire as af
 af.set_backend('cpu')
 import numpy as np
@@ -321,6 +323,11 @@ def time_evolution():
     
     print('u calculated!')
     
+    results_directory = 'results/1D_Wave_images'
+    
+    if not os.path.exists(results_directory):
+        os.makedirs(results_directory)
+
     for t_n in trange(0, time.shape[0] - 1):
         
         if t_n % 100 == 0:
