@@ -48,7 +48,7 @@ before_install:
     - cd ../../
     - git clone https://github.com/amanabt/gmshtranslator.git
     - cd gmshtranslator
-    - sudo python setup.py install
+    - sudo python3 setup.py install
     - cd ..
     - pip install virtualenv
     - pwd
