@@ -40,7 +40,7 @@ before_install:
     - echo $LD_LIBRARY_PATH
     - cd ../../../../
     - cd arrayfire/build
-    - make test
+#    - make test
     - cd ../../
     - git clone https://github.com/amanabt/gmshtranslator.git
     - cd gmshtranslator
