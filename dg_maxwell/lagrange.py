@@ -11,10 +11,12 @@ from dg_maxwell import params
 
 def LGL_points(N):
     '''
-    Calculates : math:`N` Legendre-Gauss-Lobatto (LGL) points.
-    LGL points are the roots of the polynomial
-    :math:`(1 - \\xi^2) P_{n - 1}(\\xi)` = 0`
-    Where :math:`P_{n}(\\xi)` are the Legendre polynomials.
+    Calculates : math: `N` Legendre-Gauss-Lobatto (LGL) points.
+    LGL points are the roots of the polynomial 
+
+    :math: `(1 - \\xi ** 2) P_{n - 1}'(\\xi) = 0`
+
+    Where :math: `P_{n}(\\xi)` are the Legendre polynomials.
     This function finds the roots of the above polynomial.
 
     Parameters
@@ -25,13 +27,13 @@ def LGL_points(N):
     
     Returns
     -------
-    
+
     lgl : arrayfire.Array [N 1 1 1]
           The Lagrange-Gauss-Lobatto Nodes.
                           
     **See:** `document`_
     .. _document: https://goo.gl/KdG2Sv
-    
+
     '''
     xi                 = np.poly1d([1, 0])
     legendre_N_minus_1 = N * (xi * sp.legendre(N - 1) - sp.legendre(N))
@@ -49,29 +51,25 @@ def lobatto_weights(n):
     
     Parameters
     ----------
-    
     n : int
         Lobatto weights for n quadrature points.
     
     
     Returns
     -------
-    
     Lobatto_weights : arrayfire.Array
                       An array of lobatto weight functions for
                       the given x points and index.
-    
-    
+
     **See:** Gauss-Lobatto weights Wikipedia `link`_.
     
     .. _link: https://goo.gl/kYqTyK
-
-
     **Examples**
     
     lobatto_weight_function(4) returns the Gauss-Lobatto weights
     which are to be used with the Lobatto nodes 'LGL_points(4)'
     to integrate using Lobatto quadrature.
+
     '''
     xi_LGL = LGL_points(n)
     
@@ -85,27 +83,28 @@ def lobatto_weights(n):
 
 def gauss_nodes(n):
     '''
-    Calculates :math:`N` Gaussian nodes used for Integration by
-    Gaussian quadrature.
-
-    Gaussian node :math:`x_i` is the :math:`i^{th}` root of :math:`P_n(\\xi)`.
-    Where, :math:`P_{n}(\\xi)` are the Legendre polynomials.
+    Calculates :math: `N` Gaussian nodes used for Integration by
+    Gaussia quadrature.
+    Gaussian node :math: `x_i` is the `i^{th}` root of
+    :math: `P_n(\\xi)`
+    Where :math: `P_{n}(\\xi)` are the Legendre polynomials.
 
     Parameters
     ----------
-    
+
     n : int
         The number of Gaussian nodes required.
 
     Returns
     -------
-    
+
     gauss_nodes : numpy.ndarray
-                  The Gauss nodes :math:`x_i`.
+                  The Gauss nodes :math: `x_i`.
 
     **See:** A Wikipedia article about the Gauss-Legendre quadrature `here`_
     
     .. _here: https://goo.gl/9gqLpe
+
     '''
     legendre = sp.legendre(n)
     gauss_nodes = legendre.r
@@ -124,7 +123,6 @@ def gaussian_weights(N):
     Where :math:`x_i` are the Gaussian nodes and :math:`P_{n}(\\xi)`
     are the Legendre polynomials.
     
-
     Parameters
     ----------
     
@@ -149,7 +147,7 @@ def gaussian_weights(N):
     return gaussian_weight
 
 
-def lagrange_polynomials(x):
+def lagrange_polynomials(x):    
     '''
     A function to get the analytical form and the coefficients of
     Lagrange basis polynomials evaluated using x nodes.
@@ -181,18 +179,19 @@ def lagrange_polynomials(x):
                             coefficients of the Lagrange basis polynomials such
                             that :math:`i^{th}` lagrange polynomial will be the
                             :math:`i^{th}` row of the matrix.
+
     **Examples**
     
     lagrange_polynomials(4)[0] gives the lagrange polynomials obtained using
     4 LGL points in poly1d form
 
     lagrange_polynomials(4)[0][2] is :math: `L_2(\\xi)`
-
     lagrange_polynomials(4)[1] gives the coefficients of the above mentioned
     lagrange basis polynomials in a 2D array.
 
     lagrange_polynomials(4)[1][2] gives the coefficients of :math:`L_2(\\xi)`
     in the form [a^2_3, a^2_2, a^2_1, a^2_0]
+
     '''
     X = np.array(x)
     lagrange_basis_poly   = []
@@ -215,7 +214,6 @@ def lagrange_function_value(lagrange_coeff_array):
     '''
     Funtion to calculate the value of lagrange basis functions over LGL
     nodes.
-
     Parameters
     ----------
     
@@ -230,8 +228,7 @@ def lagrange_function_value(lagrange_coeff_array):
           The value of lagrange basis functions calculated over the LGL
           nodes.
 
-    Examples
-    --------
+    **Examples**
     
     lagrange_function_value(4) gives the value of the four
     Lagrange basis functions evaluated over 4 LGL points
@@ -259,11 +256,9 @@ def lagrange_function_value(lagrange_coeff_array):
 def product_lagrange_poly(x):
     '''
     Used to obtain the coefficients of the product of Lagrange polynomials.
-
     A matrix involves integrals of the product of the Lagrange polynomials.
     The Integrate() function requires the coefficients of the integrand to
     compute the integral.
-
     This function takes the poly1d form of the Lagrange basis polynomials,
     multiplies them and stores the coefficients in a 2D array.
 
@@ -279,18 +274,15 @@ def product_lagrange_poly(x):
     lagrange_product_coeffs : arrayfire.Array [N_LGL**2 N_LGL*2-1 1 1]
                               Contains the coefficients of the product of the
                               Lagrange polynomials.
-
     Examples
     --------
     product_lagrange_poly(xi_LGL)[0] gives the coefficients of the product
     `L_0(\\xi) * L_0(\\xi)`.
 
-
     product_lagrange_poly(xi_LGL)[1] gives the coefficients of the product
     `L_0(\\xi) * L_1(\\xi)`.
-                              
     '''
-    poly1d_list             = lagrange_polynomials(params.xi_LGL)[0]
+    poly1d_list             = lagrange_polynomials(params.xi_LGL)[0] 
     lagrange_product_coeffs = np.zeros([params.N_LGL ** 2, params.N_LGL * 2 - 1])
 
     for i in range (params.N_LGL):
@@ -307,7 +299,6 @@ def Integrate(integrand_coeffs):
     Performs integration according to the given quadrature method
     by taking in the coefficients of the polynomial and the number of
     quadrature points.
-
     The number of quadrature points and the quadrature scheme are set
     in params.py module.
     
@@ -326,6 +317,7 @@ def Integrate(integrand_coeffs):
     '''
 
     if (params.scheme == 'gauss_quadrature'):
+        
         integrand      = integrand_coeffs
         gaussian_nodes = params.gauss_points
         Gauss_weights  = params.gauss_weights
@@ -336,7 +328,6 @@ def Integrate(integrand_coeffs):
         weights_tile = af.transpose(af.tile(Gauss_weights, 1, integrand.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
-        
         value_at_gauss_nodes = af.matmul(integrand, nodes_weight)
         Integral             = af.sum(value_at_gauss_nodes, 1)
  
@@ -364,7 +355,6 @@ def wave_equation_lagrange_basis_single_element(u, element_no):
     '''
     Calculates the function which describes the amplitude of the wave in
     a particular element.
-
     Using the value of the amplitude at the LGL points, A function which
     describes this behaviour is obtained by expressing it as a linear
     combination of the Lagrange basis polynomials.
@@ -380,11 +370,9 @@ def wave_equation_lagrange_basis_single_element(u, element_no):
     u          : arrayfire.Array [N_LGL N_Elements 1 1]
                  The amplitude of the wave at the LGL points for a
                  single element.
-
     element_no : int
                  The element for which the analytical form of the wave equation
                  is required.
-
     Returns
     -------
     
@@ -426,7 +414,7 @@ def wave_equation_lagrange(u):
     for i in range(0, params.N_Elements):
         element_wave_equation = wave_equation_lagrange_basis_single_element(u, i)
 
-        wave_equation_lagrange_basis.append(element_wave_equation)
+        wave_equation_lagrange_basis.append(element_wave_equation)  
 
     return wave_equation_lagrange_basis
 
@@ -437,7 +425,7 @@ def differential_lagrange_poly1d():
 
     Returns
     -------
-    
+
     diff_lagrange_poly1d : list [N_LGL]
                            Contains the differential of the Lagrange basis
                            polynomials in numpy.poly1d form.
@@ -448,4 +436,4 @@ def differential_lagrange_poly1d():
         test_diff = np.poly1d.deriv(params.lagrange_poly1d_list[i])
         diff_lagrange_poly1d.append(test_diff)
     
-    return  diff_lagrange_poly1d
+    return diff_lagrange_poly1d 

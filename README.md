@@ -16,7 +16,6 @@ using the discontinuous Galerkin method. As first steps to develop this
 solver, we are developing a library which allows us to solve the
 1D wave equation and the 2D wave equation using discontinuous Galerkin
 method.
->>>>>>> upstream-master
 
 ### 1D Wave equation
 The 1D wave equation solver is aimed at finding the time evolution of
@@ -91,5 +90,5 @@ $ pytest
 
 ## Maintainers
 - Aman Abhishek Tiwari - ![aman@quazartech.com](aman@quazartech.com)
-- Balavarun P - ![Github Profile](https://github.com/balavarun5)
+- Balavarun P - ![Github Profile](f2013462@pilani.bits-pilani.ac.in)
 - Manichandra Morumpudi - ![mani@quazartech.com](mani@quazartech.com)
