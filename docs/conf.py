@@ -30,7 +30,7 @@ class Mock(MagicMock):
             return MagicMock()
 
 MOCK_MODULES = ['gmshtranslator', 'gmshtranslator.gmshtranslator', 'arrayfire',
-                'lagrange']
+                'lagrange', 'scipy', 'numpy', 'matplotlib', 'matplotlib.lines']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
