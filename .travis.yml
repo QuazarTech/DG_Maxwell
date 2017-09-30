@@ -49,5 +49,5 @@ install:
     - pip install -r requirements.txt
 
 script:
-    - python -c "import code"
+    - python -c "import dg_maxwell"
 
