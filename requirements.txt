@@ -1,0 +1,5 @@
+pytest
+arrayfire
+numpy
+matplotlib
+tqdm

@@ -1,0 +1,53 @@
+sudo: required
+dist: trusty
+language: python
+
+python:
+    - "3.5"
+
+# command to install dependencies
+before_install:
+    - git clone https://github.com/amanabt/gmshtranslator.git
+    - cd gmshtranslator
+    - sudo python setup.py install
+    - cd ..
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq build-essential git cmake libfreeimage-dev cmake-curses-gui
+    - sudo apt-get install -qq libopenblas-dev libfftw3-dev liblapacke-dev libboost-all-dev
+    - sudo apt-get install -qq libfontconfig1-dev
+    - sudo apt-get install build-essential cmake cmake-curses-gui xorg-dev libglu1-mesa-dev libxinerama-dev libxcursor-dev
+    - grep MemTotal /proc/meminfo
+    - cat /proc/cpuinfo
+    - wget https://github.com/glfw/glfw/archive/3.1.2.zip -O glfw-3.1.2.zip
+    - unzip glfw-3.1.2.zip
+    - cd glfw-3.1.2
+    - mkdir build
+    - cd build
+    - cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release
+    - make -j8
+    - sudo make install
+    - export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH 
+    - cd ../../
+    - git clone https://github.com/arrayfire/arrayfire.git
+    - cd arrayfire
+    - git submodule init
+    - git submodule update
+    - mkdir build 
+    - cd build
+    - cmake .. -DCMAKE_BUILD_TYPE=Release  -DCMAKE_INSTALL_PREFIX=package -DBUILD_GRAPHICS=OFF
+    - make -j8
+    - sudo make install
+    - cd package
+    - export AF_PATH=$PWD
+    - cd lib
+    - export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
+    - echo $LD_LIBRARY_PATH
+    - cd ../../../../
+    - echo $PWD
+
+install:
+    - pip install -r requirements.txt
+
+script:
+    - python -c "import code"
+

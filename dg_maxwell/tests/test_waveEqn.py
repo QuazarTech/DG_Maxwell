@@ -1,16 +1,18 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import math
+import os
+import sys
+sys.path.insert(0, os.path.abspath('./'))
 
 import numpy as np
 import arrayfire as af
-from matplotlib import pyplot as plt
-af.set_backend('opencl')
+af.set_backend('cpu')
 
-from app import params
-from app import lagrange
-from app import wave_equation
-from utils import utils
+from dg_maxwell import params
+from dg_maxwell import lagrange
+from dg_maxwell import wave_equation
+from dg_maxwell import isoparam
 
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
@@ -27,7 +29,7 @@ def test_LGL_points():
                                    ] \
                                   ) \
                          )
-        
+
     calculated_nodes = (lagrange.LGL_points(6))
     assert(af.max(af.abs(reference_nodes - calculated_nodes)) <= 1e-14)
 
@@ -36,9 +38,8 @@ def test_gauss_nodes():
     '''
     The Gauss points obtained by the function above is compared to
     analytical values.
-    Reference
-    ---------
-    `https://goo.gl/9gqLpe` 
+    
+    **See:** `https://goo.gl/9gqLpe`
     '''
     threshold = 1e-10
     analytical_gauss_nodes = np.array([-0.906179845938664, -0.5384693101056831,\
@@ -64,7 +65,7 @@ def test_gauss_weights():
                                                                   <= threshold
 
 
-def test_mapping_xi_to_x():
+def test_isoparam_1D():
     '''
     A test function to check the mapping_xi_to_x function in wave_equation module,
     The test involves passing trial element nodes and :math: `\\xi` and
@@ -76,7 +77,7 @@ def test_mapping_xi_to_x():
     test_element_nodes = af.interop.np_to_af_array(np.array([7, 11]))
     test_xi            = 0
     analytical_x_value = 9
-    numerical_x_value  = wave_equation.mapping_xi_to_x(test_element_nodes, test_xi)
+    numerical_x_value  = isoparam.isoparam_1D(test_element_nodes, test_xi)
     
     assert af.abs(analytical_x_value - numerical_x_value) <= threshold
 
@@ -87,13 +88,13 @@ def test_dx_dxi():
     passing nodes of an element and using the LGL points. Analytically, the
     differential would be a constant. The check has a tolerance 1e-7.
     '''
-    threshold = 1e-14
+    threshold = 1e-9
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
-    
-    check_dx_dxi = (af.statistics.mean(wave_equation.dx_dxi_numerical
-                    (test_nodes,params.xi_LGL)) - analytical_dx_dxi) <= threshold
+        
+    check_dx_dxi = abs((af.statistics.mean(wave_equation.dx_dxi_numerical
+                    (test_nodes,params.xi_LGL)) - analytical_dx_dxi)) <= threshold
     
     assert check_dx_dxi
 
@@ -123,7 +124,7 @@ def test_lagrange_coeffs():
     
     `https://goo.gl/6EFX5S`
     '''
-    threshold = 6e-10 
+    threshold = 6e-10
     basis_array_analytical = np.zeros([8, 8])
     
     basis_array_analytical[0] = np.array([-3.351562500008004,\
@@ -222,7 +223,7 @@ def test_A_matrix():
     
     [0.008091331778355441, -0.01965330750343234, 0.025006581762566073, \
     0.3849615416814164, 0.027497252976343693, -0.025006581761945083, \
-    0.019653307503020863, -0.008091331778233875],  
+    0.019653307503020863, -0.008091331778233875],
     
     [-0.008091331778233877, 0.019653307503020866, -0.025006581761945083, \
     0.027497252976343693, 0.3849615416814164, 0.025006581762566073, \
@@ -262,7 +263,7 @@ def test_volume_integral_flux():
     threshold = 8e-9
     params.c = 1
     
-    reference_flux_integral = af.transpose(af.interop.np_to_af_array(np.array
+    referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array
         ([
         [-0.002016634876668093, -0.000588597708116113, -0.0013016773719126333,\
         -0.002368387579324652, -0.003620502047659841, -0.004320197094090966,
@@ -297,8 +298,8 @@ def test_volume_integral_flux():
 
          ])))
     
-    numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0], 0)
-    assert (af.max(af.abs(numerical_flux - reference_flux_integral)) < threshold)
+    numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
+    assert (af.max(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
 
 def test_lax_friedrichs_flux():
     '''
@@ -327,7 +328,7 @@ def test_surface_term():
     analytical_f_i_minus1 = (af.shift(params.u[-1, :, 0], 0, 1))
     
     L_p_1                 = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
-    L_p_1[params.N_LGL - 1] = 1 
+    L_p_1[params.N_LGL - 1] = 1
     
     L_p_minus1    = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
     L_p_minus1[0] = 1
@@ -351,23 +352,23 @@ def test_b_vector():
     
     u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(),\
                                                   params.u[:, :, 0])
-    volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0], 0)
+    volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
     surface_term         = test_surface_term()
     b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\
                                     (surface_term)) * params.delta_t
-    b_vector_array       = wave_equation.b_vector(params.u[:, :, 0], 0)
+    b_vector_array       = wave_equation.b_vector(params.u[:, :, 0])
     
     assert (b_vector_analytical - b_vector_array) < threshold
 
 def test_Integrate():
     '''
-    Testing the Integrate() function by passing coefficients 
+    Testing the Integrate() function by passing coefficients
     of a polynomial and comparing it to the analytical result.
     '''
     threshold = 1e-14
 
     test_coeffs = af.np_to_af_array(np.array([7., 6, 4, 2, 1, 3, 9, 2]))
-    # The coefficients of a test polynomial 
+    # The coefficients of a test polynomial
     # `7x^7 + 6x^6 + 4x^5 + 2x^4 + x^3 + 3x^2 + 9x + 2`
 
     # Using Integrate() function.

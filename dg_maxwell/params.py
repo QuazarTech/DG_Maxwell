@@ -1,13 +1,13 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import arrayfire as af
-af.set_backend('opencl')
+af.set_backend('cpu')
 
-from app import lagrange
-from utils import utils
-from app import wave_equation
-
+from dg_maxwell import lagrange
+from dg_maxwell import utils
+from dg_maxwell import isoparam
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
@@ -26,17 +26,16 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-# [TODO]- refer amplitude_quadrature_points before changing.
 N_quad = 8
 
 # Wave speed.
 c          = 1
 
-# The total time for which the wave is to be evolved by the simulation. 
-total_time = 2.01
+# The total time for which the wave is to be evolved by the simulation.
+total_time = 10
 
 # The c_lax to be used in the Lax-Friedrichs flux.
-c_lax      = c
+c_lax      = 1
 
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
@@ -84,7 +83,6 @@ for i in range(N_LGL):
 volume_integrand_8_LGL= af.np_to_af_array(volume_integrand_8_LGL)
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
-
 element_size    = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
 elements_xi_LGL = af.constant(0, N_Elements, N_LGL)
 elements        = utils.linspace(af.sum(x_nodes[0]),
@@ -97,21 +95,21 @@ element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
                                     af.sum(x_nodes[1]), N_Elements + 1)
 
 element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
-element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
-                                                                   xi_LGL)
+element_LGL   = isoparam.isoparam_1D(af.transpose(element_array),
+                                              xi_LGL)
 
 # The minimum distance between 2 mapped LGL points.
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 
 # The value of time-step.
-delta_t = delta_x / (10 * c)
+delta_t = delta_x / (20 * c)
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
                                                     int(total_time / delta_t))
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
-u_init     = af.sin(2 * np.pi * element_LGL)#np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
