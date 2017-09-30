@@ -48,7 +48,7 @@ before_install:
     - cd ../../
     - git clone https://github.com/amanabt/gmshtranslator.git
     - cd gmshtranslator
-    - sudo python3 setup.py install
+    - sudo python3.5 setup.py install
     - cd ..
     - pip install virtualenv
     - pwd
@@ -63,8 +63,7 @@ install:
     - pip install -r requirements.txt
 
 script:
-    - python -c "import arrayfire as af"
-    - python -c "import dg_maxwell"
     - python -c "import gmshtranslator"
+    - python -c "import dg_maxwell"
     - pytest
 
