@@ -1,19 +1,19 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import arrayfire as af
-af.set_backend('opencl')
+af.set_backend('cpu')
 
-from app import lagrange
-from utils import utils
-from app import wave_equation
-
+from dg_maxwell import lagrange
+from dg_maxwell import utils
+from dg_maxwell import isoparam
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8 
+N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
@@ -31,7 +31,7 @@ N_quad = 8
 # Wave speed.
 c          = 1
 
-# The total time for which the wave is to be evolved by the simulation. 
+# The total time for which the wave is to be evolved by the simulation.
 total_time = 10
 
 # The c_lax to be used in the Lax-Friedrichs flux.
@@ -95,8 +95,8 @@ element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
                                     af.sum(x_nodes[1]), N_Elements + 1)
 
 element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
-element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
-                                                                   xi_LGL)
+element_LGL   = isoparam.isoparam_1D(af.transpose(element_array),
+                                              xi_LGL)
 
 # The minimum distance between 2 mapped LGL points.
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])

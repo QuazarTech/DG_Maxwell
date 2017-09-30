@@ -1,15 +1,16 @@
 #! /usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import arrayfire as af
-af.set_backend('opencl')
+af.set_backend('cpu')
 import numpy as np
 from matplotlib import pyplot as plt
-import pylab as pl
 from tqdm import trange
 
-from app import params
-from app import lagrange
-from utils import utils
+from dg_maxwell import params
+from dg_maxwell import lagrange
+from dg_maxwell import utils
+from dg_maxwell import isoparam
 
 plt.rcParams['figure.figsize'  ] = 9.6, 6.
 plt.rcParams['figure.dpi'      ] = 100
@@ -39,44 +40,11 @@ plt.rcParams['ytick.labelsize' ] = 'medium'
 plt.rcParams['ytick.direction' ] = 'in'
 
 
-
-
-def mapping_xi_to_x(x_nodes, xi):
-    '''
-    Maps points in :math: `\\xi` space to :math:`x` space using the formula
-    :math:  `x = \\frac{1 - \\xi}{2} x_0 + \\frac{1 + \\xi}{2} x_1`
-    
-    Parameters
-    ----------
-    
-    x_nodes : arrayfire.Array [2 1 1 1]
-              Element nodes.
-    
-    xi      : arrayfire.Array [N 1 1 1]
-              Value of :math: `\\xi`coordinate for which the corresponding
-              :math: `x` coordinate is to be found.
-    
-    Returns
-    -------
-    x : arrayfire.Array
-        :math: `x` value in the element corresponding to :math:`\\xi`.
-    '''
-    N_0 = (1 - xi) / 2
-    N_1 = (1 + xi) / 2
-    
-    N0_x0 = af.broadcast(utils.multiply, N_0, x_nodes[0])
-    N1_x1 = af.broadcast(utils.multiply, N_1, x_nodes[1])
-    
-    x = N0_x0 + N1_x1
-    
-    return x
-
-
 def dx_dxi_numerical(x_nodes, xi):
     '''
-    Differential :math: `\\frac{dx}{d \\xi}` calculated by central
-    differential method about xi using the mapping_xi_to_x function.
-    
+    Differential :math:`\\frac{dx}{d \\xi}` calculated by central
+    differential method about xi using the isoparam.isoparam_1D function.
+
     Parameters
     ----------
     
@@ -84,16 +52,16 @@ def dx_dxi_numerical(x_nodes, xi):
               Contains the nodes of elements.
     
     xi      : arrayfire.Array [N_LGL 1 1 1]
-              Values of :math: `\\xi`
+              Values of :math:`\\xi`
     
     Returns
     -------
     dx_dxi : arrayfire.Array [N_Elements 1 1 1]
-             :math:`\\frac{dx}{d \\xi}`. 
+             :math:`\\frac{dx}{d \\xi}`.
     '''
     dxi = 1e-7
-    x2  = mapping_xi_to_x(x_nodes, xi + dxi)
-    x1  = mapping_xi_to_x(x_nodes, xi - dxi)
+    x2  = isoparam.isoparam_1D(x_nodes, xi + dxi)
+    x1  = isoparam.isoparam_1D(x_nodes, xi - dxi)
     
     dx_dxi = (x2 - x1) / (2 * dxi)
     
@@ -103,7 +71,7 @@ def dx_dxi_numerical(x_nodes, xi):
 def dx_dxi_analytical(x_nodes, xi):
     '''
     The analytical result for :math:`\\frac{dx}{d \\xi}` for a 1D element is
-    :math: `\\frac{x_1 - x_0}{2}`
+    :math:`\\frac{x_1 - x_0}{2}`
 
     Parameters
     ----------
@@ -111,13 +79,13 @@ def dx_dxi_analytical(x_nodes, xi):
               Contains the nodes of elements.
  
     xi      : arrayfire.Array [N_LGL 1 1 1]
-              Values of :math: `\\xi`.
+              Values of :math:`\\xi`.
 
     Returns
     -------
     analytical_dx_dxi : arrayfire.Array [N_Elements 1 1 1]
-                        The analytical solution of :math:
-                        `\\frac{dx}{d\\xi}` for an element.
+                        The analytical solution of :math:`\\frac{dx}{d\\xi}`
+                        for an element.
     
     '''
     analytical_dx_dxi = (x_nodes[1] - x_nodes[0]) / 2
@@ -128,11 +96,11 @@ def dx_dxi_analytical(x_nodes, xi):
 def A_matrix():
     '''
     Calculates A matrix whose elements :math:`A_{p i}` are given by
-    :math: `A_{p i} &= \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
+    :math:`A_{p i} = \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
 
     The integrals are computed using the Integrate() function.
 
-    Since elements are taken to be of equal size, :math: `\\frac {dx}{dxi}
+    Since elements are taken to be of equal size, :math:`\\frac{dx}{d\\xi}`
     is same everywhere
     
 
@@ -165,7 +133,7 @@ def flux_x(u):
 
     Returns
     -------
-    flux : list [N_Elements] 
+    flux : list [N_Elements]
            The analytical value of the flux for each element arranged in a list
            of numpy.poly1d polynomials.
     '''
@@ -238,11 +206,13 @@ def volume_integral_flux(u_n):
 def lax_friedrichs_flux(u_n):
     '''
     Calculates the lax-friedrichs_flux :math:`f_i` using.
-    :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \\frac
-                {\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
+    
+    .. math:: f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} \\\\
+        - \\frac{\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})
 
-    The algorithm used is explained in the link given below
-    `https://goo.gl/sNsXXK`
+    The algorithm used is explained in this `document`_
+    
+    .. _document: `https://goo.gl/sNsXXK`
 
     Parameters
     ----------
@@ -266,7 +236,7 @@ def lax_friedrichs_flux(u_n):
                         - params.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
     
     
-    return boundary_flux 
+    return boundary_flux
 
 
 def surface_term(u_n):
@@ -290,11 +260,9 @@ def surface_term(u_n):
                    :math:`N_{Elements}`. p varies along the rows and i along
                    columns.
     
-    Reference
-    ---------
-    Link to PDF describing the algorithm to obtain the surface term.
+    **See:** `PDF`_ describing the algorithm to obtain the surface term.
     
-    `https://goo.gl/Nhhgzx`
+    .. _PDF: https://goo.gl/Nhhgzx
     '''
 
     L_p_minus1   = params.lagrange_basis_value[:, 0]
@@ -322,10 +290,9 @@ def b_vector(u_n):
                      Contains the b vector(of shape [N_LGL 1 1 1])
                      for each element.
 
-    Reference
-    ---------
-    A report for the b-vector can be found here
-    `https://goo.gl/sNsXXK`
+    **See:** `Report`_ for the b-vector can be found here
+    .. _Report: https://goo.gl/sNsXXK
+
     '''
     volume_integral = volume_integral_flux(u_n)
     Surface_term    = surface_term(u_n)
@@ -337,14 +304,13 @@ def b_vector(u_n):
 def time_evolution():
     '''
     Solves the wave equation
-    :math: `u^{t_n + 1} = b(t_n) \\times A`
-    iterated over time steps t_n and then plots :math: `x` against the amplitude
+    :math:`u^{t_n + 1} = b(t_n) \\times A`
+    iterated over time steps t_n and then plots :math:`x` against the amplitude
     of the wave. The images are then stored in Wave folder.
     '''
     A_inverse   = af.inverse(A_matrix())
-    element_LGL = params.element_LGL
     delta_t     = params.delta_t
-    amplitude   = params.u 
+    amplitude   = params.u
     time        = params.time
     
     for t_n in trange(0, time.shape[0] - 1):
