@@ -31,7 +31,7 @@ volume_integral_scheme = 'lobatto_quadrature'
 N_quad     = 8
 
 # Wave speed.
-c          = 2
+c          = 1
 
 # The total time for which the wave is to be evolved by the simulation. 
 total_time = 2.01

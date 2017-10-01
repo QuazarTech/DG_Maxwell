@@ -461,7 +461,7 @@ def time_evolution():
 
     h5py_one_pass = h5py.File('results/hdf5/dump_timestep_%06d'\
                               %int(time_one_pass) + '.hdf5', 'r')
-    analytical_u = analytical_u_LGL(time_one_pass)
+    analytical_u = analytical_u_LGL(time_one_pass + params.delta_t)
     calculated_u  = af.np_to_af_array(h5py_one_pass['u_i'][:])
 
     wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
