@@ -3,3 +3,5 @@ arrayfire
 numpy
 matplotlib
 tqdm
+scipy
+gmshtranslator
