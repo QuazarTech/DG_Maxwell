@@ -17,13 +17,13 @@ def isoparam_1D(x_nodes, xi):
               Element nodes.
     
     xi      : arrayfire.Array [N 1 1 1]
-              Value of :math: `\\xi`coordinate for which the corresponding
-              :math: `x` coordinate is to be found.
+              Value of :math:`\\xi` coordinate for which the corresponding
+              :math:`x` coordinate is to be found.
     
     Returns
     -------
     x : arrayfire.Array
-        :math: `x` value in the element corresponding to :math:`\\xi`.
+        :math:`x` value in the element corresponding to :math:`\\xi`.
     '''
     N_0 = (1 - xi) / 2
     N_1 = (1 + xi) / 2
