@@ -476,7 +476,7 @@ def time_evolution():
     return L1_norm 
 
 
-def change_parameters(LGL, Elements):
+def change_parameters(LGL, Elements, wave='sin'):
     '''
 
     Changes the parameters of the simulation. Used only for convergence tests.
@@ -583,7 +583,12 @@ def change_parameters(LGL, Elements):
                                                         int(params.total_time / params.delta_t))
 
     # Initializing the amplitudes. Change u_init to required initial conditions.
-    params.u_init     = af.sin(2 * np.pi * params.element_LGL)#np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+    if (wave=='sin'):
+        params.u_init     = af.sin(2 * np.pi * params.element_LGL)
+        
+    if (wave=='gaussian'):
+        params.u_init = np.e ** (-(params.element_LGL) ** 2 / 0.4 ** 2)
+    
     params.u          = af.constant(0, params.N_LGL, params.N_Elements, params.time.shape[0],\
                                      dtype = af.Dtype.f64)
     params.u[:, :, 0] = params.u_init

@@ -113,8 +113,21 @@ delta_t = delta_x / (10 * c)
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
                                                     int(total_time / delta_t))
 
+
+# The wave to be advected is either a sin or a Gaussian wave.
+# This parameter can take values 'sin' or 'gaussian'.
+wave = 'sin'
+
 # Initializing the amplitudes. Change u_init to required initial conditions.
-u_init     = af.sin(2 * np.pi * element_LGL)#np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+if (wave=='sin'):
+    u_init = af.sin(2 * np.pi * element_LGL)
+
+if (wave=='gaussian'):
+    u_init = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+
+
+
+# Initializing the amplitudes. Change u_init to required initial conditions.
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
