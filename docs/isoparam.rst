@@ -4,6 +4,6 @@
 isoparam
 ========
 
-.. automodule::
-   dg_maxwell.isoparam
+.. automodule:: dg_maxwell.isoparam
    :members:
+   :undoc-members:
