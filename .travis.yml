@@ -7,10 +7,10 @@ python:
 
 # command to install dependencies
 before_install:
-    - git clone https://github.com/amanabt/gmshtranslator.git
-    - cd gmshtranslator
-    - sudo python setup.py install
+    - ls -al
+    - pwd
     - cd ..
+    - ls -al
     - sudo apt-get update -qq
     - sudo apt-get install -qq build-essential git cmake libfreeimage-dev cmake-curses-gui
     - sudo apt-get install -qq libopenblas-dev libfftw3-dev liblapacke-dev libboost-all-dev
@@ -43,11 +43,26 @@ before_install:
     - export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
     - echo $LD_LIBRARY_PATH
     - cd ../../../../
-    - echo $PWD
+    - cd arrayfire/build
+#    - make test
+    - cd ../../
+    - git clone https://github.com/amanabt/gmshtranslator.git
+    - cd gmshtranslator
+    - sudo pip install -e .
+    - cd ..
+    - pip install virtualenv
+    - pwd
+    - ls -al
+    - cd DG_Maxwell
+    - pwd
+    - ls -al
+    - virtualenv venv 
+    - source venv/bin/activate
 
 install:
     - pip install -r requirements.txt
 
 script:
-    - python -c "import code"
+    - python -c "import dg_maxwell"
+    - pytest
 
