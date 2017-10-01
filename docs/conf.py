@@ -31,7 +31,7 @@ class Mock(MagicMock):
 
 MOCK_MODULES = ['gmshtranslator', 'gmshtranslator.gmshtranslator', 'arrayfire',
                 'lagrange', 'scipy', 'numpy', 'matplotlib', 'matplotlib.lines',
-                'dg_maxwell.params']
+                'dg_maxwell.params', 'tqdm']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- General configuration ------------------------------------------------
@@ -149,7 +149,7 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "quazar_logo.png"
+html_logo = "docs/quazar_logo.png"
 
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
