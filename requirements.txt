@@ -1,3 +1,4 @@
+h5py
 pytest
 arrayfire
 numpy
