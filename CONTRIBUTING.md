@@ -1,8 +1,7 @@
 # Contributing to DG Maxwell
 You can contribute to this project by testing, raising issues
-and making code contributions. A certain set of guidelines are
-required to be followed for cotributing to the project in
-different ways.
+and making code contributions. A certain set of guidelines needs
+to be followed for cotributing to the project.
 
 ## Code Guidelines
 This project is mostly written in `Python3`, we follow a certain
@@ -18,7 +17,7 @@ to build it's documentation. The documentation lies in the
 `docs` directory of the repository. In this project,
 python `docstrings` are used to document all the member functions
 of a module. Sphinx uses `autodoc` to read this docstring and
-convert it into a beautiful `html` documentation. We follow a
+convert it into beautiful `html` pages. We follow a
 certain set of guidelines for writing the `docstrings` as explained
 below.
 
@@ -33,55 +32,91 @@ below.
   [Math support in Sphinx](http://www.sphinx-doc.org/en/stable/ext/math.html#math-support).
 - When using the special LaTeX symbols, use double "\\\\" instead of a
     single "\\". For eg, for writing the math symbol
-    ![xi](.svgs/xi.svg), write "$\\\\xi$" instead of "$\\xi$".
+    ![xi](.svgs/xi.svg), write "\\\\xi" instead of "\\xi".
 - If the function implements some mathematical equation, state that
     equation and describe the terms occuring in the equation.
 - If the algorithm is non-trivial, explain it in the documentation.
 - If the algorithm is very lengthy and complicated,
     write a LaTeX file explaining the algorithm and state it in the documentation.
-    Here is an example for stating the link "Full description of the algorithm can
-    be found here < link >"
+    Here is an example for stating the link `Full description of the algorithm can
+    be found here < link >`
 - In case you want to insert the URL in the documentation and the URL is
-    exceeding the 80 characters limit, you have to shorten the URL using
+    exceeding the 80 characters limit, shorten the URL using
     the [Google URL shortener](https://goo.gl/).
 - Don't use personal pronouns in the documentation.
 - Do not exceed the 80 characters per line limit.
 
 Shown below is an example for documentation of a function
-```
+```python
+def isoparam_1D(x_nodes, xi):
     '''
-    Finds the :math:`x` coordinate using isoparametric mapping of a
-    :math:`2^{nd}` order element with :math:`8` nodes
-    .. math:: (P_0, P_1, P_2, P_3, P_4, P_5, P_6, P_7)
+    Maps points in :math:`\\xi` space to :math:`x` space using the formula
+    :math:`x = \\frac{1 - \\xi}{2} x_0 + \\frac{1 + \\xi}{2} x_1`
 
-    Here :math:`P_i` corresponds to :math:`(\\xi_i, \\eta_i)` coordinates,
-    :math:`i \in \\{0, 1, ..., 7\\}` respectively, where,
-    
-    .. math:: (\\xi_0, \\eta_0) &\equiv (-1,  1) \\\\
-              (\\xi_1, \\eta_1) &\equiv (-1,  0) \\\\
-              (\\xi_2, \\eta_2) &\equiv (-1, -1) \\\\
-              (\\xi_3, \\eta_3) &\equiv ( 0, -1) \\\\
-              (\\xi_4, \\eta_4) &\equiv ( 1, -1) \\\\
-              (\\xi_5, \\eta_5) &\equiv ( 1,  0) \\\\
-              (\\xi_6, \\eta_6) &\equiv ( 1,  1) \\\\
-              (\\xi_7, \\eta_7) &\equiv ( 0,  1)
-              
     Parameters
     ----------
-    x_nodes : np.ndarray [8]
-              :math:`x` nodes.
-              
-    xi      : float
-            :math:`\\xi` coordinate for which :math:`x` has to be found.
-
-    eta     : float
-            :math:`\\eta` coordinate for which :math:`x` has to be found.
-
+    
+    x_nodes : arrayfire.Array [2 1 1 1]
+              Element nodes.
+    
+    xi      : arrayfire.Array [N 1 1 1]
+              Value of :math:`\\xi` coordinate for which the corresponding
+              :math:`x` coordinate is to be found.
+    
     Returns
     -------
-    x : float
-        :math:`x` coordinate corresponding to :math:`(\\xi, \\eta)` coordinate.
-    
-    '''
+    x : arrayfire.Array
+        :math:`x` value in the element corresponding to :math:`\\xi`.
+    '''    '''
 ```
 
+## Documentation Hosting
+The documentations for the code is hosted on
+[readthedocs(rtd)](https://readthedocs.org). This platform uses the `makefile`
+in the `docs` directory to build a documentation and host it on the web if the
+documentation build is successful. So, it's necessary to always make sure that
+rtd is able to build the documentation successfully. Here are some things to
+keep in mind when using rtd to host the documentation.
+1.This project uses Sphinx `autodoc` extension to generate
+  the documentation from the `doc-strings`. But, in doing so, it imports the
+  actual modules. Those modules often contain some other 3rd party imports.
+  Sphinx fails if that dependency is not satisfied. So, to avoid that situation,
+  this project uses `unittest.mock.MagicMock`. This was you can use mock imports.
+  This code snippet is added in `docs/conf.py`.
+  ```python
+  from unittest.mock import MagicMock
+
+  class Mock(MagicMock):
+      @classmethod
+      def __getattr__(cls, name):
+              return MagicMock()
+
+  MOCK_MODULES = ['gmshtranslator', 'gmshtranslator.gmshtranslator', 'arrayfire',
+                  'lagrange', 'scipy', 'numpy', 'matplotlib', 'matplotlib.lines',
+                  'dg_maxwell.params', 'tqdm']
+  sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+  ```
+  If you want to add a mock import, add that import name in the `MOCK_MODULES`
+  list.
+
+## Continuous Integration
+This project uses [Travis CI](https://travis-ci.org/) for automatically checking
+the `build` and the unit tests.
+
+## Code Quality
+This project uses [CODACY](https://www.codacy.com/) to automatically check the
+code quality.
+
+## Pull Request Process
+This project follows the guidelines set by Quazar Technologies for giving
+a pull request. You may find the link to the pull request
+[here](https://github.com/QuazarTech/Style-Guidelines/blob/master/github/PR_guidelines.md).
+Here are few additional guidelines to be followed when giving a pull request
+- Before asking to merge the pull request, make sure that the documentation
+  build is passing on `rtd`. You may do this by hosting your fork documentation on
+  `rtd`. Make sure that there are no errors by checking the build log and also
+  check your documentation on the `rtd` website and make sure to check the
+  hosted documentation of your fork.
+- Make sure that the build is successfull and all the unit tests are passing on
+  `Travis CI`.
+- Check the code quality of your fork with CODACY.
