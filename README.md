@@ -84,7 +84,7 @@ The unit tests are located in the
 To run the unit tests, enter the following commands
 ```
 $ cd path/to/the/DG_Maxwell/repo
-$ pytest
+$ pytest --verbose -r P --color=yes
 ```
 
 
