@@ -25,7 +25,7 @@ N_Elements = 10
 scheme     = 'gauss_quadrature'
 
 # The scheme to integrate the volume integral flux
-volume_integral_scheme = 'lobatto_quadrature'
+volume_integral_scheme = 'analytical'
 
 # The number quadrature points to be used for integration.
 N_quad     = 8

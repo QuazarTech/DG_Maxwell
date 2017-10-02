@@ -241,24 +241,47 @@ def volume_integral_flux(u_n, t_n):
         flux_integral          = af.sum(integral_expansion, 1)
         flux_integral          = af.reorder(flux_integral, 0, 2, 1) * params.c
 
+    elif(params.volume_integral_scheme == 'analytical'):
 
-    else:
-        analytical_form_flux       = flux_x(lagrange.\
-                                            wave_equation_lagrange(u_n))
-        differential_lagrange_poly = params.differential_lagrange_polynomial
+        integrand       = params.volume_integrand_N_LGL
+        lobatto_nodes   = params.lobatto_quadrature_nodes
+        Lobatto_weights = params.lobatto_weights_quadrature
 
-        integrand = np.zeros(([params.N_LGL * params.N_Elements,\
-                                          2 * params.N_LGL - 2]))
+        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
+        power        = af.flip(af.range(integrand.shape[1]))
+        power_tile   = af.tile(power, 1, params.N_quad)
+        nodes_power  = nodes_tile ** power_tile
+        weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
+        nodes_weight = nodes_power * weights_tile
 
-        for i in range(params.N_LGL):
-            for j in range(params.N_Elements):
-                integrand[i + params.N_LGL * j] = (analytical_form_flux[j] *\
-                                                  differential_lagrange_poly[i]).c
+        value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
+        analytical_u_n         = analytical_u_LGL(t_n)
+        F_u_n                  = af.reorder(analytical_u_n, 2, 0, 1)
+        integral_expansion     = af.broadcast(utils.multiply, value_at_lobatto_nodes, F_u_n)
+        flux_integral          = af.sum(integral_expansion, 1)
+        flux_integral = af.reorder(flux_integral, 0, 2, 1)
 
-        integrand     = af.np_to_af_array(integrand)
-        flux_integral = lagrange.Integrate(integrand)
-        flux_integral = af.moddims(flux_integral, params.N_LGL,\
-                                             params.N_Elements) * params.c
+
+#    else:
+#        analytical_form_flux       = flux_x(lagrange.\
+#                                            wave_equation_lagrange(u_n))
+#        differential_lagrange_poly = params.differential_lagrange_polynomial
+#
+#        integrand = np.zeros(([params.N_LGL * params.N_Elements,\
+#                                          2 * params.N_LGL - 2]))
+#
+#        for i in range(params.N_LGL):
+#            for j in range(params.N_Elements):
+#                integrand[i + params.N_LGL * j] = (analytical_form_flux[j] *\
+#                                                  differential_lagrange_poly[i]).c
+#
+#        integrand     = af.np_to_af_array(integrand)
+#        flux_integral = lagrange.Integrate(integrand)
+#        flux_integral = af.moddims(flux_integral, params.N_LGL,\
+#                                             params.N_Elements) * params.c
+#
+#
+
 
     return flux_integral
 
@@ -421,21 +444,17 @@ def time_evolution():
     if not os.path.exists(results_directory):
         os.makedirs(results_directory)
 
-
-
-
     A_inverse   = af.inverse(A_matrix())
     element_LGL = params.element_LGL
     delta_t     = params.delta_t
     u           = params.u_init
     time        = params.time
 
-    
     element_boundaries = af.np_to_af_array(params.np_element_array)
 
-    for t_n in trange(0, time.shape[0] - 1):
+    for t_n in trange(0, 1):
 
-        # Storing the amplitudes at timesteps which are multiples of 20.
+        # Storing u at timesteps which are multiples of 20.
         if (t_n % 20) == 0:
             h5file = h5py.File('results/hdf5/dump_timestep_%06d' %(int(t_n)) + '.hdf5', 'w')
             dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
@@ -446,42 +465,70 @@ def time_evolution():
         u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u, t_n))\
                              * delta_t / 2
 
-        u            +=  af.matmul(A_inverse, b_vector(u_n_plus_half, t_n))\
+        u            +=  af.matmul(A_inverse, b_vector(u_n_plus_half, t_n + 0.5))\
                          * delta_t
-        
+
+
+       # analytical_u = analytical_u_LGL(t_n + 1)
+       # 
+       # plt.plot(element_LGL, analytical_u - u)
+       # plt.xlabel('x')
+       # plt.ylabel('$u_{analytical}$ - $u_{numerical}$')
+       # plt.show()
+
+        analytical_u_n_plus_half = analytical_u_LGL(t_n + 1/2)
+
+        plt.plot(element_LGL, analytical_u_n_plus_half - u_n_plus_half)
+        plt.xlabel('x')
+        plt.ylabel('$u_{analytical}$ - $u_{numerical}$')
+        plt.show()
+
 
 
 
     print('u calculated!')
 
-    # Calculating the time required for one complete advection.
-    time_one_pass = int(2 / delta_t)
+#    # Calculating the time required for one complete advection.
+#    time_one_pass = int(2 / delta_t)
+#
+#    # Obtaining the amplitude from the h5py file (which is a multiple off 20).
+#    while (time_one_pass % 20 != 0):
+#        time_one_pass -= 1
+#
+#    h5py_one_pass = h5py.File('results/hdf5/dump_timestep_%06d'\
+#                              %int(time_one_pass) + '.hdf5', 'r')
+#    analytical_u = analytical_u_LGL(time_one_pass + 0 * params.delta_t)
+#    calculated_u = af.np_to_af_array(h5py_one_pass['u_i'][:])
+#    vol_int_num  = (volume_integral_flux(u, time_one_pass))
+#
+#    params.volume_integral_scheme = 'analytical'
+#
+#    vol_int_analytical = (volume_integral_flux(u, time_one_pass))
+#
+#    plt.plot(element_LGL, vol_int_num - vol_int_analytical)
+#    plt.xlabel('x')
+#    plt.ylabel('numerical volume int. - analytical volume int.')
+#    plt.title('difference in volume integral flux vs x') 
+#    plt.show()
 
-    # Obtaining the amplitude from the h5py file (which is a multiple off 20).
-    while (time_one_pass % 20 != 0):
-        time_one_pass -= 1
+    #plt.plot(af.flat(element_LGL), af.flat(analytical_u), label='analytical u')
+    #plt.plot(af.flat(element_LGL), af.flat(calculated_u), '--k', label='calculated u')
+    #plt.plot(element_LGL, vol_int_num - vol_int_analytical)
+    #plt.ylabel('$u_{analytical}$ - $u_{calculated}$')
+    #plt.legend(loc='best')
+    #plt.xlabel('x')
+    #plt.show()
 
-    h5py_one_pass = h5py.File('results/hdf5/dump_timestep_%06d'\
-                              %int(time_one_pass) + '.hdf5', 'r')
-    analytical_u = analytical_u_LGL(time_one_pass + params.delta_t)
-    calculated_u  = af.np_to_af_array(h5py_one_pass['u_i'][:])
+#    wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
+#
+#    for i in range(0, params.N_Elements):
+#        wave_equation_coeffs[i, :] = lagrange.wave_equation_lagrange(\
+#                                     af.abs(calculated_u - analytical_u))[i].c
+#
+#    L1_norm = af.sum(lagrange.Integrate(af.np_to_af_array\
+#                                       (wave_equation_coeffs)))
 
-    plt.plot(element_LGL, analytical_u - calculated_u)
-    plt.title('$u_{analytical}$ - $u_{calculated}$ vs x')
-    plt.ylabel('$u_{analytical}$ - $u_{calculated}$')
-    plt.xlabel('x')
-    plt.show()
-
-    wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
-
-    for i in range(0, params.N_Elements):
-        wave_equation_coeffs[i, :] = lagrange.wave_equation_lagrange(\
-                                     af.abs(calculated_u - analytical_u))[i].c
-
-    L1_norm = af.sum(lagrange.Integrate(af.np_to_af_array\
-                                       (wave_equation_coeffs)))
-
-    return L1_norm 
+    return
 
 
 def change_parameters(LGL, Elements, wave='sin'):
@@ -496,6 +543,7 @@ def change_parameters(LGL, Elements, wave='sin'):
 
     Elements : int
                The new N_Elements.
+
     '''
     # The domain of the function.
     params.x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
@@ -505,7 +553,6 @@ def change_parameters(LGL, Elements, wave='sin'):
 
     # Number of elements the domain is to be divided into.
     params.N_Elements = Elements
-
 
     # The number quadrature points to be used for integration.
     params.N_quad     = LGL
