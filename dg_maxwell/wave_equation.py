@@ -218,69 +218,78 @@ def volume_integral_flux(u_n, t_n):
                     of all N_LGL * N_Element integrands.
 
     '''
+    # The coefficients of dLp / d\xi
+    diff_lag_coeff  = params.volume_integrand_N_LGL
+
+    lobatto_nodes   = params.lobatto_quadrature_nodes
+    Lobatto_weights = params.lobatto_weights_quadrature
+
+    nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, diff_lag_coeff.shape[1]))
+    power        = af.flip(af.range(diff_lag_coeff.shape[1]))
+    power_tile   = af.tile(power, 1, params.N_quad)
+    nodes_power  = nodes_tile ** power_tile
+    weights_tile = af.transpose(af.tile(Lobatto_weights, 1, diff_lag_coeff.shape[1]))
+    nodes_weight = nodes_power * weights_tile
+
+    dLp_dxi      = af.matmul(diff_lag_coeff, nodes_weight)
+
+
+    
     if(params.volume_integral_scheme == 'lobatto_quadrature'\
         and params.N_quad == params.N_LGL):
 
-        integrand       = params.volume_integrand_N_LGL
-        lobatto_nodes   = params.lobatto_quadrature_nodes
-        Lobatto_weights = params.lobatto_weights_quadrature
+        # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
+        F_u_n                  = af.reorder(flux_x(u_n), 2, 0, 1)
 
-        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1,\
-                                          integrand.shape[1]))
-        power        = af.flip(af.range(integrand.shape[1]))
-        power_tile   = af.tile(power, 1, params.N_quad)
-        nodes_power  = nodes_tile ** power_tile
-        weights_tile = af.transpose(af.tile(Lobatto_weights, 1,\
-                       integrand.shape[1]))
-        nodes_weight = nodes_power * weights_tile
-
-        value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
-        F_u_n                  = af.reorder(u_n, 2, 0, 1)
+        # Multiplying with dLp / d\xi
         integral_expansion     = af.broadcast(utils.multiply,\
-                                 value_at_lobatto_nodes, F_u_n)
+                                 dLp_dxi, F_u_n)
+
+        # Using the quadrature rule.
         flux_integral          = af.sum(integral_expansion, 1)
-        flux_integral          = af.reorder(flux_integral, 0, 2, 1) * params.c
+        flux_integral          = af.reorder(flux_integral, 0, 2, 1)
 
     elif(params.volume_integral_scheme == 'analytical'):
 
-        integrand       = params.volume_integrand_N_LGL
-        lobatto_nodes   = params.lobatto_quadrature_nodes
-        Lobatto_weights = params.lobatto_weights_quadrature
-
-        nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, integrand.shape[1]))
-        power        = af.flip(af.range(integrand.shape[1]))
-        power_tile   = af.tile(power, 1, params.N_quad)
-        nodes_power  = nodes_tile ** power_tile
-        weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
-        nodes_weight = nodes_power * weights_tile
-
-        value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
+        # u_n calculated using af.sin
         analytical_u_n         = analytical_u_LGL(t_n)
         F_u_n                  = af.reorder(analytical_u_n, 2, 0, 1)
-        integral_expansion     = af.broadcast(utils.multiply, value_at_lobatto_nodes, F_u_n)
+
+
+        # Multiplying with dLp / d\xi
+        integral_expansion     = af.broadcast(utils.multiply, dLp_dxi, F_u_n)
+
+        # Using the quadrature rule.
         flux_integral          = af.sum(integral_expansion, 1)
         flux_integral = af.reorder(flux_integral, 0, 2, 1)
 
 
-#    else:
-#        analytical_form_flux       = flux_x(lagrange.\
-#                                            wave_equation_lagrange(u_n))
-#        differential_lagrange_poly = params.differential_lagrange_polynomial
-#
-#        integrand = np.zeros(([params.N_LGL * params.N_Elements,\
-#                                          2 * params.N_LGL - 2]))
-#
-#        for i in range(params.N_LGL):
-#            for j in range(params.N_Elements):
-#                integrand[i + params.N_LGL * j] = (analytical_form_flux[j] *\
-#                                                  differential_lagrange_poly[i]).c
-#
-#        integrand     = af.np_to_af_array(integrand)
-#        flux_integral = lagrange.Integrate(integrand)
-#        flux_integral = af.moddims(flux_integral, params.N_LGL,\
-#                                             params.N_Elements) * params.c
-#
-#
+    else:
+        # Obtaining the u_n in polynomial form using the value at LGL points.
+        analytical_form_flux       = flux_x(lagrange.\
+                                            wave_equation_lagrange(u_n))
+
+        # dLp/ d\xi in poly1d form
+        differential_lagrange_poly = params.differential_lagrange_polynomial
+
+
+        # The coefficients of the integrand dLp / dxi * F(u)
+        # arranged in a (N_LGL * N_Elements) X (N_LGL - 2) array
+        integrand_coeff = np.zeros(([params.N_LGL * params.N_Elements,\
+                                          2 * params.N_LGL - 2]))
+
+        for i in range(params.N_LGL):
+            for j in range(params.N_Elements):
+                # Coefficients of the integrand.
+                integrand_coeff[i + params.N_LGL * j] = (analytical_form_flux[j] *\
+                                                  differential_lagrange_poly[i]).c
+
+        integrand_coeff = af.np_to_af_array(integrand_coeff)
+        flux_integral   = lagrange.Integrate(integrand_coeff)
+        flux_integral   = af.moddims(flux_integral, params.N_LGL,\
+                                             params.N_Elements) * params.c
+
+
 
 
     return flux_integral
