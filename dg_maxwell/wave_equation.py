@@ -466,6 +466,12 @@ def time_evolution():
     analytical_u = analytical_u_LGL(time_one_pass + params.delta_t)
     calculated_u  = af.np_to_af_array(h5py_one_pass['u_i'][:])
 
+    plt.plot(element_LGL, analytical_u - calculated_u)
+    plt.title('$u_{analytical}$ - $u_{calculated}$ vs x')
+    plt.ylabel('$u_{analytical}$ - $u_{calculated}$')
+    plt.xlabel('x')
+    plt.show()
+
     wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
 
     for i in range(0, params.N_Elements):

@@ -63,7 +63,6 @@ lagrange_product           = lagrange.product_lagrange_poly(xi_LGL)
 lagrange_coeffs            = af.np_to_af_array(\
                                 lagrange.lagrange_polynomials(xi_LGL)[1])
 
-
 # Refer corresponding functions.
 lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)
 
@@ -89,20 +88,16 @@ volume_integrand_N_LGL= af.np_to_af_array(volume_integrand_N_LGL)
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
 
-
 element_size    = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
 elements_xi_LGL = af.constant(0, N_Elements, N_LGL)
 elements        = utils.linspace(af.sum(x_nodes[0]),
                   af.sum(x_nodes[1] - element_size), N_Elements)
 
-
 np_element_array   = np.concatenate((af.transpose(elements),
                                af.transpose(elements + element_size)))
 
-
 element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
                                     af.sum(x_nodes[1]), N_Elements + 1)
-
 
 element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
 element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
@@ -133,7 +128,6 @@ if (wave=='gaussian'):
 
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
-
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init

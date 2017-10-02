@@ -5,6 +5,5 @@ matplotlib
 tqdm
 scipy
 gmshtranslator
-hdf5
 h5py
 
