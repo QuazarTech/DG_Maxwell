@@ -5,7 +5,7 @@ to be followed for cotributing to the project.
 
 ## Code Guidelines
 This project is mostly written in `Python3`, we follow a certain
-set of code guidelines for writing `python3` code. This project
+set of code guidelines for writing `Python3` code. This project
 follows the code guidelines set by the master organization
 [Quazar Technologies](https://github.com/quazartech). You may
 find the latest code guidelines on this
