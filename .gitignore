@@ -197,7 +197,6 @@ Thumbs.db
 !examples/read_and_plot_mesh/mesh/*
 !dg_maxwell/tests/mesh/*
 !dg_maxwell/tests/msh_parser/mesh/*
-
 examples/results
-
 main.py
+!docs/quazar_logo.png
