@@ -243,7 +243,8 @@ def lagrange_function_value(lagrange_coeff_array):
     It follows then that lagrange_function_value returns an identity matrix.
     
     '''
-    xi_tile    = af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL))
+    xi_tile    = af.transpose(af.tile(LGL_points(params.N_LGL), 1,
+                                      params.N_LGL))
     power      = af.flip(af.range(params.N_LGL))
     power_tile = af.tile(power, 1, params.N_LGL)
     xi_pow     = af.arith.pow(xi_tile, power_tile)
@@ -282,8 +283,9 @@ def product_lagrange_poly(x):
     product_lagrange_poly(xi_LGL)[1] gives the coefficients of the product
     `L_0(\\xi) * L_1(\\xi)`.
     '''
-    poly1d_list             = lagrange_polynomials(params.xi_LGL)[0] 
-    lagrange_product_coeffs = np.zeros([params.N_LGL ** 2, params.N_LGL * 2 - 1])
+    poly1d_list             = lagrange_polynomials(LGL_points(params.N_LGL))[0] 
+    lagrange_product_coeffs = np.zeros([params.N_LGL ** 2,
+                                        params.N_LGL * 2 - 1])
 
     for i in range (params.N_LGL):
         for j in range (params.N_LGL):

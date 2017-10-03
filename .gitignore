@@ -199,3 +199,5 @@ Thumbs.db
 !dg_maxwell/tests/msh_parser/mesh/*
 
 examples/results
+
+main.py

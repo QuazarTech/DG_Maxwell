@@ -93,8 +93,9 @@ def test_dx_dxi():
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
         
-    check_dx_dxi = abs((af.statistics.mean(wave_equation.dx_dxi_numerical
-                    (test_nodes,params.xi_LGL)) - analytical_dx_dxi)) <= threshold
+    check_dx_dxi =  abs((af.statistics.mean(wave_equation.dx_dxi_numerical
+                    (test_nodes,lagrange.LGL_points(params.N_LGL))) \
+                  - analytical_dx_dxi)) <= threshold
     
     assert check_dx_dxi
 

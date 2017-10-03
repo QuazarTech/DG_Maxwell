@@ -152,8 +152,8 @@ def A_matrix():
 
     '''
     int_Li_Lp = lagrange.Integrate(params.lagrange_product)
-    dx_dxi    = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
-                                                        params.xi_LGL))
+    dx_dxi    = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),
+                                         lagrange.LGL_points(params.N_LGL)))
 
     A_matrix_flat = dx_dxi * int_Li_Lp
     A_matrix      = af.moddims(A_matrix_flat, params.N_LGL, params.N_LGL)
@@ -584,18 +584,21 @@ def change_parameters(LGL, Elements, wave='sin'):
                                         (params.N_quad)
 
     # A list of the Lagrange polynomials in poly1d form.
-    params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
+    params.lagrange_product = lagrange.product_lagrange_poly(\
+        lagrange.LGL_points(params.N_LGL))
 
     # An array containing the coefficients of the lagrange basis polynomials.
     params.lagrange_coeffs  = af.np_to_af_array(\
-                              lagrange.lagrange_polynomials(params.xi_LGL)[1])
+                              lagrange.lagrange_polynomials( \
+                                  lagrange.LGL_points(params.N_LGL))[1])
 
     # Refer corresponding functions.
     params.lagrange_basis_value = lagrange.lagrange_function_value\
                                            (params.lagrange_coeffs)
 
     # A list of the Lagrange polynomials in poly1d form.
-    params.lagrange_poly1d_list = lagrange.lagrange_polynomials(params.xi_LGL)[0]
+    params.lagrange_poly1d_list = lagrange.lagrange_polynomials( \
+        lagrange.LGL_points(params.N_LGL))[0]
 
 
     # list containing the poly1d forms of the differential of Lagrange
@@ -633,8 +636,8 @@ def change_parameters(LGL, Elements, wave='sin'):
 
     params.element_array = af.transpose(af.np_to_af_array\
                                        (params.np_element_array))
-    params.element_LGL   = mapping_xi_to_x(af.transpose\
-                                          (params.element_array), params.xi_LGL)
+    params.element_LGL   = mapping_xi_to_x(af.transpose(params.element_array),
+                                           lagrange.LGL_points(params.N_LGL))
 
     # The minimum distance between 2 mapped LGL points.
     params.delta_x = af.min((params.element_LGL - af.shift(params.element_LGL, 1, 0))[1:, :])
