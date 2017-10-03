@@ -461,7 +461,7 @@ def time_evolution():
 
     element_boundaries = af.np_to_af_array(params.np_element_array)
 
-    for t_n in trange(0, 1):
+    for t_n in trange(0, time.shape[0]):
 
         # Storing u at timesteps which are multiples of 20.
         if (t_n % 20) == 0:
@@ -487,10 +487,10 @@ def time_evolution():
 
         analytical_u_n_plus_half = analytical_u_LGL(t_n + 1/2)
 
-        plt.plot(element_LGL, analytical_u_n_plus_half - u_n_plus_half)
-        plt.xlabel('x')
-        plt.ylabel('$u_{analytical}$ - $u_{numerical}$')
-        plt.show()
+        #plt.plot(element_LGL, analytical_u_n_plus_half - u_n_plus_half)
+        #plt.xlabel('x')
+        #plt.ylabel('$u_{analytical}$ - $u_{numerical}$')
+        #plt.show()
 
 
 

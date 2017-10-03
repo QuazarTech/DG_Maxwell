@@ -42,7 +42,6 @@ c_lax      = c
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
 
-
 # N_Gauss number of Gauss nodes.
 gauss_points               = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
 
@@ -115,8 +114,6 @@ delta_t = delta_x / (10 * c)
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
                                                     int(total_time / delta_t))
-
-
 # The wave to be advected is either a sin or a Gaussian wave.
 # This parameter can take values 'sin' or 'gaussian'.
 wave = 'sin'
