@@ -47,7 +47,7 @@ def test_read_order_2_msh():
     test_elements = np.array(test_elements)
     
     nodes, elements = msh_parser.read_order_2_msh(
-        os.path.abspath('./dg_maxwell/tests/msh_parser/mesh/rectangular.msh'))
+        os.path.abspath('./tests/msh_parser/mesh/rectangular.msh'))
     
     node_test = np.all((nodes - test_nodes) < threshold)
     element_test = np.all((elements == test_elements))
