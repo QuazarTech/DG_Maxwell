@@ -197,3 +197,4 @@ Thumbs.db
 !dg_maxwell/tests/mesh/*
 !dg_maxwell/tests/msh_parser/mesh/*
 examples/results
+!docs/quazar_logo.png
