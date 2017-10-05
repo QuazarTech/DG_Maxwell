@@ -18,7 +18,7 @@ x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
-N_Elements = 10
+N_Elements = 8
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
@@ -106,8 +106,13 @@ element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
 # The minimum distance between 2 mapped LGL points.
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 
+# dx_dxi for elements of equal size.
+dx_dxi = af.mean(wave_equation.dx_dxi_numerical((element_mesh_nodes[0 : 2]),\
+                                   xi_LGL))
+
+
 # The value of time-step.
-delta_t = delta_x / (10 * c)
+delta_t = delta_x / (2 * c)
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,

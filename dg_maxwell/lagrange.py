@@ -154,7 +154,7 @@ def lagrange_polynomials(x):
     
     It calculates the Lagrange basis polynomials using the formula:
     
-    .. math:: \\\\
+    .. math:: \\
         L_i = \\prod_{m = 0, m \\notin i}^{N - 1}\\frac{(x - x_m)}{(x_i - x_m)}
 
     Parameters
@@ -212,8 +212,10 @@ def lagrange_polynomials(x):
 
 def lagrange_function_value(lagrange_coeff_array):
     '''
+
     Funtion to calculate the value of lagrange basis functions over LGL
     nodes.
+
     Parameters
     ----------
     
@@ -238,7 +240,7 @@ def lagrange_function_value(lagrange_coeff_array):
     Also the value lagrange basis functions at LGL points has the property,
     
     L_i(xi_k) = 0 for i != k
-              = 1 for i = k
+              = 1 for i  = k
     
     It follows then that lagrange_function_value returns an identity matrix.
     
@@ -349,6 +351,8 @@ def Integrate(integrand_coeffs):
 
     
     return Integral
+
+
 
 
 def wave_equation_lagrange_basis_single_element(u, element_no):

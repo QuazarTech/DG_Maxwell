@@ -152,8 +152,7 @@ def A_matrix():
 
     '''
     int_Li_Lp = lagrange.Integrate(params.lagrange_product)
-    dx_dxi    = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
-                                                        params.xi_LGL))
+    dx_dxi    = params.dx_dxi 
 
     A_matrix_flat = dx_dxi * int_Li_Lp
     A_matrix      = af.moddims(A_matrix_flat, params.N_LGL, params.N_LGL)
@@ -437,8 +436,8 @@ def time_evolution():
     It increases the accuracy of the wave evolution.
 
     The second order time-stepping would be
-    `U^{n + 1/2} = U^n + dt/2 (A^{-1} B(U^n))`
-    `U^{n + 1}    = U^n + dt    (A^{-1} B(U^{n + 1/2}))`
+    `U^{n + 1/2} = U^n + dt / 2 (A^{-1} B(U^n))`
+    `U^{n + 1}   = U^n + dt     (A^{-1} B(U^{n + 1/2}))`
     
     Returns
     -------
@@ -461,7 +460,7 @@ def time_evolution():
 
     element_boundaries = af.np_to_af_array(params.np_element_array)
 
-    for t_n in trange(0, 1):
+    for t_n in trange(0, time.shape[0]):
 
         # Storing u at timesteps which are multiples of 20.
         if (t_n % 20) == 0:
@@ -477,67 +476,11 @@ def time_evolution():
         u            +=  af.matmul(A_inverse, b_vector(u_n_plus_half, t_n + 0.5))\
                          * delta_t
 
-
-       # analytical_u = analytical_u_LGL(t_n + 1)
-       # 
-       # plt.plot(element_LGL, analytical_u - u)
-       # plt.xlabel('x')
-       # plt.ylabel('$u_{analytical}$ - $u_{numerical}$')
-       # plt.show()
-
-        analytical_u_n_plus_half = analytical_u_LGL(t_n + 1/2)
-
-        plt.plot(element_LGL, analytical_u_n_plus_half - u_n_plus_half)
-        plt.xlabel('x')
-        plt.ylabel('$u_{analytical}$ - $u_{numerical}$')
-        plt.show()
+    u_analytical = analytical_u_LGL(t_n + 1)
 
 
 
-
-    print('u calculated!')
-
-#    # Calculating the time required for one complete advection.
-#    time_one_pass = int(2 / delta_t)
-#
-#    # Obtaining the amplitude from the h5py file (which is a multiple off 20).
-#    while (time_one_pass % 20 != 0):
-#        time_one_pass -= 1
-#
-#    h5py_one_pass = h5py.File('results/hdf5/dump_timestep_%06d'\
-#                              %int(time_one_pass) + '.hdf5', 'r')
-#    analytical_u = analytical_u_LGL(time_one_pass + 0 * params.delta_t)
-#    calculated_u = af.np_to_af_array(h5py_one_pass['u_i'][:])
-#    vol_int_num  = (volume_integral_flux(u, time_one_pass))
-#
-#    params.volume_integral_scheme = 'analytical'
-#
-#    vol_int_analytical = (volume_integral_flux(u, time_one_pass))
-#
-#    plt.plot(element_LGL, vol_int_num - vol_int_analytical)
-#    plt.xlabel('x')
-#    plt.ylabel('numerical volume int. - analytical volume int.')
-#    plt.title('difference in volume integral flux vs x') 
-#    plt.show()
-
-    #plt.plot(af.flat(element_LGL), af.flat(analytical_u), label='analytical u')
-    #plt.plot(af.flat(element_LGL), af.flat(calculated_u), '--k', label='calculated u')
-    #plt.plot(element_LGL, vol_int_num - vol_int_analytical)
-    #plt.ylabel('$u_{analytical}$ - $u_{calculated}$')
-    #plt.legend(loc='best')
-    #plt.xlabel('x')
-    #plt.show()
-
-#    wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
-#
-#    for i in range(0, params.N_Elements):
-#        wave_equation_coeffs[i, :] = lagrange.wave_equation_lagrange(\
-#                                     af.abs(calculated_u - analytical_u))[i].c
-#
-#    L1_norm = af.sum(lagrange.Integrate(af.np_to_af_array\
-#                                       (wave_equation_coeffs)))
-
-    return
+    return (af.abs(u - u_analytical))
 
 
 def change_parameters(LGL, Elements, wave='sin'):
@@ -639,8 +582,13 @@ def change_parameters(LGL, Elements, wave='sin'):
     # The minimum distance between 2 mapped LGL points.
     params.delta_x = af.min((params.element_LGL - af.shift(params.element_LGL, 1, 0))[1:, :])
 
+    # dx_dxi for elements of equal size.
+    params. dx_dxi = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
+                                   params.xi_LGL))
+
+
     # The value of time-step.
-    params.delta_t = params.delta_x / (10 * params.c)
+    params.delta_t = params.delta_x / (2 * params.c)
 
     # Array of timesteps seperated by delta_t.
     params.time    = utils.linspace(0, int(params.total_time / params.delta_t) * params.delta_t,
@@ -659,6 +607,20 @@ def change_parameters(LGL, Elements, wave='sin'):
                                                      
     return
 
+def L1_norm_error(mod_diff_u):
+    '''
+    '''
+    wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
+
+    for i in range(0, params.N_Elements):
+        wave_equation_coeffs[i, :] = lagrange.wave_equation_lagrange(mod_diff_u)[i].c
+
+    L1_norm = af.sum(lagrange.Integrate(af.np_to_af_array\
+                                       (wave_equation_coeffs))) * params.dx_dxi
+
+    return L1_norm
+
+
 def convergence_test():
     '''
 
@@ -666,25 +628,51 @@ def convergence_test():
     or N_LGL).
     
     '''
-    L1_norm_4_LGL = np.zeros([6])
-    L1_norm_8_LGL = np.zeros([6])
-    index         = np.array([8, 16, 32, 64, 128, 256])
+    L1_norm_option_1 = np.zeros([6])
 
-    for i in range(0, 6):
+    change_parameters(8, 8)
+    u_diff_8  = (time_evolution(8))
 
-        change_parameters(4, index[i])
-        L1_norm_4_LGL[i] = time_evolution() 
+    L1_norm_option_1[0] = L1_norm_error(u_diff_8)
 
-        change_parameters(8, index[i])
-        L1_norm_8_LGL[i] = time_evolution()
+    change_parameters(8, 16)
+    u_diff_16 = (time_evolution(16))
 
-    plt.semilogy(index, L1_norm_4_LGL, '--', marker='o', label='$N_{LGL}$ = 4')
-    plt.semilogy(index, L1_norm_8_LGL, '--', marker='o', label='$N_{LGL}$ = 8')
-    plt.title('$L1 norm$ v/s $N_{Elements}$')
-    plt.xlabel('Number of elements')
+    L1_norm_option_1[1] = L1_norm_error(u_diff_16)
+
+    change_parameters(8, 32)
+    u_diff_32 = (time_evolution(32))
+
+    L1_norm_option_1[2] = L1_norm_error(u_diff_32)
+
+
+    change_parameters(8, 64)
+    u_diff_64 = (time_evolution(64))
+
+    L1_norm_option_1[3] = L1_norm_error(u_diff_64)
+
+
+    change_parameters(8, 128)
+    u_diff_128 = af.abs(time_evolution(128))
+
+    L1_norm_option_1[4] = L1_norm_error(u_diff_128)
+
+    change_parameters(8, 256)
+    u_diff_256 = time_evolution(256)
+
+    L1_norm_option_1[5] = L1_norm_error(u_diff_256)
+
+    N_elements = np.array([8., 16, 32, 64, 128, 256])
+    normalization = 0.0015
+    plt.loglog(N_elements, L1_norm_option_1, marker='o', label='L1 norm option 1')
+    plt.xlabel('No. of Elements')
     plt.ylabel('L1 norm of error')
-
+    plt.loglog(N_elements, normalization * N_elements **(-2), color='black', linestyle='--', label='$N_{Elements}^{-2}$')
     plt.legend(loc='best')
+
     plt.show()
+
+
+
 
     return

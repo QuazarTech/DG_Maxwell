@@ -207,7 +207,7 @@ def test_A_matrix():
     '''
     threshold = 1e-8
     
-    reference_A_matrix = 0.1 * af.interop.np_to_af_array(np.array([\
+    reference_A_matrix = params.dx_dxi * af.interop.np_to_af_array(np.array([\
 
     [0.03333333333332194, 0.005783175201965206, -0.007358427761753982, \
     0.008091331778355441, -0.008091331778233877, 0.007358427761705623, \
