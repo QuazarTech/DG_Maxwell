@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import isoparam
+from dg_maxwell import isoparam
 
 def dx_dxi(x_nodes, xi, eta):
     '''
@@ -9,16 +9,20 @@ def dx_dxi(x_nodes, xi, eta):
     The derivative is obtained by finding the derivative of the analytical
     function :math:`x \\equiv x(\\xi, \\eta)`.
     
+    .. _worksheet: https://goo.gl/ffCJvn
+    
     Parameters
     ----------
     x_nodes : np.ndarray [8]
               :math:`x` nodes.
               
     xi      : float
-            :math:`\\xi` coordinate for which :math:`x` has to be found.
+            :math:`\\xi` coordinate for which
+            :math:`\\frac{\\partial x}{\\partial \\xi}` has to be found.
 
     eta     : float
-            :math:`\\eta` coordinate for which :math:`x` has to be found.
+            :math:`\\eta` coordinate for which
+            :math:`\\frac{\\partial x}{\\partial \\xi}` has to be found.
             
     Returns
     -------
@@ -48,10 +52,30 @@ def dx_dxi(x_nodes, xi, eta):
     return dx_dxi
 
 def dx_deta(x_nodes, xi, eta):
-    """
-    This function will numerically compute the derivative
-    dx_deta.
-    """
+    '''
+    Computes the derivative :math:`\\frac{\\partial x}{\\partial \\eta}`.
+    The derivative is obtained by finding the derivative of the analytical
+    function :math:`x \\equiv x(\\xi, \\eta)`.
+    
+    Parameters
+    ----------
+    y_nodes : np.ndarray [8]
+              :math:`y` nodes.
+              
+    xi      : float
+            :math:`\\xi` coordinate for which
+            :math:`\\frac{\\partial x}{\\partial \\eta}` has to be found.
+
+    eta     : float
+            :math:`\\eta` coordinate for which
+            :math:`\\frac{\\partial x}{\\partial \\eta}` has to be found.
+            
+    Returns
+    -------
+    dx_deta : float
+              :math:`\\frac{\\partial x}{\\partial \\eta}` calculated at
+              :math:`(\\xi, \\eta)` coordinate.
+    '''
     
     dN_0_deta = (-0.5*eta - 0.25)*xi + 0.25*xi**2 + 0.5*eta
     dN_1_deta = eta*xi - 1.0*eta
@@ -74,15 +98,55 @@ def dx_deta(x_nodes, xi, eta):
     return dx_deta
 
 def dy_dxi(y_nodes, xi, eta):
-    """
-    This function will numerically compute the derivative
-    dy_dxi.
-    """
+    '''
+    Computes the derivative :math:`\\frac{\\partial y}{\\partial \\xi}`.
+    The derivative is obtained by finding the derivative of the analytical
+    function :math:`y \\equiv y(\\xi, \\eta)`.
+    
+    Parameters
+    ----------
+    y_nodes : np.ndarray [8]
+              :math:`y` nodes.
+              
+    xi      : float
+            :math:`\\xi` coordinate for which
+            :math:`\\frac{\\partial y}{\\partial \\xi}` has to be found.
+
+    eta     : float
+            :math:`\\eta` coordinate for which
+            :math:`\\frac{\\partial y}{\\partial \\xi}` has to be found.
+            
+    Returns
+    -------
+    float
+        :math:`\\frac{\\partial y}{\\partial \\xi}` calculated at
+        :math:`(\\xi, \\eta)` coordinate.
+    '''
     return dx_dxi(y_nodes, xi, eta)
 
 def dy_eta(y_nodes, xi, eta):
-    """
-    This function will numerically compute the derivative
-    dy_deta.
-    """
+    '''
+    Computes the derivative :math:`\\frac{\\partial y}{\\partial \\eta}`.
+    The derivative is obtained by finding the derivative of the analytical
+    function :math:`y \\equiv y(\\xi, \\eta)`.
+    
+    Parameters
+    ----------
+    y_nodes : np.ndarray [8]
+              :math:`y` nodes.
+              
+    xi      : float
+            :math:`\\xi` coordinate for which
+            :math:`\\frac{\\partial y}{\\partial \\eta}` has to be found.
+
+    eta     : float
+            :math:`\\eta` coordinate for which
+            :math:`\\frac{\\partial y}{\\partial \\eta}` has to be found.
+            
+    Returns
+    -------
+    float
+        :math:`\\frac{\\partial y}{\\partial \\eta}` calculated at
+        :math:`(\\xi, \\eta)` coordinate.
+    '''
     return dx_deta(y_nodes, xi, eta)
