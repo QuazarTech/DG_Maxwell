@@ -26,10 +26,10 @@ def test_dx_dxi():
     threshold = 1e-8
     
     dx_dxi_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/2d_wave_equation/files/dx_dxi_data.csv')
+        'dg_maxwell/tests/wave_equation_2d/files/dx_dxi_data.csv')
     
     nodes, elements = msh_parser.read_order_2_msh(
-        'dg_maxwell/tests/2d_wave_equation/files/circle.msh')
+        'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
     
     N_LGL = 16
@@ -55,10 +55,10 @@ def test_dx_deta():
     threshold = 1e-8
     
     dx_deta_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/2d_wave_equation/files/dx_deta_data.csv')
+        'dg_maxwell/tests/wave_equation_2d/files/dx_deta_data.csv')
     
     nodes, elements = msh_parser.read_order_2_msh(
-        'dg_maxwell/tests/2d_wave_equation/files/circle.msh')
+        'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
     
     N_LGL = 16
@@ -83,10 +83,10 @@ def test_dy_dxi():
     threshold = 1e-8
     
     dy_dxi_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/2d_wave_equation/files/dy_dxi_data.csv')
+        'dg_maxwell/tests/wave_equation_2d/files/dy_dxi_data.csv')
     
     nodes, elements = msh_parser.read_order_2_msh(
-        'dg_maxwell/tests/2d_wave_equation/files/circle.msh')
+        'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
     
     N_LGL = 16
@@ -112,10 +112,10 @@ def test_dy_deta():
     threshold = 1e-8
     
     dy_deta_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/2d_wave_equation/files/dy_deta_data.csv')
+        'dg_maxwell/tests/wave_equation_2d/files/dy_deta_data.csv')
     
     nodes, elements = msh_parser.read_order_2_msh(
-        'dg_maxwell/tests/2d_wave_equation/files/circle.msh')
+        'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
     
     N_LGL = 16
