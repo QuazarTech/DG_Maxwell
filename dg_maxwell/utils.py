@@ -158,7 +158,7 @@ def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
         
     return
 
-def csv_to_numpy(filename, delimeter = ','):
+def csv_to_numpy(filename, delimeter_ = ','):
     '''
     Reads a text file data and converts it into a numpy :math:`2D` numpy
     array.
@@ -177,9 +177,8 @@ def csv_to_numpy(filename, delimeter = ','):
               Read content from the file.
     '''
     
-    csv_handler = csv.reader(
-    open('dg_maxwell/tests/2d_wave_equation/files/dx_dxi_data.csv',
-            newline='\n'), delimiter = ',')
+    csv_handler = csv.reader(open(filename, newline='\n'),
+                             delimiter = delimeter_)
 
     content = list()
 

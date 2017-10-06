@@ -3,11 +3,15 @@
 
 from dg_maxwell import isoparam
 
+
 def dx_dxi(x_nodes, xi, eta):
     '''
     Computes the derivative :math:`\\frac{\\partial x}{\\partial \\xi}`.
     The derivative is obtained by finding the derivative of the analytical
     function :math:`x \\equiv x(\\xi, \\eta)`.
+    
+    The derivation of the analytical form of
+    :math:`\\frac{\\partial x}{\\partial \\xi}` is given in this `worksheet`_.
     
     .. _worksheet: https://goo.gl/ffCJvn
     
@@ -51,6 +55,7 @@ def dx_dxi(x_nodes, xi, eta):
 
     return dx_dxi
 
+
 def dx_deta(x_nodes, xi, eta):
     '''
     Computes the derivative :math:`\\frac{\\partial x}{\\partial \\eta}`.
@@ -77,14 +82,18 @@ def dx_deta(x_nodes, xi, eta):
               :math:`(\\xi, \\eta)` coordinate.
     '''
     
-    dN_0_deta = (-0.5*eta - 0.25)*xi + 0.25*xi**2 + 0.5*eta
-    dN_1_deta = eta*xi - 1.0*eta
-    dN_2_deta = (-0.5*eta + 0.25)*xi - 0.25*xi**2 + 0.5*eta
-    dN_3_deta = 0.5*xi**2 - 0.5
-    dN_4_deta = (0.5*eta - 0.25)*xi - 0.25*xi**2 + 0.5*eta
-    dN_5_deta = -1.0*eta*xi - 1.0*eta
-    dN_6_deta = (0.5*eta + 0.25)*xi + 0.25*xi**2 + 0.5*eta
-    dN_7_deta = -0.5*xi**2 + 0.5
+    dN_0_deta = -(eta - xi - 1) * (0.25 * xi - 0.25) \
+                - (eta + 1) * (0.25 * xi - 0.25)
+    dN_1_deta = -2 * eta * (-0.5 * xi + 0.5)
+    dN_2_deta = -(eta + xi + 1) * (0.25 * xi - 0.25) \
+                - (eta - 1) * (0.25 * xi - 0.25)
+    dN_3_deta = 0.5 * xi**2 - 0.5
+    dN_4_deta = -(eta - xi + 1) * (-0.25 * xi - 0.25) \
+                - (eta - 1) * (-0.25 * xi - 0.25)
+    dN_5_deta = -2 * eta * (0.5 * xi + 0.5)
+    dN_6_deta = -(eta + xi - 1) * (-0.25 * xi - 0.25) \
+                - (eta + 1) * (-0.25 * xi - 0.25)
+    dN_7_deta = -0.5 * xi**2 + 0.5
 
     dx_deta = dN_0_deta * x_nodes[0] \
             + dN_1_deta * x_nodes[1] \
@@ -96,6 +105,7 @@ def dx_deta(x_nodes, xi, eta):
             + dN_7_deta * x_nodes[7]
 
     return dx_deta
+
 
 def dy_dxi(y_nodes, xi, eta):
     '''
@@ -124,7 +134,8 @@ def dy_dxi(y_nodes, xi, eta):
     '''
     return dx_dxi(y_nodes, xi, eta)
 
-def dy_eta(y_nodes, xi, eta):
+
+def dy_deta(y_nodes, xi, eta):
     '''
     Computes the derivative :math:`\\frac{\\partial y}{\\partial \\eta}`.
     The derivative is obtained by finding the derivative of the analytical
