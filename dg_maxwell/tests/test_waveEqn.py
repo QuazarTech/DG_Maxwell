@@ -244,7 +244,6 @@ def test_A_matrix():
     ]))
     
     test_A_matrix = wave_equation.A_matrix()
-    print(test_A_matrix.shape, reference_A_matrix.shape)
     error_array = af.abs(reference_A_matrix - test_A_matrix)
     
     assert af.max(error_array) < threshold

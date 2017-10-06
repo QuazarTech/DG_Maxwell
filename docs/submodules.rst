@@ -18,6 +18,6 @@ Submodules
 |:ref:`wave_equation`    | Functions related to time_evolution of         |
 |                        | 1D wave equation.                              |
 +------------------------+------------------------------------------------+
-|:ref:`2d_wave_equation` | Functions related to time_evolution of         |
+|:ref:`wave_equation_2d` | Functions related to time_evolution of         |
 |                        | 2D wave equation.                              |
 +------------------------+------------------------------------------------+

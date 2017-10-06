@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import csv
+
 import numpy as np
 import matplotlib.lines as lines
 import arrayfire as af
@@ -155,3 +157,44 @@ def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
         axes_handler.add_line(lines.Line2D(line1_xs, line1_ys, linewidth=grid_width, color=grid_color))
         
     return
+
+def csv_to_numpy(filename, delimeter = ','):
+    '''
+    Reads a text file data and converts it into a numpy :math:`2D` numpy
+    array.
+    
+    Parameters
+    ----------
+    filename : str
+               File which is to be read.
+    
+    delimeter : str
+                Delimeter used in the document.
+                
+    Returns
+    -------
+    content : np.array
+              Read content from the file.
+    '''
+    
+    csv_handler = csv.reader(
+    open('dg_maxwell/tests/2d_wave_equation/files/dx_dxi_data.csv',
+            newline='\n'), delimiter = ',')
+
+    content = list()
+
+    for n, line in enumerate(csv_handler):
+        content.append(list())
+        for item in line:
+            try:
+                content[-1].append(float(item))
+            except ValueError:
+                if content[-1] == []:
+                    content.pop()
+                    print('popping string')
+                break
+    
+    content = np.array(content)
+    
+    return content
+    
