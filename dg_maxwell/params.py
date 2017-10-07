@@ -18,7 +18,7 @@ x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
-N_Elements = 8
+N_Elements = 10
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
@@ -34,7 +34,7 @@ N_quad     = 8
 c          = 1
 
 # The total time for which the wave is to be evolved by the simulation. 
-total_time = 2.01
+total_time = 20.01
 
 # The c_lax to be used in the Lax-Friedrichs flux.
 c_lax      = c
@@ -112,7 +112,7 @@ dx_dxi = af.mean(wave_equation.dx_dxi_numerical((element_mesh_nodes[0 : 2]),\
 
 
 # The value of time-step.
-delta_t = delta_x / (2 * c)
+delta_t = delta_x / (4 * c)
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,

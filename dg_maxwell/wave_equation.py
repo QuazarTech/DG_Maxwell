@@ -249,6 +249,7 @@ def volume_integral_flux(u_n, t_n):
         flux_integral          = af.reorder(flux_integral, 0, 2, 1)
 
     elif(params.volume_integral_scheme == 'analytical'):
+        print('option2')
 
         # u_n calculated using af.sin
         analytical_u_n         = analytical_u_LGL(t_n)
@@ -424,6 +425,35 @@ def b_vector(u_n, t_n):
     
     return b_vector_array
 
+def RK4_timestepping(A_inverse, u, t_n, delta_t):
+    '''
+    '''
+
+    k1 = af.matmul(A_inverse, b_vector(u                   , t_n))
+    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2, t_n))
+    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2, t_n))
+    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    , t_n))
+
+    delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+    return delta_u
+
+def RK6_timestepping(A_inverse, u, t_n, delta_t):
+    '''
+    '''
+
+    k1 = af.matmul(A_inverse, b_vector(u, t_n))
+    k2 = af.matmul(A_inverse, b_vector(u + 0.25 * k1 * delta_t, t_n))
+    k3 = af.matmul(A_inverse, b_vector(u + (3 / 32) * (k1 + 3 * k2) * delta_t, t_n))
+    k4 = af.matmul(A_inverse, b_vector(u + (12 / 2197) * (161 * k1 - 600 * k2 + 608 * k3) * delta_t, t_n))
+    k5 = af.matmul(A_inverse, b_vector(u + (1 / 4104) * (8341 * k1 - 32832 * k2 + 29440 * k3 - 845 * k4) * delta_t, t_n))
+    k6 = af.matmul(A_inverse, b_vector(u + (-(8/27) * k1 + 2 * k2- (3544 / 2565) *\
+                                       k3 + (1859 / 4104) * k4 - (11 / 40) * k5) * delta_t, t_n))
+
+    delta_u = delta_t * 1 / 5 * ((16 / 27) * k1 + (6656 / 2565) * k3 + (28561 / 11286) * k4 - (9 / 10) * k5 + (2 / 11) * k6)
+
+    return delta_u
+
 
 def time_evolution():
     '''
@@ -447,7 +477,7 @@ def time_evolution():
 
     '''
     # Creating a folder to store hdf5 files. If it doesn't exist.
-    results_directory = 'results/hdf5'
+    results_directory = 'results/hdf5_%02d' %int(params.N_LGL)
             
     if not os.path.exists(results_directory):
         os.makedirs(results_directory)
@@ -463,18 +493,24 @@ def time_evolution():
     for t_n in trange(0, time.shape[0]):
 
         # Storing u at timesteps which are multiples of 20.
-        if (t_n % 20) == 0:
-            h5file = h5py.File('results/hdf5/dump_timestep_%06d' %(int(t_n)) + '.hdf5', 'w')
+        if (t_n % 50) == 0:
+            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
             dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
 
             dset[:, :] = u[:, :]
 
-        # Usage of second order time-stepping.
-        u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u, t_n))\
-                             * delta_t / 2
+       # # Implementing second order time-stepping.
+       # u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u, t_n))\
+       #                      * delta_t / 2
 
-        u            +=  af.matmul(A_inverse, b_vector(u_n_plus_half, t_n + 0.5))\
-                         * delta_t
+       # u            +=  af.matmul(A_inverse, b_vector(u_n_plus_half, t_n + 0.5))\
+       #                  * delta_t
+
+        # Implementing RK 4 scheme
+        #u += RK4_timestepping(A_inverse, u, t_n, delta_t)
+
+        # Implementing RK 6 scheme
+        u += RK6_timestepping(A_inverse, u, t_n, delta_t)
 
     u_analytical = analytical_u_LGL(t_n + 1)
 
@@ -507,7 +543,7 @@ def change_parameters(LGL, Elements, wave='sin'):
     params.N_Elements = Elements
 
     # The number quadrature points to be used for integration.
-    params.N_quad     = LGL
+    params.N_quad     = LGL + 1
 
     # Array containing the LGL points in xi space.
     params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
@@ -588,7 +624,7 @@ def change_parameters(LGL, Elements, wave='sin'):
 
 
     # The value of time-step.
-    params.delta_t = params.delta_x / (2 * params.c)
+    params.delta_t = params.delta_x / (4 * params.c)
 
     # Array of timesteps seperated by delta_t.
     params.time    = utils.linspace(0, int(params.total_time / params.delta_t) * params.delta_t,
@@ -628,51 +664,28 @@ def convergence_test():
     or N_LGL).
     
     '''
-    L1_norm_option_1 = np.zeros([6])
+    L1_norm_option_1 = np.zeros([10])
+    N_lgl            = (np.arange(10) + 3).astype(float)
 
-    change_parameters(8, 8)
-    u_diff_8  = (time_evolution(8))
+    for i in range(0, 10):
+        change_parameters(i + 3, 64)
+        u_diff = time_evolution()
+        L1_norm_option_1[i] = L1_norm_error(u_diff)
 
-    L1_norm_option_1[0] = L1_norm_error(u_diff_8)
-
-    change_parameters(8, 16)
-    u_diff_16 = (time_evolution(16))
-
-    L1_norm_option_1[1] = L1_norm_error(u_diff_16)
-
-    change_parameters(8, 32)
-    u_diff_32 = (time_evolution(32))
-
-    L1_norm_option_1[2] = L1_norm_error(u_diff_32)
+#    L1_norm_option_1 = np.array([7.86867473e-03, 1.62010118e-04, 6.09539662e-06, 3.33291808e-07,\
+#                                 1.60409746e-07, 6.26348505e-07, 3.40978741e-07, 3.06485997e-07,\
+#                                 1.97638417e-07, 2.09291363e-08])
 
 
-    change_parameters(8, 64)
-    u_diff_64 = (time_evolution(64))
-
-    L1_norm_option_1[3] = L1_norm_error(u_diff_64)
-
-
-    change_parameters(8, 128)
-    u_diff_128 = af.abs(time_evolution(128))
-
-    L1_norm_option_1[4] = L1_norm_error(u_diff_128)
-
-    change_parameters(8, 256)
-    u_diff_256 = time_evolution(256)
-
-    L1_norm_option_1[5] = L1_norm_error(u_diff_256)
-
-    N_elements = np.array([8., 16, 32, 64, 128, 256])
-    normalization = 0.0015
-    plt.loglog(N_elements, L1_norm_option_1, marker='o', label='L1 norm option 1')
-    plt.xlabel('No. of Elements')
+    print(L1_norm_option_1)
+    normalization = 0.00786 / (3 ** (-3))
+    plt.loglog(N_lgl, L1_norm_option_1, marker='o', label='L1 norm')
+    plt.xlabel('No. of LGL points')
     plt.ylabel('L1 norm of error')
-    plt.loglog(N_elements, normalization * N_elements **(-2), color='black', linestyle='--', label='$N_{Elements}^{-2}$')
+    plt.title('L1 norm after 10 full advections')
+    plt.loglog(N_lgl, normalization * N_lgl **(-N_lgl), color='black', linestyle='--', label='$N_{LGL}^{-N_{LGL}}$')
     plt.legend(loc='best')
 
     plt.show()
-
-
-
 
     return
