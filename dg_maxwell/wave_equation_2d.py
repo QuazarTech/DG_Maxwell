@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from dg_maxwell import isoparam
-
+from dg_maxwell import lagrange
 
 def dx_dxi(x_nodes, xi, eta):
     '''
@@ -209,5 +209,9 @@ def jacobian(x_nodes, y_nodes, xi, eta):
 def A_matrix():
     '''
     '''
+    N_LGL_quad   = 16
+    xi_LGL_quad  = lagrange.gauss_nodes(N_LGL_quad)
+    eta_LGL_quad = lagrange.gauss_nodes(N_LGL_quad)
+    
     
     return

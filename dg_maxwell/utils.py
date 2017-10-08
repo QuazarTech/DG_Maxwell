@@ -154,7 +154,8 @@ def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
     for point_id in np.arange(1, len(points)):
         line = [points[point_id].tolist(), points[point_id - 1].tolist()]
         (line1_xs, line1_ys) = zip(*line)
-        axes_handler.add_line(lines.Line2D(line1_xs, line1_ys, linewidth=grid_width, color=grid_color))
+        axes_handler.add_line(lines.Line2D(line1_xs, line1_ys,
+                                           linewidth=grid_width, color=grid_color))
         
     return
 
@@ -196,4 +197,26 @@ def csv_to_numpy(filename, delimeter_ = ','):
     content = np.array(content)
     
     return content
+
+
+def af_meshgrid(arr_0, arr_1):
+    '''
+    Creates a meshgrid from the given two arrayfire array.
     
+    Parameters
+    ----------
+    
+    arr_0 : af.Array [N_0 1 1 1]
+    
+    arr_1 : af.Array [N_1 1 1 1]
+    
+    Returns
+    -------
+    
+    tuple(af.Array[N_1 N_0 1 1], af.Array[N_1 N_0 1 1])
+    '''
+    
+    Arr_0 = af.data.tile(af.array.transpose(arr_0), d0 = arr_1.shape[0])
+    Arr_1 = af.data.tile(arr_1, d0 = 1, d1 = arr_0.shape[0])
+    
+    return Arr_0, Arr_1
