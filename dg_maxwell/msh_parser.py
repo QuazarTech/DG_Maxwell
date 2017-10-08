@@ -72,7 +72,7 @@ def read_order_2_msh(msh_file):
     msh_handler.parse()
     
     nodes    = np.array(nodes)
-    elements = np.array(elements)
+    elements = np.array(elements, dtype = np.int)
     
     return nodes, elements
 

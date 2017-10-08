@@ -6,9 +6,9 @@ import sys
 sys.path.insert(0, os.path.abspath('./'))
 import csv
 
+import numpy as np
 import arrayfire as af
 af.set_backend('cpu')
-import numpy as np
 
 from dg_maxwell import utils
 from dg_maxwell import msh_parser
@@ -23,24 +23,26 @@ def test_dx_dxi():
     download the file from this
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
-    threshold = 1e-8
+    threshold = 1e-7
     
-    dx_dxi_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/wave_equation_2d/files/dx_dxi_data.csv')
+    dx_dxi_reference = af.np_to_af_array(utils.csv_to_numpy(
+        'dg_maxwell/tests/wave_equation_2d/files/dx_dxi_data.csv'))
     
     nodes, elements = msh_parser.read_order_2_msh(
         'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
+    N_LGL   = 16
+    xi_LGL  = lagrange.LGL_points(N_LGL)
+    eta_LGL = lagrange.LGL_points(N_LGL)
+    Xi  = af.data.tile(af.array.transpose(xi_LGL), d0 = N_LGL)
+    Eta = af.data.tile(eta_LGL, d0 = 1, d1 = N_LGL)
     
-    N_LGL = 16
-    xi_LGL  = np.array(lagrange.LGL_points(N_LGL))
-    eta_LGL = np.array(lagrange.LGL_points(N_LGL))
-    Xi, Eta = np.meshgrid(xi_LGL, eta_LGL)
+    dx_dxi  = wave_equation_2d.dx_dxi(nodes[elements[0]][:, 0],
+                                      Xi, Eta)
     
-    dx_dxi = wave_equation_2d.dx_dxi(nodes[elements[0]][:, 0],
-                                     Xi, Eta)
+    check = af.abs((dx_dxi - dx_dxi_reference)) < threshold
     
-    assert np.all(np.isclose(dx_dxi, dx_dxi_reference))
+    assert af.all_true(check)
     
     
 def test_dx_deta():
@@ -52,24 +54,27 @@ def test_dx_deta():
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
     
-    threshold = 1e-8
+    threshold = 1e-7
     
-    dx_deta_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/wave_equation_2d/files/dx_deta_data.csv')
+    dx_deta_reference = af.np_to_af_array(utils.csv_to_numpy(
+        'dg_maxwell/tests/wave_equation_2d/files/dx_deta_data.csv'))
     
     nodes, elements = msh_parser.read_order_2_msh(
         'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
     
-    N_LGL = 16
-    xi_LGL  = np.array(lagrange.LGL_points(N_LGL))
-    eta_LGL = np.array(lagrange.LGL_points(N_LGL))
-    Xi, Eta = np.meshgrid(xi_LGL, eta_LGL)
+    N_LGL   = 16
+    xi_LGL  = lagrange.LGL_points(N_LGL)
+    eta_LGL = lagrange.LGL_points(N_LGL)
+    Xi  = af.data.tile(af.array.transpose(xi_LGL), d0 = N_LGL)
+    Eta = af.data.tile(eta_LGL, d0 = 1, d1 = N_LGL)
     
     dx_deta = wave_equation_2d.dx_deta(nodes[elements[0]][:, 0],
                                        Xi, Eta)
     
-    assert np.all(np.isclose(dx_deta, dx_deta_reference))
+    check = af.abs(dx_deta - dx_deta_reference) < threshold
+    
+    assert af.all_true(check)
     
     
 def test_dy_dxi():
@@ -80,24 +85,27 @@ def test_dy_dxi():
     download the file from this
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
-    threshold = 1e-8
+    threshold = 1e-7
     
-    dy_dxi_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/wave_equation_2d/files/dy_dxi_data.csv')
+    dy_dxi_reference = af.np_to_af_array(utils.csv_to_numpy(
+        'dg_maxwell/tests/wave_equation_2d/files/dy_dxi_data.csv'))
     
     nodes, elements = msh_parser.read_order_2_msh(
         'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
     
-    N_LGL = 16
-    xi_LGL  = np.array(lagrange.LGL_points(N_LGL))
-    eta_LGL = np.array(lagrange.LGL_points(N_LGL))
-    Xi, Eta = np.meshgrid(xi_LGL, eta_LGL)
+    N_LGL   = 16
+    xi_LGL  = lagrange.LGL_points(N_LGL)
+    eta_LGL = lagrange.LGL_points(N_LGL)
+    Xi  = af.data.tile(af.array.transpose(xi_LGL), d0 = N_LGL)
+    Eta = af.data.tile(eta_LGL, d0 = 1, d1 = N_LGL)
     
-    dy_dxi = wave_equation_2d.dy_dxi(nodes[elements[0]][:, 1],
-                                     Xi, Eta)
+    dy_dxi  = wave_equation_2d.dy_dxi(nodes[elements[0]][:, 1],
+                                      Xi, Eta)
     
-    assert np.all(np.isclose(dy_dxi, dy_dxi_reference))
+    check = af.abs(dy_dxi - dy_dxi_reference) < threshold
+    
+    assert af.all_true(check)
 
     
 def test_dy_deta():
@@ -109,24 +117,27 @@ def test_dy_deta():
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
     
-    threshold = 1e-8
+    threshold = 1e-7
     
-    dy_deta_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/wave_equation_2d/files/dy_deta_data.csv')
+    dy_deta_reference = af.np_to_af_array(utils.csv_to_numpy(
+        'dg_maxwell/tests/wave_equation_2d/files/dy_deta_data.csv'))
     
     nodes, elements = msh_parser.read_order_2_msh(
         'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
     
-    N_LGL = 16
-    xi_LGL  = np.array(lagrange.LGL_points(N_LGL))
-    eta_LGL = np.array(lagrange.LGL_points(N_LGL))
-    Xi, Eta = np.meshgrid(xi_LGL, eta_LGL)
+    N_LGL   = 16
+    xi_LGL  = lagrange.LGL_points(N_LGL)
+    eta_LGL = lagrange.LGL_points(N_LGL)
+    Xi  = af.data.tile(af.array.transpose(xi_LGL), d0 = N_LGL)
+    Eta = af.data.tile(eta_LGL, d0 = 1, d1 = N_LGL)
     
     dy_deta = wave_equation_2d.dy_deta(nodes[elements[0]][:, 1],
                                        Xi, Eta)
     
-    assert np.all(np.isclose(dy_deta, dy_deta_reference))
+    check = af.abs(dy_deta - dy_deta_reference) < threshold
+    
+    assert af.all_true(check)
 
 
 def test_jacobian():
@@ -138,22 +149,25 @@ def test_jacobian():
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
     
-    threshold = 1e-8
+    threshold = 1e-7
     
-    jacobian_reference = utils.csv_to_numpy(
-        'dg_maxwell/tests/wave_equation_2d/files/jacobian_data.csv')
+    jacobian_reference = af.np_to_af_array(utils.csv_to_numpy(
+        'dg_maxwell/tests/wave_equation_2d/files/jacobian_data.csv'))
     
     nodes, elements = msh_parser.read_order_2_msh(
         'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
     
     
-    N_LGL = 16
-    xi_LGL  = np.array(lagrange.LGL_points(N_LGL))
-    eta_LGL = np.array(lagrange.LGL_points(N_LGL))
-    Xi, Eta = np.meshgrid(xi_LGL, eta_LGL)
+    N_LGL   = 16
+    xi_LGL  = lagrange.LGL_points(N_LGL)
+    eta_LGL = lagrange.LGL_points(N_LGL)
+    Xi  = af.data.tile(af.array.transpose(xi_LGL), d0 = N_LGL)
+    Eta = af.data.tile(eta_LGL, d0 = 1, d1 = N_LGL)
     
     jacobian = wave_equation_2d.jacobian(nodes[elements[0]][:, 0],
                                          nodes[elements[0]][:, 1],
                                          Xi, Eta)
     
-    assert np.all(np.isclose(jacobian, jacobian_reference))
+    check = af.abs(jacobian - jacobian_reference) < threshold
+    
+    assert af.all_true(check)

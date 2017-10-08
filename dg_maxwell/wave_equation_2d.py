@@ -20,17 +20,19 @@ def dx_dxi(x_nodes, xi, eta):
     x_nodes : np.ndarray [8]
               :math:`x` nodes.
               
-    xi      : float
-            :math:`\\xi` coordinate for which
-            :math:`\\frac{\\partial x}{\\partial \\xi}` has to be found.
+    xi      : af.Array
+              :math:`\\xi` coordinates for which
+              :math:`\\frac{\\partial x}{\\partial \\xi}` has to be found.
+              This could be a single number or a meshgrid.
 
-    eta     : float
-            :math:`\\eta` coordinate for which
-            :math:`\\frac{\\partial x}{\\partial \\xi}` has to be found.
+    eta     : af.Array
+              :math:`\\eta` coordinate for which
+              :math:`\\frac{\\partial x}{\\partial \\xi}` has to be found.
+              This could be a single number or a meshgrid.
             
     Returns
     -------
-    dx_dxi : float
+    dx_dxi : af.Array
              :math:`\\frac{\\partial x}{\\partial \\xi}` calculated at
              :math:`(\\xi, \\eta)` coordinate.
     '''
@@ -67,17 +69,17 @@ def dx_deta(x_nodes, xi, eta):
     y_nodes : np.ndarray [8]
               :math:`y` nodes.
               
-    xi      : float
-            :math:`\\xi` coordinate for which
-            :math:`\\frac{\\partial x}{\\partial \\eta}` has to be found.
+    xi      : af.Array
+              :math:`\\xi` coordinate for which
+              :math:`\\frac{\\partial x}{\\partial \\eta}` has to be found.
 
-    eta     : float
-            :math:`\\eta` coordinate for which
-            :math:`\\frac{\\partial x}{\\partial \\eta}` has to be found.
+    eta     : af.Array
+              :math:`\\eta` coordinate for which
+              :math:`\\frac{\\partial x}{\\partial \\eta}` has to be found.
             
     Returns
     -------
-    dx_deta : float
+    dx_deta : af.Array
               :math:`\\frac{\\partial x}{\\partial \\eta}` calculated at
               :math:`(\\xi, \\eta)` coordinate.
     '''
@@ -118,17 +120,17 @@ def dy_dxi(y_nodes, xi, eta):
     y_nodes : np.ndarray [8]
               :math:`y` nodes.
               
-    xi      : float
-            :math:`\\xi` coordinate for which
-            :math:`\\frac{\\partial y}{\\partial \\xi}` has to be found.
+    xi      : af.Array
+              :math:`\\xi` coordinate for which
+              :math:`\\frac{\\partial y}{\\partial \\xi}` has to be found.
 
-    eta     : float
-            :math:`\\eta` coordinate for which
-            :math:`\\frac{\\partial y}{\\partial \\xi}` has to be found.
+    eta     : af.Array
+              :math:`\\eta` coordinate for which
+              :math:`\\frac{\\partial y}{\\partial \\xi}` has to be found.
             
     Returns
     -------
-    float
+    af.Array
         :math:`\\frac{\\partial y}{\\partial \\xi}` calculated at
         :math:`(\\xi, \\eta)` coordinate.
     '''
@@ -146,17 +148,17 @@ def dy_deta(y_nodes, xi, eta):
     y_nodes : np.ndarray [8]
               :math:`y` nodes.
               
-    xi      : float
-            :math:`\\xi` coordinate for which
-            :math:`\\frac{\\partial y}{\\partial \\eta}` has to be found.
+    xi      : af.Array
+              :math:`\\xi` coordinate for which
+              :math:`\\frac{\\partial y}{\\partial \\eta}` has to be found.
 
-    eta     : float
-            :math:`\\eta` coordinate for which
-            :math:`\\frac{\\partial y}{\\partial \\eta}` has to be found.
+    eta     : af.Array
+              :math:`\\eta` coordinate for which
+              :math:`\\frac{\\partial y}{\\partial \\eta}` has to be found.
             
     Returns
     -------
-    float
+    af.Array
         :math:`\\frac{\\partial y}{\\partial \\eta}` calculated at
         :math:`(\\xi, \\eta)` coordinate.
     '''
@@ -176,13 +178,13 @@ def jacobian(x_nodes, y_nodes, xi, eta):
     y_nodes : np.ndarray [8]
               :math:`y` nodes.
               
-    xi      : float
-            :math:`\\xi` coordinate at which
-            Jacobian has to be found.
+    xi      : af.Array
+              :math:`\\xi` coordinate at which
+              Jacobian has to be found.
 
-    eta     : float
-            :math:`\\eta` coordinate at which
-            Jacobian has to be found.
+    eta     : af.Array
+              :math:`\\eta` coordinate at which
+              Jacobian has to be found.
             
     Returns
     -------
@@ -202,3 +204,10 @@ def jacobian(x_nodes, y_nodes, xi, eta):
     dy_dxi_  = dy_dxi (y_nodes, xi, eta)
     
     return (dx_dxi_ * dy_deta_) - (dx_deta_ * dy_dxi_)
+
+
+def A_matrix():
+    '''
+    '''
+    
+    return
