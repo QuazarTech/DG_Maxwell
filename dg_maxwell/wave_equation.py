@@ -236,7 +236,7 @@ def volume_integral_flux(u_n, t_n):
     
     if(params.volume_integral_scheme == 'lobatto_quadrature'\
         and params.N_quad == params.N_LGL):
-
+        print('option1')
         # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
         F_u_n                  = af.reorder(flux_x(u_n), 2, 0, 1)
 
@@ -265,6 +265,7 @@ def volume_integral_flux(u_n, t_n):
 
 
     else:
+        print('option3')
         # Obtaining the u_n in polynomial form using the value at LGL points.
         analytical_form_flux       = flux_x(lagrange.\
                                             wave_equation_lagrange(u_n))
