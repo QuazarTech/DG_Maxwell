@@ -18,7 +18,7 @@ from dg_maxwell import wave_equation_2d
 def test_dx_dxi():
     '''
     This test checks the derivative :math:`\\frac{\\partial x}{\\partial \\xi}`
-    calculated using the function :meth:`dg_maxwell.wave_equation_2d.dx_dxi`
+    calculated using the function :math:`dg_maxwell.wave_equation_2d.dx_dxi`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
@@ -46,7 +46,7 @@ def test_dx_dxi():
 def test_dx_deta():
     '''
     This test checks the derivative :math:`\\frac{\\partial x}{\\partial \\eta}`
-    calculated using the function :meth:`dg_maxwell.wave_equation_2d.dx_deta`
+    calculated using the function :math:`dg_maxwell.wave_equation_2d.dx_deta`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
@@ -75,7 +75,7 @@ def test_dx_deta():
 def test_dy_dxi():
     '''
     This test checks the derivative :math:`\\frac{\\partial y}{\\partial \\xi}`
-    calculated using the function :meth:`dg_maxwell.wave_equation_2d.dy_dxi`
+    calculated using the function :math:`dg_maxwell.wave_equation_2d.dy_dxi`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
@@ -103,7 +103,7 @@ def test_dy_dxi():
 def test_dy_deta():
     '''
     This test checks the derivative :math:`\\frac{\\partial y}{\\partial \\eta}`
-    calculated using the function :meth:`dg_maxwell.wave_equation_2d.dy_deta`
+    calculated using the function :math:`dg_maxwell.wave_equation_2d.dy_deta`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
     :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
@@ -127,4 +127,33 @@ def test_dy_deta():
                                        Xi, Eta)
     
     assert np.all(np.isclose(dy_deta, dy_deta_reference))
+
+
+def test_jacobian():
+    '''
+    This test checks the derivative Jacobian
+    calculated using the function :math:`dg_maxwell.wave_equation_2d.jacobian`
+    for the :math:`0^{th}` element of a mesh for a circular ring. You may
+    download the file from this
+    :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
+    '''
     
+    threshold = 1e-8
+    
+    jacobian_reference = utils.csv_to_numpy(
+        'dg_maxwell/tests/wave_equation_2d/files/jacobian_data.csv')
+    
+    nodes, elements = msh_parser.read_order_2_msh(
+        'dg_maxwell/tests/wave_equation_2d/files/circle.msh')
+    
+    
+    N_LGL = 16
+    xi_LGL  = np.array(lagrange.LGL_points(N_LGL))
+    eta_LGL = np.array(lagrange.LGL_points(N_LGL))
+    Xi, Eta = np.meshgrid(xi_LGL, eta_LGL)
+    
+    jacobian = wave_equation_2d.jacobian(nodes[elements[0]][:, 0],
+                                         nodes[elements[0]][:, 1],
+                                         Xi, Eta)
+    
+    assert np.all(np.isclose(jacobian, jacobian_reference))
