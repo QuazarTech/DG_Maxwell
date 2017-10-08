@@ -8,6 +8,8 @@ af.set_backend('cpu')
 from dg_maxwell import lagrange
 from dg_maxwell import utils
 from dg_maxwell import isoparam
+from dg_maxwell import wave_equation
+
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([0, 1.]))
@@ -26,38 +28,40 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-N_quad = 8
+N_quad     = 8
 
 # Wave speed.
 c          = 1
 
-# The total time for which the wave is to be evolved by the simulation.
-total_time = 10
+# The total time for which the wave is to be evolved by the simulation. 
+total_time = 20.01
 
 # The c_lax to be used in the Lax-Friedrichs flux.
-c_lax      = 1
+c_lax      = c
 
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
 
+
 # N_Gauss number of Gauss nodes.
-gauss_points  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
+gauss_points               = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
 
 # The Gaussian weights.
-gauss_weights = lagrange.gaussian_weights(N_quad)
+gauss_weights              = lagrange.gaussian_weights(N_quad)
 
 # The lobatto nodes to be used for integration.
-lobatto_quadrature_nodes = lagrange.LGL_points(N_quad)
+lobatto_quadrature_nodes   = lagrange.LGL_points(N_quad)
 
 # The lobatto weights to be used for integration.
 lobatto_weights_quadrature = lagrange.lobatto_weights\
                                     (N_quad)
 
 # A list of the Lagrange polynomials in poly1d form.
-lagrange_product = lagrange.product_lagrange_poly(xi_LGL)
+lagrange_product           = lagrange.product_lagrange_poly(xi_LGL)
 
 # An array containing the coefficients of the lagrange basis polynomials.
-lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
+lagrange_coeffs            = af.np_to_af_array(\
+                                lagrange.lagrange_polynomials(xi_LGL)[1])
 
 # Refer corresponding functions.
 lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)
@@ -75,14 +79,15 @@ differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
 # lobatto quadrature points, The integration can be vectorized
 # and in this case the coefficients of the differential of the
 # Lagrange polynomials is required
-volume_integrand_8_LGL = np.zeros(([N_LGL, N_LGL - 1]))
+volume_integrand_N_LGL = np.zeros(([N_LGL, N_LGL - 1]))
 
 for i in range(N_LGL):
-    volume_integrand_8_LGL[i] = (differential_lagrange_polynomial[i]).c
+    volume_integrand_N_LGL[i] = (differential_lagrange_polynomial[i]).c
 
-volume_integrand_8_LGL= af.np_to_af_array(volume_integrand_8_LGL)
+volume_integrand_N_LGL= af.np_to_af_array(volume_integrand_N_LGL)
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
+
 element_size    = af.sum((x_nodes[1] - x_nodes[0]) / N_Elements)
 elements_xi_LGL = af.constant(0, N_Elements, N_LGL)
 elements        = utils.linspace(af.sum(x_nodes[0]),
@@ -95,18 +100,37 @@ element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
                                     af.sum(x_nodes[1]), N_Elements + 1)
 
 element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
-element_LGL   = isoparam.isoparam_1D(af.transpose(element_array),
-                                              xi_LGL)
+element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
+                                                                   xi_LGL)
 
 # The minimum distance between 2 mapped LGL points.
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 
+# dx_dxi for elements of equal size.
+dx_dxi = af.mean(wave_equation.dx_dxi_numerical((element_mesh_nodes[0 : 2]),\
+                                   xi_LGL))
+
+
 # The value of time-step.
-delta_t = delta_x / (20 * c)
+delta_t = delta_x / (4 * c)
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
                                                     int(total_time / delta_t))
+
+
+# The wave to be advected is either a sin or a Gaussian wave.
+# This parameter can take values 'sin' or 'gaussian'.
+wave = 'sin'
+
+# Initializing the amplitudes. Change u_init to required initial conditions.
+if (wave=='sin'):
+    u_init = af.sin(2 * np.pi * element_LGL)
+
+if (wave=='gaussian'):
+    u_init = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+
+
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 u_init     = af.sin(2 * np.pi * element_LGL)
