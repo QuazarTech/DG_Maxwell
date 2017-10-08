@@ -161,3 +161,44 @@ def dy_deta(y_nodes, xi, eta):
         :math:`(\\xi, \\eta)` coordinate.
     '''
     return dx_deta(y_nodes, xi, eta)
+
+
+def jacobian(x_nodes, y_nodes, xi, eta):
+    '''
+    Calculates the jocobian for the corrdinate transformation from
+    :math:`xy` space to :math:`\\xi \\eta` space.
+    
+    Parameters
+    ----------
+    x_nodes : np.ndarray [8]
+              :math:`x` nodes.
+
+    y_nodes : np.ndarray [8]
+              :math:`y` nodes.
+              
+    xi      : float
+            :math:`\\xi` coordinate at which
+            Jacobian has to be found.
+
+    eta     : float
+            :math:`\\eta` coordinate at which
+            Jacobian has to be found.
+            
+    Returns
+    -------
+    float
+        Returns the Jacobian calculated using this formula.
+        
+        .. math::   J\\Big(\\frac{x, y}{\\xi, \\eta}\Big) =
+                    \\frac{\\partial x}{\\partial \\xi}  \
+                    \\frac{\\partial y}{\\partial \\eta} \
+                    - \\frac{\\partial x}{\\partial \\eta} \
+                    \\frac{\\partial y}{\\partial \\xi}
+    '''
+    
+    dx_dxi  = dx_dxi (x_nodes, xi, eta)
+    dy_deta = dy_deta (y_nodes, xi, eta)
+    dx_deta = dx_deta (x_nodes, xi, eta)
+    dy_dxi  = dy_dxi (y_nodes, xi, eta)
+    
+    return (dx_dxi * dy_deta) - (dx_deta * dy_dxi)
