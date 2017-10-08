@@ -10,13 +10,13 @@ from dg_maxwell import utils
 from dg_maxwell import isoparam
 
 # The domain of the function.
-x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
+x_nodes    = af.np_to_af_array(np.array([0, 1.]))
 
 # The number of LGL points into which an element is split.
 N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
-N_Elements = 10
+N_Elements = 8
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
@@ -109,7 +109,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
                                                     int(total_time / delta_t))
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
-u_init     = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
+u_init     = af.sin(2 * np.pi * element_LGL)
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
