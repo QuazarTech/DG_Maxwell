@@ -209,7 +209,7 @@ def jacobian(x_nodes, y_nodes, xi, eta):
 def A_matrix():
     '''
     '''
-    N_LGL_quad   = 16
+    N_LGL_quad   = 9
     xi_LGL_quad  = lagrange.gauss_nodes(N_LGL_quad)
     eta_LGL_quad = lagrange.gauss_nodes(N_LGL_quad)
     
