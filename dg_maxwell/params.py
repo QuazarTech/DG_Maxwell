@@ -28,13 +28,13 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-N_quad     = 8
+N_quad     = 11
 
 # Wave speed.
 c          = 1
 
 # The total time for which the wave is to be evolved by the simulation. 
-total_time = 20.01
+total_time = 2.01
 
 # The c_lax to be used in the Lax-Friedrichs flux.
 c_lax      = c
@@ -79,12 +79,12 @@ differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
 # lobatto quadrature points, The integration can be vectorized
 # and in this case the coefficients of the differential of the
 # Lagrange polynomials is required
-volume_integrand_N_LGL = np.zeros(([N_LGL, N_LGL - 1]))
+dl_dxi_coeffs = np.zeros(([N_LGL, N_LGL - 1]))
 
 for i in range(N_LGL):
-    volume_integrand_N_LGL[i] = (differential_lagrange_polynomial[i]).c
+    dl_dxi_coeffs[i] = (differential_lagrange_polynomial[i]).c
 
-volume_integrand_N_LGL= af.np_to_af_array(volume_integrand_N_LGL)
+dl_dxi_coeffs= af.np_to_af_array(dl_dxi_coeffs)
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
 

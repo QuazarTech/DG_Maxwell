@@ -11,6 +11,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import trange
 import h5py
+from scipy import integrate
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
@@ -218,7 +219,7 @@ def volume_integral_flux(u_n, t_n):
 
     '''
     # The coefficients of dLp / d\xi
-    diff_lag_coeff  = params.volume_integrand_N_LGL
+    diff_lag_coeff  = params.dl_dxi_coeffs
 
     lobatto_nodes   = params.lobatto_quadrature_nodes
     Lobatto_weights = params.lobatto_weights_quadrature
@@ -237,6 +238,7 @@ def volume_integral_flux(u_n, t_n):
     if(params.volume_integral_scheme == 'lobatto_quadrature'\
         and params.N_quad == params.N_LGL):
 
+        print('option1')
         # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
         F_u_n                  = af.reorder(flux_x(u_n), 2, 0, 1)
 
@@ -249,8 +251,8 @@ def volume_integral_flux(u_n, t_n):
         flux_integral          = af.reorder(flux_integral, 0, 2, 1)
 
     elif(params.volume_integral_scheme == 'analytical'):
-        print('option2')
 
+        print('option2')
         # u_n calculated using af.sin
         analytical_u_n         = analytical_u_LGL(t_n)
         F_u_n                  = af.reorder(analytical_u_n, 2, 0, 1)
@@ -265,31 +267,33 @@ def volume_integral_flux(u_n, t_n):
 
 
     else:
+        convolve_flux_coeffs = af.np_to_af_array(np.zeros([3 * params.N_LGL - 2, 1, params.N_Elements]))
+       # print('option3')
         # Obtaining the u_n in polynomial form using the value at LGL points.
         analytical_form_flux       = flux_x(lagrange.\
-                                            wave_equation_lagrange(u_n))
+                                            lagrange_interpolation_u(u_n))
 
-        # dLp/ d\xi in poly1d form
-        differential_lagrange_poly = params.differential_lagrange_polynomial
+        convolve_flux_coeffs[params.N_LGL - 1:2 * params.N_LGL - 1, :, :] = af.reorder(analytical_form_flux, 1, 0, 2)
 
-
-        # The coefficients of the integrand dLp / dxi * F(u)
-        # arranged in a (N_LGL * N_Elements) X (N_LGL - 2) array
-        integrand_coeff = np.zeros(([params.N_LGL * params.N_Elements,\
-                                          2 * params.N_LGL - 2]))
-
-        for i in range(params.N_LGL):
-            for j in range(params.N_Elements):
-                # Coefficients of the integrand.
-                integrand_coeff[i + params.N_LGL * j] = (analytical_form_flux[j] *\
-                                                  differential_lagrange_poly[i]).c
-
-        integrand_coeff = af.np_to_af_array(integrand_coeff)
-        flux_integral   = lagrange.Integrate(integrand_coeff)
-        flux_integral   = af.moddims(flux_integral, params.N_LGL,\
-                                             params.N_Elements) * params.c
+        convolve_dl_dxi_coeffs = af.np_to_af_array(np.zeros([3 * params.N_LGL - 3, params.N_LGL, 1]))
 
 
+
+        convolve_dl_dxi_coeffs[params.N_LGL - 1 : 2 * params.N_LGL - 2, :] = af.reorder(params.dl_dxi_coeffs, 1, 0)
+
+
+        convolved_volume_int_flux = af.convolve(convolve_dl_dxi_coeffs, convolve_flux_coeffs)
+
+        #print(convolve_dl_dxi_coeffs.shape, convolve_flux_coeffs.shape, convolved_volume_int_flux.shape)
+
+        int_coeffs = af.reorder(convolved_volume_int_flux[3:-4], 1, 0, 2)
+        int_coeffs = af.reorder(int_coeffs, 0, 2, 1)
+        int_coeffs = af.moddims(int_coeffs, 80, 14)
+       # flux_integral = af.np_to_af_array(np.zeros([8, 10]))
+       # for ii in range(0,10):
+       #     flux_integral[:, ii] = lagrange.Integrate(int_coeffs[:, :, ii])
+        flux_integral = lagrange.Integrate(int_coeffs)
+        flux_integral = af.moddims(flux_integral, 8, 10)
 
 
     return flux_integral
@@ -492,12 +496,12 @@ def time_evolution():
 
     for t_n in trange(0, time.shape[0]):
 
-        # Storing u at timesteps which are multiples of 20.
-        if (t_n % 50) == 0:
-            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-            dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
+       # # Storing u at timesteps which are multiples of 20.
+       # if (t_n % 100) == 0:
+       #     h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
+       #     dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
 
-            dset[:, :] = u[:, :]
+       #     dset[:, :] = u[:, :]
 
        # # Implementing second order time-stepping.
        # u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u, t_n))\
@@ -516,7 +520,7 @@ def time_evolution():
 
 
 
-    return (af.abs(u - u_analytical))
+    return af.mean(af.abs(u - u_analytical))
 
 
 def change_parameters(LGL, Elements, wave='sin'):
@@ -664,28 +668,61 @@ def convergence_test():
     or N_LGL).
     
     '''
-    L1_norm_option_1 = np.zeros([10])
-    N_lgl            = (np.arange(10) + 3).astype(float)
+    L1_norm_option_1 = np.zeros([5])
+    N_lgl            = (np.arange(5) + 7).astype(float)
+    mean             = np.zeros([5])
 
-    for i in range(0, 10):
-        change_parameters(i + 3, 64)
-        u_diff = time_evolution()
-        L1_norm_option_1[i] = L1_norm_error(u_diff)
+#    for i in range(0, 5):
+#        change_parameters(i + 7, 10)
+#        u_diff = time_evolution()
+#        L1_norm_option_1[i] = L1_norm_error(u_diff)
+#        mean[i]             = af.mean(u_diff)
 
-#    L1_norm_option_1 = np.array([7.86867473e-03, 1.62010118e-04, 6.09539662e-06, 3.33291808e-07,\
-#                                 1.60409746e-07, 6.26348505e-07, 3.40978741e-07, 3.06485997e-07,\
-#                                 1.97638417e-07, 2.09291363e-08])
-
-
-    print(L1_norm_option_1)
-    normalization = 0.00786 / (3 ** (-3))
+    L1_norm_option_1 = np.array([1.42269745e-07, 2.56562475e-08, 3.82020293e-08, 9.37116538e-09,\
+                                 7.74181927e-09])
+    print(L1_norm_option_1, mean)
+    normalization = 1.4e-7 / (7 ** (-7))
     plt.loglog(N_lgl, L1_norm_option_1, marker='o', label='L1 norm')
     plt.xlabel('No. of LGL points')
     plt.ylabel('L1 norm of error')
-    plt.title('L1 norm after 10 full advections')
+    plt.title('L1 norm after 1 full advection')
     plt.loglog(N_lgl, normalization * N_lgl **(-N_lgl), color='black', linestyle='--', label='$N_{LGL}^{-N_{LGL}}$')
     plt.legend(loc='best')
 
     plt.show()
 
     return
+
+
+
+#    def test_function(x):
+#        '''
+#        The test wave function.
+#        '''
+#        return np.sin(2 * np.pi * x)
+#
+#    def int_sin2pix_dLdxi(x_nodes, xi_LGL, lagrange_basis_order):
+#        '''
+#        '''
+#        L_i, temp = lagrange.lagrange_polynomials(xi_LGL)
+#        
+#        def sin2pix_dLdxi(xi):
+#            x = (((x_nodes[1] - x_nodes[0]) * xi + (x_nodes[1] + x_nodes[0]))) / 2
+#            return np.sin(2 * np.pi * x) * L_i[lagrange_basis_order].deriv()(xi)
+#        
+#        return integrate.quad(sin2pix_dLdxi, -1, 1)[0]
+#
+
+def analytical_volume_integral(x_nodes, p):
+    '''
+    '''
+    dlp_dxi = params.differential_lagrange_polynomial[p]
+
+    def F_u(x):
+        analytical_flux = flux_x(np.sin(2* np.pi*((x_nodes[1] - x_nodes[0]) * x/2 + (x_nodes[0] + x_nodes[1]) / 2))) * dlp_dxi(x)
+        return analytical_flux
+    
+    analytical_integral = integrate.quad(F_u, -1, 1)[0]
+
+
+    return analytical_integral

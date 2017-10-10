@@ -52,16 +52,16 @@ if not os.path.exists(results_directory):
 N = os.system('cd results/hdf5 && find -maxdepth 1 -type f | wc -l')
 
 
-for i in range(0,int(186)):
+for i in range(0,int(63)):
     fig = pl.figure()
-    h5py_data = h5py.File('results/hdf5/dump_timestep_%06d'%(50 * i) + '.hdf5', 'r')
+    h5py_data = h5py.File('results/hdf5/dump_timestep_%06d'%(100 * i) + '.hdf5', 'r')
     u_LGL     = (h5py_data['u_i'][:])
     pl.plot(params.element_LGL, u_LGL)
     pl.xlabel('x')
     pl.ylabel('u')
     pl.xlim(-1, 1)
     pl.ylim(-2, 2)
-    pl.title('Time = %f' % (i * 4 * params.delta_t))
+    pl.title('Time = %f' % (i * 100 * params.delta_t))
     fig.savefig('results/1D_Wave_images/%04d' %(i) + '.png')
     pl.close('all')
 

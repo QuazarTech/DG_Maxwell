@@ -260,7 +260,7 @@ def test_volume_integral_flux():
     given below.
     `https://goo.gl/5Mub8M`
     '''
-    threshold = 8e-9
+    threshold = 1e-10
     params.c = 1
     wave_equation.change_parameters(8, 10, 'gaussian')
     
@@ -300,7 +300,7 @@ def test_volume_integral_flux():
          ])))
     
     numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0], 0)
-    assert (af.max(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
+    assert (af.mean(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
 
 def test_lax_friedrichs_flux():
     '''

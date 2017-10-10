@@ -318,9 +318,12 @@ def Integrate(integrand_coeffs):
                specified quadrature method for M polynomials.
     '''
 
+
+    integrand      = integrand_coeffs
+
     if (params.scheme == 'gauss_quadrature'):
+        #print('gauss_quad')
         
-        integrand      = integrand_coeffs
         gaussian_nodes = params.gauss_points
         Gauss_weights  = params.gauss_weights
         
@@ -334,8 +337,8 @@ def Integrate(integrand_coeffs):
         Integral             = af.sum(value_at_gauss_nodes, 1)
  
     if (params.scheme == 'lobatto_quadrature'):
+        #print('lob_quad')
 
-        integrand       = integrand_coeffs
         lobatto_nodes   = params.lobatto_quadrature_nodes
         Lobatto_weights = params.lobatto_weights_quadrature
 
@@ -441,3 +444,13 @@ def differential_lagrange_poly1d():
         diff_lagrange_poly1d.append(test_diff)
     
     return diff_lagrange_poly1d 
+
+def lagrange_interpolation_u(u):
+    '''
+    '''
+    lagrange_coeffs_tile = af.tile(params.lagrange_coeffs, 1, 1, params.N_Elements)
+    reordered_u          = af.reorder(u, 0, 2, 1)
+
+    lagrange_interpolated_coeffs = af.sum(af.broadcast(utils.multiply, reordered_u, lagrange_coeffs_tile), 0)
+
+    return lagrange_interpolated_coeffs
