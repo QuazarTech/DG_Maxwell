@@ -260,9 +260,9 @@ def test_volume_integral_flux():
     given below.
     `https://goo.gl/5Mub8M`
     '''
-    threshold = 1e-10
+    threshold = 4e-9
     params.c = 1
-    wave_equation.change_parameters(8, 10, 'gaussian')
+    wave_equation.change_parameters(8, 10, 8, 'gaussian')
     
     referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array
         ([
@@ -299,7 +299,7 @@ def test_volume_integral_flux():
 
          ])))
     
-    numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0], 0)
+    numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
     assert (af.mean(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
 
 def test_lax_friedrichs_flux():
@@ -324,7 +324,7 @@ def test_surface_term():
     threshold = 1e-13
     params.c = 1
     
-    wave_equation.change_parameters(8, 10, 'gaussian')
+    wave_equation.change_parameters(8, 10, 8, 'gaussian')
     
     analytical_f_i        = (params.u[-1, :, 0])
     analytical_f_i_minus1 = (af.shift(params.u[-1, :, 0], 0, 1))
@@ -352,15 +352,15 @@ def test_b_vector():
     threshold = 1e-13
     params.c = 1
     
-    wave_equation.change_parameters(8, 10, 'gaussian')
+    wave_equation.change_parameters(8, 10, 8, 'gaussian')
 
     u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(),\
                                                   params.u[:, :, 0])
-    volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0], 0)
+    volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
     surface_term         = test_surface_term()
     b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\
                                     (surface_term)) * params.delta_t
-    b_vector_array       = wave_equation.b_vector(params.u[:, :, 0], 0)
+    b_vector_array       = wave_equation.b_vector(params.u[:, :, 0])
     
     assert (b_vector_analytical - b_vector_array) < threshold
 

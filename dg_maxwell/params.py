@@ -18,7 +18,7 @@ x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
-N_Elements = 10
+N_Elements = 6
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
@@ -56,8 +56,7 @@ lobatto_quadrature_nodes   = lagrange.LGL_points(N_quad)
 lobatto_weights_quadrature = lagrange.lobatto_weights\
                                     (N_quad)
 
-# A list of the Lagrange polynomials in poly1d form.
-lagrange_product           = lagrange.product_lagrange_poly(xi_LGL)
+
 
 # An array containing the coefficients of the lagrange basis polynomials.
 lagrange_coeffs            = af.np_to_af_array(\
@@ -66,25 +65,15 @@ lagrange_coeffs            = af.np_to_af_array(\
 # Refer corresponding functions.
 lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)
 
-# A list of the Lagrange polynomials in poly1d form.
-lagrange_poly1d_list = lagrange.lagrange_polynomials(xi_LGL)[0]
-
-
-# list containing the poly1d forms of the differential of Lagrange
-# basis polynomials.
-differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
-
 
 # While evaluating the volume integral using N_LGL
 # lobatto quadrature points, The integration can be vectorized
 # and in this case the coefficients of the differential of the
 # Lagrange polynomials is required
-dl_dxi_coeffs = np.zeros(([N_LGL, N_LGL - 1]))
 
-for i in range(N_LGL):
-    dl_dxi_coeffs[i] = (differential_lagrange_polynomial[i]).c
 
-dl_dxi_coeffs= af.np_to_af_array(dl_dxi_coeffs)
+diff_pow      = (af.flip(af.transpose(af.range(N_LGL - 1) + 1), 1))
+dl_dxi_coeffs = (af.broadcast(utils.multiply, lagrange_coeffs[:, :-1], diff_pow))
 
 # Obtaining an array consisting of the LGL points mapped onto the elements.
 

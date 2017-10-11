@@ -3,8 +3,6 @@
     
 import os
 
-import os
-
 import arrayfire as af
 af.set_backend('cpu')
 import numpy as np
@@ -152,11 +150,21 @@ def A_matrix():
                obtained by LGL points, using the Integrate() function
 
     '''
-    int_Li_Lp = lagrange.Integrate(params.lagrange_product)
-    dx_dxi    = params.dx_dxi 
+    # Coefficients of Lagrange basis polynomials.
+    lagrange_coeffs = params.lagrange_coeffs
+    lagrange_coeffs = af.reorder(lagrange_coeffs, 1, 2, 0)
 
-    A_matrix_flat = dx_dxi * int_Li_Lp
-    A_matrix      = af.moddims(A_matrix_flat, params.N_LGL, params.N_LGL)
+    # Coefficients of product of Lagrange basis polynomials.
+    lag_prod_coeffs = af.convolve1(lagrange_coeffs,\
+                                   af.reorder(lagrange_coeffs, 0, 2, 1),\
+                                   conv_mode=af.CONV_MODE.EXPAND)
+    lag_prod_coeffs = af.reorder(lag_prod_coeffs, 1, 2, 0)
+    lag_prod_coeffs = af.moddims(lag_prod_coeffs, params.N_LGL ** 2, 2 * params.N_LGL - 1)
+
+
+    dx_dxi   = params.dx_dxi 
+    A_matrix = dx_dxi * af.moddims(lagrange.Integrate(lag_prod_coeffs),\
+                                             params.N_LGL, params.N_LGL)
     
     return A_matrix
 
@@ -187,7 +195,7 @@ def flux_x(u):
     return flux
 
 
-def volume_integral_flux(u_n, t_n):
+def volume_integral_flux(u_n):
     '''
 
     Calculates the volume integral of flux in the wave equation.
@@ -238,7 +246,7 @@ def volume_integral_flux(u_n, t_n):
     if(params.volume_integral_scheme == 'lobatto_quadrature'\
         and params.N_quad == params.N_LGL):
 
-        print('option1')
+        #print('option1')
         # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
         F_u_n                  = af.reorder(flux_x(u_n), 2, 0, 1)
 
@@ -250,50 +258,28 @@ def volume_integral_flux(u_n, t_n):
         flux_integral          = af.sum(integral_expansion, 1)
         flux_integral          = af.reorder(flux_integral, 0, 2, 1)
 
-    elif(params.volume_integral_scheme == 'analytical'):
-
-        print('option2')
-        # u_n calculated using af.sin
-        analytical_u_n         = analytical_u_LGL(t_n)
-        F_u_n                  = af.reorder(analytical_u_n, 2, 0, 1)
-
-
-        # Multiplying with dLp / d\xi
-        integral_expansion     = af.broadcast(utils.multiply, dLp_dxi, F_u_n)
-
-        # Using the quadrature rule.
-        flux_integral          = af.sum(integral_expansion, 1)
-        flux_integral = af.reorder(flux_integral, 0, 2, 1)
-
 
     else:
-        convolve_flux_coeffs = af.np_to_af_array(np.zeros([3 * params.N_LGL - 2, 1, params.N_Elements]))
-       # print('option3')
-        # Obtaining the u_n in polynomial form using the value at LGL points.
-        analytical_form_flux       = flux_x(lagrange.\
-                                            lagrange_interpolation_u(u_n))
+        #print('option3')
+        analytical_flux_coeffs = flux_x(lagrange.\
+                                        lagrange_interpolation_u(u_n))
 
-        convolve_flux_coeffs[params.N_LGL - 1:2 * params.N_LGL - 1, :, :] = af.reorder(analytical_form_flux, 1, 0, 2)
+        analytical_flux_coeffs = af.reorder(analytical_flux_coeffs, 1, 0, 2)
 
-        convolve_dl_dxi_coeffs = af.np_to_af_array(np.zeros([3 * params.N_LGL - 3, params.N_LGL, 1]))
+        dl_dxi_coefficients    = af.reorder(params.dl_dxi_coeffs, 1, 0)
 
 
+        volume_int_coeffs = af.convolve1(dl_dxi_coefficients,\
+                                         analytical_flux_coeffs,\
+                                         conv_mode=af.CONV_MODE.EXPAND)
+        volume_int_coeffs = af.reorder(volume_int_coeffs, 1, 2, 0)
+        volume_int_coeffs = af.moddims(volume_int_coeffs,\
+                                       params.N_LGL * params.N_Elements,\
+                                       2 * params.N_LGL - 2)
 
-        convolve_dl_dxi_coeffs[params.N_LGL - 1 : 2 * params.N_LGL - 2, :] = af.reorder(params.dl_dxi_coeffs, 1, 0)
 
-
-        convolved_volume_int_flux = af.convolve(convolve_dl_dxi_coeffs, convolve_flux_coeffs)
-
-        #print(convolve_dl_dxi_coeffs.shape, convolve_flux_coeffs.shape, convolved_volume_int_flux.shape)
-
-        int_coeffs = af.reorder(convolved_volume_int_flux[3:-4], 1, 0, 2)
-        int_coeffs = af.reorder(int_coeffs, 0, 2, 1)
-        int_coeffs = af.moddims(int_coeffs, 80, 14)
-       # flux_integral = af.np_to_af_array(np.zeros([8, 10]))
-       # for ii in range(0,10):
-       #     flux_integral[:, ii] = lagrange.Integrate(int_coeffs[:, :, ii])
-        flux_integral = lagrange.Integrate(int_coeffs)
-        flux_integral = af.moddims(flux_integral, 8, 10)
+        flux_integral = lagrange.Integrate(volume_int_coeffs)
+        flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
 
 
     return flux_integral
@@ -400,7 +386,7 @@ def surface_term(u_n):
     return surface_term
 
 
-def b_vector(u_n, t_n):
+def b_vector(u_n):
     '''
 
     Calculates the b vector for N_Elements number of elements.
@@ -423,36 +409,52 @@ def b_vector(u_n, t_n):
     .. _Report: https://goo.gl/sNsXXK
 
     '''
-    volume_integral = volume_integral_flux(u_n, t_n)
+    volume_integral = volume_integral_flux(u_n)
     Surface_term    = surface_term(u_n)
     b_vector_array  = (volume_integral - Surface_term)
     
     return b_vector_array
 
-def RK4_timestepping(A_inverse, u, t_n, delta_t):
+def RK4_timestepping(A_inverse, u, delta_t):
     '''
     '''
 
-    k1 = af.matmul(A_inverse, b_vector(u                   , t_n))
-    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2, t_n))
-    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2, t_n))
-    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    , t_n))
+    k1 = af.matmul(A_inverse, b_vector(u                   ))
+    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2))
+    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2))
+    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    ))
 
     delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
     return delta_u
 
-def RK6_timestepping(A_inverse, u, t_n, delta_t):
+def RK6_timestepping(A_inverse, u, delta_t):
     '''
     '''
 
-    k1 = af.matmul(A_inverse, b_vector(u, t_n))
-    k2 = af.matmul(A_inverse, b_vector(u + 0.25 * k1 * delta_t, t_n))
-    k3 = af.matmul(A_inverse, b_vector(u + (3 / 32) * (k1 + 3 * k2) * delta_t, t_n))
-    k4 = af.matmul(A_inverse, b_vector(u + (12 / 2197) * (161 * k1 - 600 * k2 + 608 * k3) * delta_t, t_n))
-    k5 = af.matmul(A_inverse, b_vector(u + (1 / 4104) * (8341 * k1 - 32832 * k2 + 29440 * k3 - 845 * k4) * delta_t, t_n))
-    k6 = af.matmul(A_inverse, b_vector(u + (-(8/27) * k1 + 2 * k2- (3544 / 2565) *\
-                                       k3 + (1859 / 4104) * k4 - (11 / 40) * k5) * delta_t, t_n))
+    k1 = af.matmul(A_inverse, b_vector(u                      ))
+    k2 = af.matmul(A_inverse, b_vector(u + 0.25 * k1 * delta_t))
+    k3 = af.matmul(A_inverse, b_vector(u + (3 / 32)\
+                                         * (k1 \
+                                         + 3 * k2)\
+                                         * delta_t,             ))
+    k4 = af.matmul(A_inverse, b_vector(u + (12 / 2197)\
+                                         * (161 * k1\
+                                         - 600 * k2 \
+                                         + 608 * k3)\
+                                         * delta_t,             ))
+    k5 = af.matmul(A_inverse, b_vector(u + (1 / 4104)\
+                                         * (8341 * k1\
+                                         - 32832 * k2\
+                                         + 29440 * k3\
+                                         - 845 * k4)\
+                                         * delta_t,             ))
+    k6 = af.matmul(A_inverse, b_vector(u + (-(8/27) * k1\
+                                         + 2 * k2\
+                                         - (3544 / 2565) * k3\
+                                         + (1859 / 4104) * k4\
+                                         - (11 / 40) * k5)\
+                                         * delta_t,             ))
 
     delta_u = delta_t * 1 / 5 * ((16 / 27) * k1 + (6656 / 2565) * k3 + (28561 / 11286) * k4 - (9 / 10) * k5 + (2 / 11) * k6)
 
@@ -496,25 +498,25 @@ def time_evolution():
 
     for t_n in trange(0, time.shape[0]):
 
-       # # Storing u at timesteps which are multiples of 20.
-       # if (t_n % 100) == 0:
-       #     h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-       #     dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
+        # Storing u at timesteps which are multiples of 20.
+        if (t_n % 100) == 0:
+            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
+            dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
 
-       #     dset[:, :] = u[:, :]
+            dset[:, :] = u[:, :]
 
        # # Implementing second order time-stepping.
-       # u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u, t_n))\
+       # u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u))\
        #                      * delta_t / 2
 
-       # u            +=  af.matmul(A_inverse, b_vector(u_n_plus_half, t_n + 0.5))\
+       # u            +=  af.matmul(A_inverse, b_vector(u_n_plus_half))\
        #                  * delta_t
 
         # Implementing RK 4 scheme
-        #u += RK4_timestepping(A_inverse, u, t_n, delta_t)
+        u += RK4_timestepping(A_inverse, u, delta_t)
 
         # Implementing RK 6 scheme
-        u += RK6_timestepping(A_inverse, u, t_n, delta_t)
+        #u += RK6_timestepping(A_inverse, u, delta_t)
 
     u_analytical = analytical_u_LGL(t_n + 1)
 
@@ -523,7 +525,7 @@ def time_evolution():
     return af.mean(af.abs(u - u_analytical))
 
 
-def change_parameters(LGL, Elements, wave='sin'):
+def change_parameters(LGL, Elements, quad, wave='sin'):
     '''
 
     Changes the parameters of the simulation. Used only for convergence tests.
@@ -547,7 +549,7 @@ def change_parameters(LGL, Elements, wave='sin'):
     params.N_Elements = Elements
 
     # The number quadrature points to be used for integration.
-    params.N_quad     = LGL + 1
+    params.N_quad     = quad
 
     # Array containing the LGL points in xi space.
     params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
@@ -567,7 +569,7 @@ def change_parameters(LGL, Elements, wave='sin'):
                                         (params.N_quad)
 
     # A list of the Lagrange polynomials in poly1d form.
-    params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
+    #params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
 
     # An array containing the coefficients of the lagrange basis polynomials.
     params.lagrange_coeffs  = af.np_to_af_array(\
@@ -577,25 +579,15 @@ def change_parameters(LGL, Elements, wave='sin'):
     params.lagrange_basis_value = lagrange.lagrange_function_value\
                                            (params.lagrange_coeffs)
 
-    # A list of the Lagrange polynomials in poly1d form.
-    params.lagrange_poly1d_list = lagrange.lagrange_polynomials(params.xi_LGL)[0]
-
-
-    # list containing the poly1d forms of the differential of Lagrange
-    # basis polynomials.
-    params.differential_lagrange_polynomial = lagrange.differential_lagrange_poly1d()
-
 
     # While evaluating the volume integral using N_LGL
     # lobatto quadrature points, The integration can be vectorized
     # and in this case the coefficients of the differential of the
     # Lagrange polynomials is required
-    params.volume_integrand_N_LGL = np.zeros(([params.N_LGL, params.N_LGL - 1]))
+    params.diff_pow      = (af.flip(af.transpose(af.range(params.N_LGL - 1) + 1), 1))
+    params.dl_dxi_coeffs = (af.broadcast(utils.multiply, params.lagrange_coeffs[:, :-1], params.diff_pow))
 
-    for i in range(params.N_LGL):
-        params.volume_integrand_N_LGL[i] = (params.differential_lagrange_polynomial[i]).c
 
-    params.volume_integrand_N_LGL= af.np_to_af_array(params.volume_integrand_N_LGL)
 
     # Obtaining an array consisting of the LGL points mapped onto the elements.
 
@@ -644,7 +636,7 @@ def change_parameters(LGL, Elements, wave='sin'):
     params.u          = af.constant(0, params.N_LGL, params.N_Elements, params.time.shape[0],\
                                      dtype = af.Dtype.f64)
     params.u[:, :, 0] = params.u_init
-                                                     
+
     return
 
 def L1_norm_error(mod_diff_u):
@@ -668,21 +660,23 @@ def convergence_test():
     or N_LGL).
     
     '''
-    L1_norm_option_1 = np.zeros([5])
-    N_lgl            = (np.arange(5) + 7).astype(float)
-    mean             = np.zeros([5])
+    L1_norm_option_1 = np.zeros([15])
+    N_lgl            = (np.arange(15) + 3).astype(float)
+    L1_norm_option_3 = np.zeros([15])
 
-#    for i in range(0, 5):
-#        change_parameters(i + 7, 10)
-#        u_diff = time_evolution()
-#        L1_norm_option_1[i] = L1_norm_error(u_diff)
-#        mean[i]             = af.mean(u_diff)
+    for i in range(0, 15):
+        change_parameters(i + 3, 15, i + 3)
+        u_diff = time_evolution()
+        L1_norm_option_1[i] = (u_diff)
+        change_parameters(i + 3, 15, i + 4) 
+        u_diff = time_evolution()
+        L1_norm_option_3[i] = (u_diff)
 
-    L1_norm_option_1 = np.array([1.42269745e-07, 2.56562475e-08, 3.82020293e-08, 9.37116538e-09,\
-                                 7.74181927e-09])
-    print(L1_norm_option_1, mean)
-    normalization = 1.4e-7 / (7 ** (-7))
-    plt.loglog(N_lgl, L1_norm_option_1, marker='o', label='L1 norm')
+
+    print(L1_norm_option_1, L1_norm_option_3)
+    normalization = 0.00281 / (3 **(-3))
+    plt.loglog(N_lgl, L1_norm_option_1, marker='o', label='option 1')
+    plt.loglog(N_lgl, L1_norm_option_3, marker='o', label='option 3')
     plt.xlabel('No. of LGL points')
     plt.ylabel('L1 norm of error')
     plt.title('L1 norm after 1 full advection')
@@ -726,3 +720,41 @@ def analytical_volume_integral(x_nodes, p):
 
 
     return analytical_integral
+
+def volume_int_convergence():
+    '''
+    convergence test for volume int flux
+    '''
+    N_LGL = np.arange(15).astype(float) + 3
+    L1_norm_option_3 = np.zeros([15])
+    L1_norm_option_1 = np.zeros([15])
+    for i in range(0, 15):
+        change_parameters(i + 3, 16, i + 4)
+        vol_int_analytical = np.zeros([params.N_Elements, params.N_LGL])
+        for j in range (params.N_Elements):
+            for k in range (params.N_LGL):
+                vol_int_analytical[j][k] = (analytical_volume_integral(af.transpose(params.element_array[j]), k))
+        vol_int_analytical = af.transpose(af.np_to_af_array(vol_int_analytical))
+        L1_norm_option_3[i] = (af.mean(af.abs(vol_int_analytical - volume_integral_flux(params.u_init, 0))))
+
+
+    for i in range(0, 15):
+        change_parameters(i + 3, 16, i + 3)
+        vol_int_analytical = np.zeros([params.N_Elements, params.N_LGL])
+        for j in range (params.N_Elements):
+            for k in range (params.N_LGL):
+                vol_int_analytical[j][k] = (analytical_volume_integral(af.transpose(params.element_array[j]), k))
+        vol_int_analytical = af.transpose(af.np_to_af_array(vol_int_analytical))
+        L1_norm_option_1[i] = (af.mean(af.abs(vol_int_analytical - volume_integral_flux(params.u_init, 0))))
+    normalization = 0.0023187 / (3 ** (-3))
+
+
+    print(L1_norm_option_1, L1_norm_option_3)
+    plt.loglog(N_LGL, L1_norm_option_1, marker='o', label='L1 norm option 1')
+    plt.loglog(N_LGL, L1_norm_option_3, marker='o', label='L1 norm option 3')
+    plt.loglog(N_LGL, normalization * N_LGL **(-N_LGL), color='black', linestyle='--', label='$N_{LGL}^{-N_{LGL}}$')
+    plt.title('L1 norm of volume integral term')
+    plt.xlabel('LGL points')
+    plt.ylabel('L1 norm')
+    plt.legend(loc='best')
+    plt.show()
