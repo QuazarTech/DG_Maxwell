@@ -171,7 +171,7 @@ def lagrange_polynomials(x):
                             A list of size `x.shape[0]` containing the
                             analytical form of the Lagrange basis polynomials
                             in numpy.poly1d form. This list is used in
-                            Integrate() function which requires the analytical
+                            integrate() function which requires the analytical
                             form of the integrand.
 
     lagrange_basis_coeffs : numpy.ndarray
@@ -256,7 +256,7 @@ def lagrange_function_value(lagrange_coeff_array):
 
 
 
-def Integrate(integrand_coeffs):
+def integrate(integrand_coeffs):
     '''
     Performs integration according to the given quadrature method
     by taking in the coefficients of the polynomial and the number of
@@ -294,7 +294,7 @@ def Integrate(integrand_coeffs):
         nodes_weight = nodes_power * weights_tile
 
         value_at_gauss_nodes = af.matmul(integrand, nodes_weight)
-        Integral             = af.sum(value_at_gauss_nodes, 1)
+        integral             = af.sum(value_at_gauss_nodes, 1)
  
     if (params.scheme == 'lobatto_quadrature'):
         #print('lob_quad')
@@ -310,15 +310,29 @@ def Integrate(integrand_coeffs):
 
         
         value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
-        Integral               = af.sum(value_at_lobatto_nodes, 1)
+        integral               = af.sum(value_at_lobatto_nodes, 1)
 
     
-    return Integral
+    return integral
 
 
 
 def lagrange_interpolation_u(u):
     '''
+    Calculates the coefficients of the Lagrange interpolation using
+    the value of u at the mapped LGL points in the domain.
+
+    Parameters
+    ----------
+    u : arrayfire.Array [N_LGL N_Elements 1 1]
+        The value of u at the mapped LGL points.
+
+    Returns
+    -------
+    lagrange_interpolated_coeffs : arrayfire.Array[1 N_LGL N_Elements 1]
+                                   The coefficients of the polynomials obtained
+                                   by Lagrange interpolation. Each polynomial
+                                   is of order N_LGL - 1.
     '''
     lagrange_coeffs_tile = af.tile(params.lagrange_coeffs, 1, 1, params.N_Elements)
     reordered_u          = af.reorder(u, 0, 2, 1)

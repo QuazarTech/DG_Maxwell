@@ -262,7 +262,7 @@ def test_volume_integral_flux():
     '''
     threshold = 4e-9
     params.c = 1
-    wave_equation.change_parameters(8, 10, 8, 'gaussian')
+    wave_equation.change_parameters(8, 10, 11, 'gaussian')
     
     referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array
         ([
@@ -364,9 +364,9 @@ def test_b_vector():
     
     assert (b_vector_analytical - b_vector_array) < threshold
 
-def test_Integrate():
+def test_integrate():
     '''
-    Testing the Integrate() function by passing coefficients
+    Testing the integrate() function by passing coefficients
     of a polynomial and comparing it to the analytical result.
     '''
     threshold = 1e-14
@@ -375,10 +375,24 @@ def test_Integrate():
     # The coefficients of a test polynomial
     # `7x^7 + 6x^6 + 4x^5 + 2x^4 + x^3 + 3x^2 + 9x + 2`
 
-    # Using Integrate() function.
+    # Using integrate() function.
 
-    calculated_integral = lagrange.Integrate(af.transpose(test_coeffs))
+    calculated_integral = lagrange.integrate(af.transpose(test_coeffs))
 
     analytical_integral = 8.514285714285714
 
     assert (calculated_integral - analytical_integral) <= threshold
+
+def test_advection():
+    '''
+    Unit test for advection of a 1D wave
+    '''
+    threshold = 5e-7
+
+    wave_equation.change_parameters(10, 10, 11, 'sin')
+
+    u_diff  = wave_equation.time_evolution()
+    L1_norm = wave_equation.L1_norm(u_diff)
+
+    assert(L1_norm <= threshold)
+

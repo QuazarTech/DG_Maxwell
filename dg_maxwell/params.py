@@ -18,7 +18,7 @@ x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
-N_Elements = 6
+N_Elements = 10
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
@@ -28,7 +28,7 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-N_quad     = 11
+N_quad     = 8
 
 # Wave speed.
 c          = 1
@@ -84,7 +84,6 @@ elements        = utils.linspace(af.sum(x_nodes[0]),
 
 np_element_array   = np.concatenate((af.transpose(elements),
                                af.transpose(elements + element_size)))
-
 element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
                                     af.sum(x_nodes[1]), N_Elements + 1)
 
@@ -96,7 +95,7 @@ element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
 
 # dx_dxi for elements of equal size.
-dx_dxi = af.mean(wave_equation.dx_dxi_numerical((element_mesh_nodes[0 : 2]),\
+dx_dxi  = af.mean(wave_equation.dx_dxi_numerical((element_mesh_nodes[0 : 2]),\
                                    xi_LGL))
 
 

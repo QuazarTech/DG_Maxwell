@@ -65,6 +65,7 @@ def mapping_xi_to_x(x_nodes, xi):
     x : arrayfire.Array
         :math: `x` value in the element corresponding to :math:`\\xi`.
     '''
+
     N_0 = (1 - xi) / 2
     N_1 = (1 + xi) / 2
     
@@ -78,6 +79,7 @@ def mapping_xi_to_x(x_nodes, xi):
 
 def dx_dxi_numerical(x_nodes, xi):
     '''
+
     Differential :math: `\\frac{dx}{d \\xi}` calculated by central
     differential method about xi using the mapping_xi_to_x function.
     
@@ -96,6 +98,7 @@ def dx_dxi_numerical(x_nodes, xi):
     dx_dxi : arrayfire.Array [N_Elements 1 1 1]
              :math:`\\frac{dx}{d \\xi}`. 
     '''
+
     dxi = 1e-7
     x2  = mapping_xi_to_x(x_nodes, xi + dxi)
     x1  = mapping_xi_to_x(x_nodes, xi - dxi)
@@ -107,13 +110,14 @@ def dx_dxi_numerical(x_nodes, xi):
 
 def dx_dxi_analytical(x_nodes, xi):
     '''
+
     The analytical result for :math:`\\frac{dx}{d \\xi}` for a 1D element is
     :math: `\\frac{x_1 - x_0}{2}`
     
     Parameters
     ----------
 
-    x_nodes : arrayfire.Array [N_Elements 1 1 1]
+    x_nodes : arrayfire.Array [2 N_Elements 1 1]
               Contains the nodes of elements.
  
     xi      : arrayfire.Array [N_LGL 1 1 1]
@@ -138,7 +142,7 @@ def A_matrix():
     Calculates A matrix whose elements :math:`A_{p i}` are given by
     :math: `A_{p i} &= \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
 
-    The integrals are computed using the Integrate() function.
+    The integrals are computed using the integrate() function.
     Since elements are taken to be of equal size, :math: `\\frac {dx}{dxi}
     is same everywhere
     
@@ -147,7 +151,7 @@ def A_matrix():
 
     A_matrix : arrayfire.Array [N_LGL N_LGL 1 1]
                The value of integral of product of lagrange basis functions
-               obtained by LGL points, using the Integrate() function
+               obtained by LGL points, using the integrate() function
 
     '''
     # Coefficients of Lagrange basis polynomials.
@@ -163,7 +167,7 @@ def A_matrix():
 
 
     dx_dxi   = params.dx_dxi 
-    A_matrix = dx_dxi * af.moddims(lagrange.Integrate(lag_prod_coeffs),\
+    A_matrix = dx_dxi * af.moddims(lagrange.integrate(lag_prod_coeffs),\
                                              params.N_LGL, params.N_LGL)
     
     return A_matrix
@@ -207,7 +211,7 @@ def volume_integral_flux(u_n):
     This integral is carried out using the analytical form of the integrand
     obtained as a linear combination of Lagrange basis polynomials.
 
-    This integrand is the used in the Integrate() function.
+    This integrand is the used in the integrate() function.
 
     Calculation of volume integral flux using N_LGL Lobatto quadrature points
     can be vectorized and is much faster.
@@ -242,11 +246,12 @@ def volume_integral_flux(u_n):
     dLp_dxi      = af.matmul(diff_lag_coeff, nodes_weight)
 
 
-    
+    # The first option to calculate the volume integral term, directly uses
+    # the Lobatto quadrature instead of using the integrate() function by
+    # passing the coefficients of the Lagrange interpolated polynomial.
     if(params.volume_integral_scheme == 'lobatto_quadrature'\
         and params.N_quad == params.N_LGL):
 
-        #print('option1')
         # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
         F_u_n                  = af.reorder(flux_x(u_n), 2, 0, 1)
 
@@ -255,10 +260,11 @@ def volume_integral_flux(u_n):
                                  dLp_dxi, F_u_n)
 
         # Using the quadrature rule.
-        flux_integral          = af.sum(integral_expansion, 1)
-        flux_integral          = af.reorder(flux_integral, 0, 2, 1)
+        flux_integral = af.sum(integral_expansion, 1)
+        flux_integral = af.reorder(flux_integral, 0, 2, 1)
 
-
+    # Using the integrate() function to calculate the volume integral term
+    # by passing the Lagrange interpolated polynomial.
     else:
         #print('option3')
         analytical_flux_coeffs = flux_x(lagrange.\
@@ -268,7 +274,7 @@ def volume_integral_flux(u_n):
 
         dl_dxi_coefficients    = af.reorder(params.dl_dxi_coeffs, 1, 0)
 
-
+        # The product of polynomials is calculated using af.convolve1
         volume_int_coeffs = af.convolve1(dl_dxi_coefficients,\
                                          analytical_flux_coeffs,\
                                          conv_mode=af.CONV_MODE.EXPAND)
@@ -278,7 +284,7 @@ def volume_integral_flux(u_n):
                                        2 * params.N_LGL - 2)
 
 
-        flux_integral = lagrange.Integrate(volume_int_coeffs)
+        flux_integral = lagrange.integrate(volume_int_coeffs)
         flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
 
 
@@ -456,7 +462,12 @@ def RK6_timestepping(A_inverse, u, delta_t):
                                          - (11 / 40) * k5)\
                                          * delta_t,             ))
 
-    delta_u = delta_t * 1 / 5 * ((16 / 27) * k1 + (6656 / 2565) * k3 + (28561 / 11286) * k4 - (9 / 10) * k5 + (2 / 11) * k6)
+    delta_u = delta_t * 1 / 5 * (   (16 / 27)       * k1\
+                                  + (6656 / 2565)   * k3\
+                                  + (28561 / 11286) * k4\
+                                  - (9 / 10)        * k5\
+                                  + (2 / 11)        * k6\
+                                )
 
     return delta_u
 
@@ -478,15 +489,18 @@ def time_evolution():
     Returns
     -------
 
-    L1_norm : float64 
-              The L1 norm of error after one full advection.
+    u_diff : arrayfire.Array [N_LGL N_Elements 1 1]
+             The absolute of the difference between the numerical
+             and analytical value of u at the LGL points.
 
     '''
+
     # Creating a folder to store hdf5 files. If it doesn't exist.
-    results_directory = 'results/hdf5_%02d' %int(params.N_LGL)
+    results_directory = 'results/hdf5_%02d' %(int(params.N_LGL))
             
     if not os.path.exists(results_directory):
         os.makedirs(results_directory)
+
 
     A_inverse   = af.inverse(A_matrix())
     element_LGL = params.element_LGL
@@ -498,8 +512,8 @@ def time_evolution():
 
     for t_n in trange(0, time.shape[0]):
 
-        # Storing u at timesteps which are multiples of 20.
-        if (t_n % 100) == 0:
+        # Storing u at timesteps which are multiples of 100.
+        if (t_n % 20) == 0:
             h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
             dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
 
@@ -520,9 +534,35 @@ def time_evolution():
 
     u_analytical = analytical_u_LGL(t_n + 1)
 
+    u_diff = af.abs(u - u_analytical)
 
 
-    return af.mean(af.abs(u - u_analytical))
+    return u_diff
+
+
+def L1_norm(u):
+    '''
+    A function to calculate the L1 norm of error using
+    the polynomial obtained using Lagrange interpolation
+
+    Parameters
+    ----------
+    u : arrayfire.Array [N_LGL N_Elements 1 1]
+        Difference between analytical and numerical u at the mapped LGL points.
+
+    Returns
+    -------
+    L1_norm : float64
+              The L1 norm of error.
+
+    '''
+    interpolated_coeffs = af.reorder(lagrange.lagrange_interpolation_u(\
+                                           u), 2, 1, 0)
+
+    L1_norm = af.sum(lagrange.integrate(interpolated_coeffs))
+
+    return L1_norm
+
 
 
 def change_parameters(LGL, Elements, quad, wave='sin'):
@@ -654,10 +694,10 @@ def convergence_test():
     for i in range(0, 15):
         change_parameters(i + 3, 15, i + 3)
         u_diff = time_evolution()
-        L1_norm_option_1[i] = (u_diff)
+        L1_norm_option_1[i] = L1_norm(u_diff)
         change_parameters(i + 3, 15, i + 4) 
         u_diff = time_evolution()
-        L1_norm_option_3[i] = (u_diff)
+        L1_norm_option_3[i] = L1_norm(u_diff)
 
 
     print(L1_norm_option_1, L1_norm_option_3)
@@ -667,7 +707,8 @@ def convergence_test():
     plt.xlabel('No. of LGL points')
     plt.ylabel('L1 norm of error')
     plt.title('L1 norm after 1 full advection')
-    plt.loglog(N_lgl, normalization * N_lgl **(-N_lgl), color='black', linestyle='--', label='$N_{LGL}^{-N_{LGL}}$')
+    plt.loglog(N_lgl, normalization * N_lgl **(-N_lgl), color='black',\
+                          linestyle='--', label='$N_{LGL}^{-N_{LGL}}$')
     plt.legend(loc='best')
 
     plt.show()
@@ -681,7 +722,8 @@ def analytical_volume_integral(x_nodes, p):
     dlp_dxi = params.differential_lagrange_polynomial[p]
 
     def F_u(x):
-        analytical_flux = flux_x(np.sin(2* np.pi*((x_nodes[1] - x_nodes[0]) * x/2 + (x_nodes[0] + x_nodes[1]) / 2))) * dlp_dxi(x)
+        analytical_flux = flux_x(np.sin(2* np.pi*((x_nodes[1] - x_nodes[0])\
+                       * x/2 + (x_nodes[0] + x_nodes[1]) / 2))) * dlp_dxi(x)
         return analytical_flux
     
     analytical_integral = integrate.quad(F_u, -1, 1)[0]
@@ -701,9 +743,12 @@ def volume_int_convergence():
         vol_int_analytical = np.zeros([params.N_Elements, params.N_LGL])
         for j in range (params.N_Elements):
             for k in range (params.N_LGL):
-                vol_int_analytical[j][k] = (analytical_volume_integral(af.transpose(params.element_array[j]), k))
-        vol_int_analytical = af.transpose(af.np_to_af_array(vol_int_analytical))
-        L1_norm_option_3[i] = (af.mean(af.abs(vol_int_analytical - volume_integral_flux(params.u_init, 0))))
+                vol_int_analytical[j][k] = (analytical_volume_integral\
+                             (af.transpose(params.element_array[j]), k))
+        vol_int_analytical = af.transpose(af.np_to_af_array\
+                                                   (vol_int_analytical))
+        L1_norm_option_3[i] = af.mean(af.abs(vol_int_analytical\
+                                      - volume_integral_flux(params.u_init, 0)))
 
 
     for i in range(0, 15):
@@ -711,9 +756,11 @@ def volume_int_convergence():
         vol_int_analytical = np.zeros([params.N_Elements, params.N_LGL])
         for j in range (params.N_Elements):
             for k in range (params.N_LGL):
-                vol_int_analytical[j][k] = (analytical_volume_integral(af.transpose(params.element_array[j]), k))
-        vol_int_analytical = af.transpose(af.np_to_af_array(vol_int_analytical))
-        L1_norm_option_1[i] = (af.mean(af.abs(vol_int_analytical - volume_integral_flux(params.u_init, 0))))
+                vol_int_analytical[j][k] = analytical_volume_integral(\
+                                           af.transpose(params.element_array[j]), k)
+        vol_int_analytical  = af.transpose(af.np_to_af_array(vol_int_analytical))
+        L1_norm_option_1[i] = af.mean(af.abs(vol_int_analytical\
+                                      - volume_integral_flux(params.u_init, 0)))
     normalization = 0.0023187 / (3 ** (-3))
 
 
