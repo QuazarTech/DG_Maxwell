@@ -89,6 +89,7 @@ def test_dx_dxi():
     differential would be a constant. The check has a tolerance 1e-7.
     '''
     threshold = 1e-9
+    wave_equation.change_parameters(8, 10, 11, 'gaussian')
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
@@ -125,6 +126,8 @@ def test_lagrange_coeffs():
     `https://goo.gl/6EFX5S`
     '''
     threshold = 6e-10
+
+    wave_equation.change_parameters(8, 10, 11, 'gaussian')
     basis_array_analytical = np.zeros([8, 8])
     
     basis_array_analytical[0] = np.array([-3.351562500008004,\
@@ -207,6 +210,8 @@ def test_A_matrix():
     '''
     threshold = 1e-8
     
+
+    wave_equation.change_parameters(8, 10, 11, 'gaussian')
     reference_A_matrix = params.dx_dxi * af.interop.np_to_af_array(np.array([\
 
     [0.03333333333332194, 0.005783175201965206, -0.007358427761753982, \

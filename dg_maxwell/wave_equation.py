@@ -423,6 +423,26 @@ def b_vector(u_n):
 
 def RK4_timestepping(A_inverse, u, delta_t):
     '''
+
+    Implementing the Runge-Kutta (RK4) method to evolve the wave.
+
+    Parameters
+    ----------
+    A_inverse : arrayfire.Array[N_LGL N_LGL 1 1]
+                The inverse of the A matrix which was calculated
+                using A_matrix() function.
+
+    u         : arrayfire.Array[N_LGL N_Elements 1 1]
+                u at the mapped LGL points
+
+    delta_t   : float64
+                The time-step by which u is to be evolved.
+
+    Returns
+    -------
+    delta_u : arrayfire.Array [N_LGL N_Elements 1 1]
+              The change in u at the mapped LGL points.
+
     '''
 
     k1 = af.matmul(A_inverse, b_vector(u                   ))
@@ -436,6 +456,26 @@ def RK4_timestepping(A_inverse, u, delta_t):
 
 def RK6_timestepping(A_inverse, u, delta_t):
     '''
+
+    Implementing the Runge-Kutta (RK4) method to evolve the wave.
+
+    Parameters
+    ----------
+    A_inverse : arrayfire.Array[N_LGL N_LGL 1 1]
+                The inverse of the A matrix which was calculated
+                using A_matrix() function.
+
+    u         : arrayfire.Array[N_LGL N_Elements 1 1]
+                u at the mapped LGL points
+
+    delta_t   : float64
+                The time-step by which u is to be evolved.
+
+    Returns
+    -------
+    delta_u : arrayfire.Array [N_LGL N_Elements 1 1]
+              The change in u at the mapped LGL points.
+
     '''
 
     k1 = af.matmul(A_inverse, b_vector(u                      ))
@@ -718,6 +758,8 @@ def convergence_test():
 
 def analytical_volume_integral(x_nodes, p):
     '''
+    Computes the volume integral analytically for a sin(2 * pi * x) wave from
+    -1 to 1.
     '''
     dlp_dxi = params.differential_lagrange_polynomial[p]
 
