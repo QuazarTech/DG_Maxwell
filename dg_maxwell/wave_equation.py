@@ -639,19 +639,6 @@ def change_parameters(LGL, Elements, quad, wave='sin'):
 
     return
 
-def L1_norm_error(mod_diff_u):
-    '''
-    '''
-    wave_equation_coeffs = np.zeros([params.N_Elements, params.N_LGL])
-
-    for i in range(0, params.N_Elements):
-        wave_equation_coeffs[i, :] = lagrange.wave_equation_lagrange(mod_diff_u)[i].c
-
-    L1_norm = af.sum(lagrange.Integrate(af.np_to_af_array\
-                                       (wave_equation_coeffs))) * params.dx_dxi
-
-    return L1_norm
-
 
 def convergence_test():
     '''
@@ -687,25 +674,6 @@ def convergence_test():
 
     return
 
-
-
-#    def test_function(x):
-#        '''
-#        The test wave function.
-#        '''
-#        return np.sin(2 * np.pi * x)
-#
-#    def int_sin2pix_dLdxi(x_nodes, xi_LGL, lagrange_basis_order):
-#        '''
-#        '''
-#        L_i, temp = lagrange.lagrange_polynomials(xi_LGL)
-#        
-#        def sin2pix_dLdxi(xi):
-#            x = (((x_nodes[1] - x_nodes[0]) * xi + (x_nodes[1] + x_nodes[0]))) / 2
-#            return np.sin(2 * np.pi * x) * L_i[lagrange_basis_order].deriv()(xi)
-#        
-#        return integrate.quad(sin2pix_dLdxi, -1, 1)[0]
-#
 
 def analytical_volume_integral(x_nodes, p):
     '''
