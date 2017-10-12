@@ -6,11 +6,12 @@ python:
     - "3.5"
 
 addons:
-    apt:
-      packages:
-        - cmake
-      sources:
-        - kalakris-cmake
+  apt:
+    sources:
+      - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
+    packages:
+      - cmake
+      - cmake-data
 
 
 # command to install dependencies
