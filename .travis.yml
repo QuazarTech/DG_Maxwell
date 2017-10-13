@@ -45,7 +45,7 @@ before_install:
     - mkdir build 
     - cd build
     - cmake .. -DCMAKE_BUILD_TYPE=Release  -DCMAKE_INSTALL_PREFIX=package -DBUILD_GRAPHICS=OFF
-    - make -j64
+    - make -j8
     - sudo make install
     - cd package
     - export AF_PATH=$PWD
