@@ -17,6 +17,8 @@ before_install:
     - ./bootstrap
     - make -j4
     - sudo make install
+    - cd ..
+    - cd ..
     - ls -al
     - pwd
     - cd ..
@@ -61,6 +63,9 @@ before_install:
     - sudo pip install -e .
     - cd ..
     - pip install virtualenv
+    - pwd
+    - ls -al
+    - cd DG_Maxwell
     - pwd
     - ls
     - virtualenv venv 
