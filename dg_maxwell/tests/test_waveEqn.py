@@ -514,7 +514,7 @@ def test_advection():
     change_parameters(10, 10, 11, 'sin')
 
     u_diff  = wave_equation.time_evolution()
-    L1_norm = wave_equation.L1_norm(u_diff)
+    L1_norm = lagrange.L1_norm(u_diff)
 
     assert(L1_norm <= threshold)
 
