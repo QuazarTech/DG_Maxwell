@@ -1,6 +1,9 @@
+#! /usr/bin/env python3
+
 from dg_maxwell import wave_equation
-from dg_maxwell import params
 from dg_maxwell import lagrange
 
-u_diff = wave_equation.time_evolution()
-print(wave_equation.L1_norm(u_diff))
+
+if __name__ == '__main__':
+    u_diff = wave_equation.time_evolution()
+    print(lagrange.L1_norm(u_diff))

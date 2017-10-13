@@ -124,3 +124,5 @@ if (wave=='gaussian'):
 u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
                                  dtype = af.Dtype.f64)
 u[:, :, 0] = u_init
+
+

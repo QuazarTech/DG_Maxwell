@@ -276,6 +276,7 @@ def integrate(integrand_coeffs):
     Integral : arrayfire.Array [M 1 1 1]
                The value of the definite integration performed using the
                specified quadrature method for M polynomials.
+
     '''
 
 
@@ -283,10 +284,10 @@ def integrate(integrand_coeffs):
 
     if (params.scheme == 'gauss_quadrature'):
         #print('gauss_quad')
-        
+
         gaussian_nodes = params.gauss_points
         Gauss_weights  = params.gauss_weights
-        
+
         nodes_tile   = af.transpose(af.tile(gaussian_nodes, 1, integrand.shape[1]))
         power        = af.flip(af.range(integrand.shape[1]))
         nodes_power  = af.broadcast(utils.power, nodes_tile, power)
@@ -308,19 +309,27 @@ def integrate(integrand_coeffs):
         weights_tile = af.transpose(af.tile(Lobatto_weights, 1, integrand.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
-        
+
         value_at_lobatto_nodes = af.matmul(integrand, nodes_weight)
         integral               = af.sum(value_at_lobatto_nodes, 1)
 
-    
+
     return integral
 
 
 
 def lagrange_interpolation_u(u):
     '''
+
     Calculates the coefficients of the Lagrange interpolation using
     the value of u at the mapped LGL points in the domain.
+
+    The interpolation using the Lagrange basis polynomials is given by
+
+    :math:`L_i(\\xi) u_i(\\xi)`
+
+    Where L_i are the Lagrange basis polynomials and u_i is the value
+    of u at the LGL points.
 
     Parameters
     ----------
@@ -333,10 +342,37 @@ def lagrange_interpolation_u(u):
                                    The coefficients of the polynomials obtained
                                    by Lagrange interpolation. Each polynomial
                                    is of order N_LGL - 1.
+
     '''
-    lagrange_coeffs_tile = af.tile(params.lagrange_coeffs, 1, 1, params.N_Elements)
+    lagrange_coeffs_tile = af.tile(params.lagrange_coeffs, 1, 1,\
+                                               params.N_Elements)
     reordered_u          = af.reorder(u, 0, 2, 1)
 
-    lagrange_interpolated_coeffs = af.sum(af.broadcast(utils.multiply, reordered_u, lagrange_coeffs_tile), 0)
+    lagrange_interpolated_coeffs = af.sum(af.broadcast(utils.multiply,\
+                                             reordered_u, lagrange_coeffs_tile), 0)
 
     return lagrange_interpolated_coeffs
+
+
+def L1_norm(u):
+    '''
+    A function to calculate the L1 norm of error using
+    the polynomial obtained using Lagrange interpolation
+
+    Parameters
+    ----------
+    u : arrayfire.Array [N_LGL N_Elements 1 1]
+        Difference between analytical and numerical u at the mapped LGL points.
+
+    Returns
+    -------
+    L1_norm : float64
+              The L1 norm of error.
+
+    '''
+    interpolated_coeffs = af.reorder(lagrange_interpolation_u(\
+                                           u), 2, 1, 0)
+
+    L1_norm = af.sum(integrate(interpolated_coeffs))
+
+    return L1_norm
