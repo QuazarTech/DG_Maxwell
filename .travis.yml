@@ -8,7 +8,16 @@ python:
 
 # command to install dependencies
 before_install:
-    - sudo apt-get install cmake
+    - sudo apt-get purge cmake
+    - mkdir ~/temp
+    - cd ~/temp
+    - wget https://cmake.org/files/v3.9/cmake-3.9.4.tar.gz
+    - tar -xzvf cmake-3.9.4.tar.gz
+    - cd cmake-3.9.4/
+    - ./bootstrap
+    - make -j4
+    - sudo make install
+    - cmake -- version
     - ls -al
     - pwd
     - cd ..
