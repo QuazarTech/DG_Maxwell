@@ -21,7 +21,7 @@ before_install:
     - sudo make install
     - pwd
     - ls
-    - cd ~/build/Balavarun5/DG_Maxwell
+    - cd ~/build/QuazarTech/DG_Maxwell
     - ls -al
     - pwd
     - cd ..
