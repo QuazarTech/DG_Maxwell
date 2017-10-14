@@ -12,6 +12,9 @@ before_install:
     - cd ..
     - ls -al
     - sudo apt-get update -qq
+    - sudo apt-get remove cmake-curses-gui cmake
+    - wget http://mirrors.kernel.org/ubuntu/pool/universe/c/cmake3/cmake3_3.5.1-1ubuntu3~14.04.1_i386.deb
+    - sudo dpkg -i cmake3_3.5.1-1ubuntu3~14.04.1_i386.deb
     - sudo apt-get install -qq build-essential git libfreeimage-dev cmake-curses-gui
     - cmake --version
     - sudo apt-get install -qq libopenblas-dev libfftw3-dev liblapacke-dev libboost-all-dev
