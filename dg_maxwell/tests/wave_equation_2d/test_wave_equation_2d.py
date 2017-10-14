@@ -21,7 +21,7 @@ def test_dx_dxi():
     calculated using the function :math:`dg_maxwell.wave_equation_2d.dx_dxi`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
-    :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
+    :download:`link <../dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
     threshold = 1e-7
     
@@ -51,7 +51,7 @@ def test_dx_deta():
     calculated using the function :math:`dg_maxwell.wave_equation_2d.dx_deta`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
-    :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
+    :download:`link <../dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
     
     threshold = 1e-7
@@ -83,7 +83,7 @@ def test_dy_dxi():
     calculated using the function :math:`dg_maxwell.wave_equation_2d.dy_dxi`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
-    :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
+    :download:`link <../dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
     threshold = 1e-7
     
@@ -114,7 +114,7 @@ def test_dy_deta():
     calculated using the function :math:`dg_maxwell.wave_equation_2d.dy_deta`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
-    :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
+    :download:`link <../dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
     
     threshold = 1e-7
@@ -146,7 +146,7 @@ def test_jacobian():
     calculated using the function :math:`dg_maxwell.wave_equation_2d.jacobian`
     for the :math:`0^{th}` element of a mesh for a circular ring. You may
     download the file from this
-    :download:`link <dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
+    :download:`link <../dg_maxwell/tests/wave_equation_2d/files/circle.msh>`.
     '''
     
     threshold = 1e-7

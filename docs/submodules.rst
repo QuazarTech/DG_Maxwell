@@ -21,3 +21,5 @@ Submodules
 |:ref:`wave_equation_2d` | Functions related to time_evolution of         |
 |                        | 2D wave equation.                              |
 +------------------------+------------------------------------------------+
+|:ref:`unit_tests`       | Unit tests                                     |
++------------------------+------------------------------------------------+

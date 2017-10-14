@@ -194,7 +194,7 @@ def csv_to_numpy(filename, delimeter_ = ','):
                     print('popping string')
                 break
     
-    content = np.array(content)
+    content = np.array(content, dtype = np.float64)
     
     return content
 
@@ -220,3 +220,36 @@ def af_meshgrid(arr_0, arr_1):
     Arr_1 = af.data.tile(arr_1, d0 = 1, d1 = arr_0.shape[0])
     
     return Arr_0, Arr_1
+
+
+def outer_prod(a, b):
+    '''
+    Calculates the outer product of two matrices.
+    
+    Parameters
+    ----------
+    a : af.Array [N_a N 1 1]
+    
+    b : af.Array [N_b N 1 1]
+    
+    Returns
+    -------
+    
+    af.Array [N_a N_b N 1]
+    Outer product of two elements
+    
+    '''
+    a_n1 = a.shape[0]
+    a_n2 = a.shape[1]
+
+    b_n1 = b.shape[0]
+    b_n2 = b.shape[1]
+    
+    a_reorder = af.reorder(a, d0 = 0, d1 = 2, d2 = 1)
+    b_reorder = af.reorder(b, d0 = 0, d1 = 2, d2 = 1)
+    b_reorder = af.transpose(b_reorder)
+    
+    a_tile = af.tile(a_reorder, d0 = 1, d1 = b.shape[0])
+    b_tile = af.tile(b_reorder, d0 = a.shape[0])
+    
+    return a_tile * b_tile
