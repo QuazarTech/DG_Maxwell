@@ -327,7 +327,7 @@ def test_A_matrix():
     threshold = 1e-8
     
 
-    change_parameters(8, 10, 10, 'gaussian')
+    change_parameters(8, 10, 8, 'gaussian')
     reference_A_matrix = params.dx_dxi * af.interop.np_to_af_array(np.array([\
 
     [0.03333333333332194, 0.005783175201965206, -0.007358427761753982, \
