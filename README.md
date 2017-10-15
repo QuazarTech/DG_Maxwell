@@ -86,9 +86,12 @@ To run the unit tests, enter the following commands
 $ cd path/to/the/DG_Maxwell/repo
 $ pytest --verbose -r P --color=yes
 ```
-
+* The parameters of the simulation are stored in params.py in
+  the app folder, These can be changed accordingly.
+  
+* The images of the wave are stored in the `1D_wave_images` folder.
 
 ## Maintainers
 - Aman Abhishek Tiwari - ![aman@quazartech.com](aman@quazartech.com)
-- Balavarun P - ![Github Profile](https://github.com/balavarun5)
+- Balavarun P - ![f2013462@pilani.bits-pilani.ac.in](f2013462@pilani.bits-pilani.ac.in)
 - Manichandra Morumpudi - ![mani@quazartech.com](mani@quazartech.com)
