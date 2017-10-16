@@ -202,3 +202,5 @@ examples/results
 
 *.kate-swp
 
+*.ipynb_checkpoints*
+
