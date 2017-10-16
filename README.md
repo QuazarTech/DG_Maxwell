@@ -82,13 +82,17 @@ The unit tests are located in the
 
 ### Running Unit Tests
 To run the unit tests, enter the following commands
-```bash
-$ cd path/to/the/DG_Maxwell/repo
-$ pytest --verbose -r P --color=yes
 ```
-
+$ cd path/to/the/DG_Maxwell/repo
+$ pytest
+```
+* The parameters of the simulation are stored in params.py in
+  the app folder, These can be changed accordingly.
+  
+* To obtain the movie of the 1D wave advection, run `post_processing.py` file after the simulation.
+  The movie will be created automatically and stored in `results` folder.
 
 ## Maintainers
 - Aman Abhishek Tiwari - ![aman@quazartech.com](aman@quazartech.com)
-- Balavarun P - ![Github Profile](https://github.com/balavarun5)
+- Balavarun P - ![f2013462@pilani.bits-pilani.ac.in](f2013462@pilani.bits-pilani.ac.in)
 - Manichandra Morumpudi - ![mani@quazartech.com](mani@quazartech.com)
