@@ -239,31 +239,29 @@ def outer_prod(a, b):
     Outer product of two elements
     
     '''
-    a_n1 = a.shape[0]
-    b_n1 = b.shape[0]
+    
+    if id(a) == id(b):
+        array_a = a.copy()
+        array_b = b.copy()
+    else:
+        array_a = a
+        array_b = b
+
+    a_n1 = array_a.shape[0]
+    b_n1 = array_b.shape[0]
     
     if (a.numdims() == 1) & (b.numdims() == 1):
         a_n2 = 1
         b_n2 = 1
     else:
-        a_n2 = a.shape[1]
-        b_n2 = b.shape[1]
+        a_n2 = array_a.shape[1]
+        b_n2 = array_b.shape[1]
         
-    a_reorder = af.reorder(a, d0 = 0, d1 = 2, d2 = 1)
-    b_reorder = af.reorder(b, d0 = 0, d1 = 2, d2 = 1)
+    a_reorder = af.reorder(array_a, d0 = 0, d1 = 2, d2 = 1)
+    b_reorder = af.reorder(array_b, d0 = 0, d1 = 2, d2 = 1)
     b_reorder = af.transpose(b_reorder)
-
-    print('outer_prod a_reorder')
-    print(a_reorder)
-
-    print('outer_prod b_reorder')
-    print(b_reorder)
 
     a_tile = af.tile(a_reorder, d0 = 1, d1 = b_n1)
     b_tile = af.tile(b_reorder, d0 = a_n1)
     
-    print('outer_prod a_tile')
-    print(a_tile)
-    print('outer_prod b_tile')
-    print(b_tile)
     return a_tile * b_tile
