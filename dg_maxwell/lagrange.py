@@ -376,3 +376,39 @@ def L1_norm(u):
     L1_norm = af.sum(integrate(interpolated_coeffs))
 
     return L1_norm
+
+
+def Li_basis_value(L_basis, i, xi):
+    '''
+    Finds the value of the :math:`i^{th}` Lagrange basis polynomial
+    at the given :math:`\\xi` coordinates.
+    
+    Parameters
+    ----------
+    L_basis : af.Array [N_LGL N_LGL 1 1]
+              Lagrange basis polynomial coefficient array
+              
+    i       : af.Array [N 1 1 1]
+              Index of the Lagrange basis polynomials
+              to be evaluated.
+              
+    xi      : af.Array [N 1 1 1]
+              :math:`\\xi` coordinates at which the :math:`i^{th}` Lagrange
+              basis polynomial is to be evaluated.
+              
+    Returns
+    -------
+    af.Array [i.shape[0] xi.shape[0] 1 1]
+        Evaluated :math:`i^{th}` lagrange basis polynomials at given
+        :math:`\\xi` coordinates
+    '''
+    
+    N_LGL = int(L_basis.shape[0])
+    xi_   = af.tile(af.transpose(xi), d0 = N_LGL)
+    power = af.tile(af.flip(af.np_to_af_array(np.arange(N_LGL)), dim = 0),
+                    d0 = 1, d1 = xi.shape[0])
+    
+    xi_power = xi_**power
+    
+    return af.matmul(L_basis[i], xi_power)
+>>>>>>> 300c80f5ea445766b9b6e5579a6edef6c747d9fc

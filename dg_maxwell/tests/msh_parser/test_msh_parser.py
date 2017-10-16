@@ -15,7 +15,7 @@ from dg_maxwell import msh_parser
 def test_read_order_2_msh():
     '''
     This test reads the mesh
-    :download:`rectangular.msh <./2d_solver/tests/msh_parser/mesh/rectangular.msh>`
+    :download:`rectangular.msh <../dg_maxwell/tests/msh_parser/mesh/rectangular.msh>`
     and stores them in the variables nodes and elements. The variables nodes
     and elements are compared against the test_nodes and test_elements
     respectively, which are created by manually reading the mesh file.
