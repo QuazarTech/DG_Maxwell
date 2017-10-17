@@ -4,10 +4,11 @@
 import numpy as np
 from scipy import special as sp
 import arrayfire as af
-af.set_backend('cpu')
 
 from dg_maxwell import utils
 from dg_maxwell import params
+
+af.set_backend(params.backend)
 
 def LGL_points(N):
     '''

@@ -4,11 +4,12 @@
 import numpy as np
 from scipy import special as sp
 import arrayfire as af
-af.set_backend('cpu')
 
 from dg_maxwell import utils
 from dg_maxwell import params
 from dg_maxwell import lagrange
+
+af.set_backend(params.backend)
 
 def test_Li_basis_value():
     '''

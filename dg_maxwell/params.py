@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+
 import arrayfire as af
-af.set_backend('cpu')
+backend = 'cpu'
+af.set_backend(backend)
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils
 from dg_maxwell import isoparam
 from dg_maxwell import wave_equation
-
+from dg_maxwell import params
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))

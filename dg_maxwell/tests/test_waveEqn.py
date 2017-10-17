@@ -7,13 +7,15 @@ sys.path.insert(0, os.path.abspath('./'))
 
 import numpy as np
 import arrayfire as af
-af.set_backend('cpu')
+
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
 from dg_maxwell import wave_equation
 from dg_maxwell import isoparam
 from dg_maxwell import utils
+
+af.set_backend(params.backend)
 
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 

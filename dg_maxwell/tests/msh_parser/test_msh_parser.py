@@ -6,11 +6,12 @@ import sys
 sys.path.insert(0, os.path.abspath('./'))
 
 import arrayfire as af
-af.set_backend('cpu')
-
 import numpy as np
 
 from dg_maxwell import msh_parser
+from dg_maxwell import params
+
+af.set_backend(params.backend)
 
 def test_read_order_2_msh():
     '''

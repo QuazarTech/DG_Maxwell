@@ -8,6 +8,10 @@ import matplotlib.lines as lines
 import arrayfire as af
 af.set_backend('cpu')
 
+from dg_maxwell import params
+
+af.set_backend(params.backend)
+
 def add(a, b):
     '''
 

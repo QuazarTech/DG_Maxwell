@@ -4,7 +4,6 @@
 import os
 
 import arrayfire as af
-af.set_backend('cpu')
 import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import trange
@@ -15,6 +14,8 @@ from dg_maxwell import params
 from dg_maxwell import lagrange
 from dg_maxwell import utils
 from dg_maxwell import isoparam
+
+af.set_backend(params.backend)
 
 plt.rcParams['figure.figsize'  ] = 9.6, 6.
 plt.rcParams['figure.dpi'      ] = 100
