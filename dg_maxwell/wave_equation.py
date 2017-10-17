@@ -154,6 +154,7 @@ def A_matrix():
                obtained by LGL points, using the integrate() function
 
     '''
+
     # Coefficients of Lagrange basis polynomials.
     lagrange_coeffs = params.lagrange_coeffs
     lagrange_coeffs = af.reorder(lagrange_coeffs, 1, 2, 0)

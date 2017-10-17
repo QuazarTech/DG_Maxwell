@@ -126,3 +126,19 @@ u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
 u[:, :, 0] = u_init
 
 
+
+
+
+
+
+# The parameters below are for 2D advection
+# -----------------------------------------
+
+#    2D_LGL_xi  = N_LGL
+#    2D_eta_LGL = N_LGL
+#    2D_xi_LGL  = lagrange.LGL_points(2D_LGL_xi)
+#    2D_eta_LGL = lagrange.LGL_points(2D_LGL_eta)
+#
+#    N_quad_xi = N_quad
+#
+#    N_quad_eta = N_quad

@@ -321,6 +321,7 @@ def integrate_2D(f_coeffs, g_coeffs):
     '''
     Parameters
     ----------
+
     '''
 
     if (params.scheme == 'gauss_quadrature'):
@@ -335,8 +336,11 @@ def integrate_2D(f_coeffs, g_coeffs):
         weights_tile = af.transpose(af.tile(Gauss_weights, 1, f_coeffs.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
-        value_at_gauss_nodes_f = af.matmul(integrand, nodes_weight)
-
+        value_at_gauss_nodes_f = af.matmul(f_coeffs, nodes_weight)
+        value_at_gauss_nodes_f = af.tile(value_at_gauss_nodes_f, 1, 1, f_coeffs.shape[0])
+        value_gauss_nodes_f = af.reorder(value_at_gauss_nodes_f, 2, 1, 0)
+        value_gauss_nodes_f = af.reorder(value_gauss_nodes_f, 0, 2, 1)
+        value_gauss_nodes_f = af.moddims(value_gauss_nodes_f, f_coeffs.shape[0] ** 2, params.N_quad)
 
         nodes_tile   = af.transpose(af.tile(gaussian_nodes, 1, g_coeffs.shape[1]))
         power        = af.flip(af.range(g_coeffs.shape[1]))
@@ -344,9 +348,17 @@ def integrate_2D(f_coeffs, g_coeffs):
         weights_tile = af.transpose(af.tile(Gauss_weights, 1, g_coeffs.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
-        value_at_gauss_nodes_g = af.matmul(integrand, nodes_weight)
+        value_at_gauss_nodes_g = af.matmul(g_coeffs, nodes_weight)
+        value_gauss_nodes_g = af.tile(value_at_gauss_nodes_g, g_coeffs.shape[0])
 
-    return
+        value_gauss_nodes_f = af.reorder(value_gauss_nodes_f, 0, 2, 1)
+
+        integral = af.broadcast(utils.multiply, value_gauss_nodes_f, value_gauss_nodes_g)
+        integral = af.sum(integral, 2)
+        integral = af.sum(integral,1)
+
+
+    return integral
 
 
 
