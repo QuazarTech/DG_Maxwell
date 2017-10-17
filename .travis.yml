@@ -55,4 +55,3 @@ install:
 script:
     - python -c "import dg_maxwell"
     - pytest --verbose -r P --color=yes
-

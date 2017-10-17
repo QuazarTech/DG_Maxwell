@@ -10,6 +10,7 @@ af.set_backend('cpu')
 
 def add(a, b):
     '''
+
     For broadcasting purposes, To sum two arrays of different
     shapes, A function which can sum two variables is required.
 
@@ -23,16 +24,19 @@ def add(a, b):
     
     Returns
     -------
-    arrayfire.Array
+    add : arrayfire.Array [N M L 1]  
           returns the sum of a and b. When used along with af.broadcast
           can be used to sum different size arrays.
+
     '''
-    return a + b
+    add = a + b
+    
+    return add
 
 
 def divide(a, b):
     '''
-    
+
     For broadcasting purposes, To divide two arrays of different
     shapes, A function which can sum two variables is required.
     
@@ -46,10 +50,11 @@ def divide(a, b):
     
     Returns
     -------
-    quotient : arrayfire.Array
-               returns the quotient a / b. When used along with af.broadcast
+    quotient : arrayfire.Array [N M L 1]
+               The quotient a / b. When used along with af.broadcast
                can be used to give quotient of two different size arrays
                by dividing elements of the broadcasted array.
+
     '''
     quotient = a / b
     
@@ -58,7 +63,7 @@ def divide(a, b):
 
 def multiply(a, b):
     '''
-       
+
     For broadcasting purposes, To divide two arrays of different
     shapes, A function which can sum two variables is required.
     
@@ -72,18 +77,19 @@ def multiply(a, b):
     
     Returns
     -------
-    product : arrayfire.Array
-              returns the quotient a / b. When used along with af.broadcast
+    product : arrayfire.Array [N M L 1]
+              The product a * b . When used along with af.broadcast
               can be used to give quotient of two different size arrays
               by multiplying elements of the broadcasted array.
+
     '''
-    product = a* b
+    product = a * b
     
     return product
 
 def power(a, b):
     '''
-       
+
     For broadcasting purposes, To divide two arrays of different
     shapes, A function which can sum two variables is required.
     
@@ -97,17 +103,21 @@ def power(a, b):
     
     Returns
     -------
-    arrayfire.Array
-              returns the quotient a / b. When used along with af.broadcast
-              can be used to give quotient of two different size arrays
-              by multiplying elements of the broadcasted array.
+    power : arrayfire.Array [N M L 1]
+            The quotient a / b. When used along with af.broadcast
+            can be used to give quotient of two different size arrays
+            by multiplying elements of the broadcasted array.
+
     '''
-    return a ** b
+    power  = a ** b
+
+    return power
 
 
 
 def linspace(start, end, number_of_points):
     '''
+
     Linspace implementation using arrayfire.
     
     Returns
@@ -115,6 +125,7 @@ def linspace(start, end, number_of_points):
     X : arrayfire.Array
         An array which contains 'number_of_points' evenly spaced points
         between 'start' and 'end'
+
     '''
     X = af.range(number_of_points, dtype = af.Dtype.f64)
     d = (end - start) / (number_of_points - 1)
@@ -125,6 +136,7 @@ def linspace(start, end, number_of_points):
 
 def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
     '''
+
     Plots curves using the given :math:`(x, y)` points. It joins the
     points using lines in the given order.
 
