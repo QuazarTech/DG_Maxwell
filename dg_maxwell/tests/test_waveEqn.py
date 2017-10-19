@@ -65,8 +65,7 @@ def change_parameters(LGL, Elements, quad, wave='sin'):
     #params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
 
     # An array containing the coefficients of the lagrange basis polynomials.
-    params.lagrange_coeffs  = af.np_to_af_array(\
-                              lagrange.lagrange_polynomials(params.xi_LGL)[1])
+    params.lagrange_coeffs  = lagrange.lagrange_polynomials(params.xi_LGL)
 
     # Refer corresponding functions.
     params.lagrange_basis_value = lagrange.lagrange_function_value\

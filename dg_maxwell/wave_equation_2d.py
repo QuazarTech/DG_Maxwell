@@ -1,7 +1,10 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import arrayfire as af
+
 from dg_maxwell import isoparam
+from dg_maxwell import params
 from dg_maxwell import lagrange
 
 def dx_dxi(x_nodes, xi, eta):
@@ -209,12 +212,35 @@ def jacobian(x_nodes, y_nodes, xi, eta):
 def A_matrix():
     '''
     '''
-    N_LGL_quad   = 9
-    xi_LGL_quad  = lagrange.gauss_nodes(N_LGL_quad)
-    eta_LGL_quad = lagrange.gauss_nodes(N_LGL_quad)
+    L_q = af.reorder(params.lagrange_coeffs, 2, 0,1)
+    L_q = af.tile(L_q, 1, params.N_LGL ** 3)
+    L_q = af.reorder(L_q, 2, 1, 0)
+
+    L_p = af.tile(params.lagrange_coeffs, 1, 1, params.N_LGL)
+    L_p = af.reorder(L_p, 1, 2, 0)
+    L_p = af.moddims(L_p, params.N_LGL, params.N_LGL ** 2)
+    L_p = af.tile(L_p, 1, params.N_LGL ** 2)
+
+    L_i = af.tile(params.lagrange_coeffs, 1, 1, params.N_LGL ** 2)
+    L_i = af.reorder(L_i, 1, 2, 0)
+    L_i = af.moddims(L_i, params.N_LGL, params.N_LGL ** 3)
+    L_i = af.tile(L_i, 1, params.N_LGL)
+
+
+    L_j = af.tile(params.lagrange_coeffs, 1, 1, params.N_LGL ** 3)
+    L_j = af.reorder(L_j, 1, 2, 0)
+    L_j = af.moddims(L_j, params.N_LGL, params.N_LGL ** 4)
+
+
+    Lp_Li_coeffs = af.transpose(af.convolve1(L_p, L_i, conv_mode=af.CONV_MODE.EXPAND))
+    Lq_Lj_coeffs = af.transpose(af.convolve1(L_q, L_j, conv_mode=af.CONV_MODE.EXPAND))
+
+
+    Integral = (lagrange.integrate_2D(Lp_Li_coeffs, Lq_Lj_coeffs))
+    Integral = af.moddims(Integral, params.N_LGL ** 2, params.N_LGL ** 2)
+ 
     
-    
-    return
+    return Integral
 
 
 

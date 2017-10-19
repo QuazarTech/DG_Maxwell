@@ -195,19 +195,18 @@ def lagrange_polynomials(x):
     '''
     X = np.array(x)
     lagrange_basis_poly   = []
-    lagrange_basis_coeffs = np.zeros([X.shape[0], X.shape[0]])
+    lagrange_basis_coeffs = af.np_to_af_array(np.zeros([X.shape[0], X.shape[0]]))
     
     for j in np.arange(X.shape[0]):
-        lagrange_basis_j = np.poly1d([1])
+        lagrange_basis_k = af.np_to_af_array(np.array([1.]))
         
         for m in np.arange(X.shape[0]):
             if m != j:
-                lagrange_basis_j *= np.poly1d([1, -X[m]]) \
-                                    / (X[j] - X[m])
-        lagrange_basis_poly.append(lagrange_basis_j)
-        lagrange_basis_coeffs[j] = lagrange_basis_j.c
+                lagrange_basis_k = af.convolve1(lagrange_basis_k,\
+                        af.np_to_af_array(np.array([1, -X[m]])/ (X[j] - X[m])), conv_mode=af.CONV_MODE.EXPAND)
+        lagrange_basis_coeffs[j] = af.transpose(lagrange_basis_k)
     
-    return lagrange_basis_poly, lagrange_basis_coeffs
+    return lagrange_basis_coeffs
 
 
 def lagrange_function_value(lagrange_coeff_array):
@@ -250,7 +249,7 @@ def lagrange_function_value(lagrange_coeff_array):
     power_tile = af.tile(power, 1, params.N_LGL)
     xi_pow     = af.arith.pow(xi_tile, power_tile)
     index      = af.range(params.N_LGL)
-    L_i        = af.blas.matmul(lagrange_coeff_array[index], xi_pow)
+    L_i        = af.blas.matmul(lagrange_coeff_array, xi_pow)
     
     return L_i
 
@@ -319,8 +318,22 @@ def integrate(integrand_coeffs):
 
 def integrate_2D(f_coeffs, g_coeffs):
     '''
+
     Parameters
     ----------
+    f_coeffs : arrayfire.Array [N M 1 1]
+               The coeffeicients of N polynomials of order M - 1 and
+               variable (say x)
+
+    g_coeffs : arrayfire.Array [N M 1 1]
+               The coeffecients of N polynomials of order M - 1 and
+               a different variable (say y)
+
+    Returns
+    -------
+    Integral : arrayfire.Array [ N 1 1 1]
+               The integral of the product of the two polynomials
+               over the two variables from -1 to 1.
 
     '''
 
@@ -337,10 +350,6 @@ def integrate_2D(f_coeffs, g_coeffs):
         nodes_weight = nodes_power * weights_tile
 
         value_at_gauss_nodes_f = af.matmul(f_coeffs, nodes_weight)
-        value_at_gauss_nodes_f = af.tile(value_at_gauss_nodes_f, 1, 1, f_coeffs.shape[0])
-        value_gauss_nodes_f = af.reorder(value_at_gauss_nodes_f, 2, 1, 0)
-        value_gauss_nodes_f = af.reorder(value_gauss_nodes_f, 0, 2, 1)
-        value_gauss_nodes_f = af.moddims(value_gauss_nodes_f, f_coeffs.shape[0] ** 2, params.N_quad)
 
         nodes_tile   = af.transpose(af.tile(gaussian_nodes, 1, g_coeffs.shape[1]))
         power        = af.flip(af.range(g_coeffs.shape[1]))
@@ -348,10 +357,9 @@ def integrate_2D(f_coeffs, g_coeffs):
         weights_tile = af.transpose(af.tile(Gauss_weights, 1, g_coeffs.shape[1]))
         nodes_weight = nodes_power * weights_tile
 
-        value_at_gauss_nodes_g = af.matmul(g_coeffs, nodes_weight)
-        value_gauss_nodes_g = af.tile(value_at_gauss_nodes_g, g_coeffs.shape[0])
+        value_gauss_nodes_g = af.matmul(g_coeffs, nodes_weight)
 
-        value_gauss_nodes_f = af.reorder(value_gauss_nodes_f, 0, 2, 1)
+        value_gauss_nodes_f = af.reorder(value_at_gauss_nodes_f, 0, 2, 1)
 
         integral = af.broadcast(utils.multiply, value_gauss_nodes_f, value_gauss_nodes_g)
         integral = af.sum(integral, 2)

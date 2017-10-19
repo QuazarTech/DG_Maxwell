@@ -59,8 +59,7 @@ lobatto_weights_quadrature = lagrange.lobatto_weights\
 
 
 # An array containing the coefficients of the lagrange basis polynomials.
-lagrange_coeffs            = af.np_to_af_array(\
-                                lagrange.lagrange_polynomials(xi_LGL)[1])
+lagrange_coeffs            = lagrange.lagrange_polynomials(xi_LGL)
 
 # Refer corresponding functions.
 lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)
