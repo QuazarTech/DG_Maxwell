@@ -281,6 +281,60 @@ def outer_prod(a, b):
     
     return a_tile * b_tile
 
+
+def matmul_3D(a, b):
+    '''
+    Finds the matrix multiplication of :math:`Q` pairs of matrices ``a`` and
+    ``b``.
+
+    Parameters
+    ----------
+    a : af,Array [M N Q 1]
+        First set of :math:`Q` :math:`2D` arrays.
+        :math:`N \neq 1 & M \neq 1`
+
+    b : af,Array [N P Q 1]
+        Second set of :math:`Q` :math:`2D` arrays.
+        :math:`P \neq 1`
+
+    Returns
+    -------
+    matmul : af.Array [M P Q 1]
+             Matrix multiplication of :math:`Q` sets of 2D arrays
+
+    '''
+    shape_a = shape(a)
+    shape_b = shape(b)
+
+    M = shape_a[0]
+    N = shape_a[1]
+    P = shape_b[1]
+    Q = shape_a[2]
+    
+    a = af.transpose(a)
+    a = af.reorder(a, d0 = 0, d1 = 3, d2 = 2, d3 = 1)
+    a = af.tile(a, d0 = 1, d1 = P)
+    b = af.tile(b, d0 = 1, d1 = 1, d2 = 1, d3 = a.shape[3])
+    
+    matmul = af.sum(a * b, dim = 0)
+    matmul = af.reorder(matmul, d0 = 3, d1 = 1, d2 = 2, d3 = 0)
+    
+    return matmul
+
+
+def shape(array):
+    '''
+    '''
+    af_shape = array.shape
+    
+    shape = [1, 1, 1, 1]
+    
+    for dim in np.arange(array.numdims()):
+        shape[dim] = af_shape[dim]
+    
+    return shape
+
+
 def polyval_1d(polynomials, xi):
     '''
     Finds the value of the polynomials at the given :math:`\\xi` coordinates.
@@ -304,9 +358,9 @@ def polyval_1d(polynomials, xi):
         Evaluated polynomials at given :math:`\\xi` coordinates
     '''
     
-    N = int(polynomials.shape[1])
+    N     = int(polynomials.shape[1])
     xi_   = af.tile(af.transpose(xi), d0 = N)
-    power = af.tile(af.flip(af.np_to_af_array(np.arange(N)), dim = 0),
+    power = af.tile(af.flip(af.range(N), dim = 0),
                     d0 = 1, d1 = xi.shape[0])
     
     xi_power = xi_**power
@@ -328,9 +382,30 @@ def polyval_2D(polynomials, x, y):
                  .. math:: P(x, y) = a_0y^Nx^0 + a_1y^{N - 1}x^1 + ... \\
                            a_2y^1x^{N - 1} + a_{N + 1}y^0x^N
                   
-    x          : af.Array [
+    x          : af.Array [Q P 1 1]
+                 :math:`x` coordinates for which the polynomials are to be
+                 evaluated
+                 
+    y          : af.Array [Q P 1 1]
+                :math:`x` coordinates for which the polynomials are to be
+                evaluated
     '''
     
+    N = int(polynomials.shape[1])
+    x = af.reorder(x, d0 = 2, d1 = 1, d2 = 0)
+    y = af.reorder(y, d0 = 2, d1 = 1, d2 = 0)
+    x = af.tile(x, d0 = N)
+    y = af.tile(y, d0 = N)
+    
+    power_y = af.tile(af.range(N), d0 = 1, d1 = x.shape[1], d2 = y.shape[2])
+    power_x = af.flip(power_y, dim = 0)
+    
+    x_power = x ** power_x
+    y_power = y ** power_y
+    
+    xy = x_power * y_power
+    
+    return af.matmul(polynomials, xy)
 
 def integrate_2d(polynomial, scheme = 'gauss'):
     '''
