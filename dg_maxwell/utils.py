@@ -6,7 +6,6 @@ import csv
 import numpy as np
 import matplotlib.lines as lines
 import arrayfire as af
-af.set_backend('cpu')
 
 from dg_maxwell import params
 
@@ -281,3 +280,83 @@ def outer_prod(a, b):
     b_tile = af.tile(b_reorder, d0 = a_n1)
     
     return a_tile * b_tile
+
+def polyval_1d(polynomials, xi):
+    '''
+    Finds the value of the polynomials at the given :math:`\\xi` coordinates.
+    
+    Parameters
+    ----------
+    polynomials : af.Array [number_of_polynomials N 1 1]
+                 ``number_of_polynomials`` :math:`2D` polynomials of degree
+                 :math:`N - 1` of the form
+                 
+                 .. math:: P(x) = a_0x^0 + a_1x^1 + ... \\
+                           a_{N - 1}x^{N - 1} + a_Nx^N
+              
+    xi      : af.Array [N 1 1 1]
+              :math:`\\xi` coordinates at which the :math:`i^{th}` Lagrange
+              basis polynomial is to be evaluated.
+              
+    Returns
+    -------
+    af.Array [i.shape[0] xi.shape[0] 1 1]
+        Evaluated polynomials at given :math:`\\xi` coordinates
+    '''
+    
+    N = int(polynomials.shape[1])
+    xi_   = af.tile(af.transpose(xi), d0 = N)
+    power = af.tile(af.flip(af.np_to_af_array(np.arange(N)), dim = 0),
+                    d0 = 1, d1 = xi.shape[0])
+    
+    xi_power = xi_**power
+    
+    return af.matmul(polynomials, xi_power)
+
+
+def polyval_2D(polynomials, x, y):
+    '''
+    Takes the 2D polynomials and finds it'their values at the :math:`(x, y)`
+    coordinates.
+    
+    Parameters
+    ----------
+    polynomials: af.Array [number_of_polynomials N 1 1]
+                 ``number_of_polynomials`` :math:`2D` polynomials of degree
+                 :math:`N` of the form
+                 
+                 .. math:: P(x, y) = a_0y^Nx^0 + a_1y^{N - 1}x^1 + ... \\
+                           a_2y^1x^{N - 1} + a_{N + 1}y^0x^N
+                  
+    x          : af.Array [
+    '''
+    
+
+def integrate_2d(polynomial, scheme = 'gauss'):
+    '''
+    Takes the coefficients of the polynomials as an argument and calculates
+    the :math:`2D` integral using either Legendre-Gauss quadrature or
+    Gauss-Lobatto quadrature.
+    
+    Parameters
+    ----------
+    polynomial : af.Array [number_of_polynomials N 1 1]
+                 ``number_of_polynomials`` :math:`2D` polynomials of degree
+                 :math:`N` of the form
+                 
+                 .. math:: P(x, y) = a_0y^Nx^0 + a_1y^{N - 1}x^1 + ... \\
+                           a_2y^1x^{N - 1} + a_{N + 1}y^0x^N
+                           
+    scheme     : str
+                 Quadrature scheme to be used for the numerical integration.
+                 scheme could accept ``gauss`` and ``lobatto``
+                 
+    Returns
+    -------
+    af.Array[number_of_polynomials 1 1 1]
+    Integral for each of the polynomials.
+    '''
+    
+    
+    
+    return

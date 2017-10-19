@@ -4,4 +4,5 @@
 import arrayfire as af
 
 from dg_maxwell import params
+
 af.set_backend(params.backend)

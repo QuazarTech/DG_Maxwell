@@ -405,11 +405,4 @@ def Li_basis_value(L_basis, i, xi):
         :math:`\\xi` coordinates
     '''
     
-    N_LGL = int(L_basis.shape[0])
-    xi_   = af.tile(af.transpose(xi), d0 = N_LGL)
-    power = af.tile(af.flip(af.np_to_af_array(np.arange(N_LGL)), dim = 0),
-                    d0 = 1, d1 = xi.shape[0])
-    
-    xi_power = xi_**power
-    
-    return af.matmul(L_basis[i], xi_power)
+    return utils.polyval_1d(L_basis[i], xi)
