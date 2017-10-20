@@ -157,17 +157,21 @@ def A_matrix():
 
     # Coefficients of Lagrange basis polynomials.
     lagrange_coeffs = params.lagrange_coeffs
+    print(lagrange_coeffs)
     lagrange_coeffs = af.reorder(lagrange_coeffs, 1, 2, 0)
+    print(lagrange_coeffs)
 
     # Coefficients of product of Lagrange basis polynomials.
     lag_prod_coeffs = af.convolve1(lagrange_coeffs,\
                                    af.reorder(lagrange_coeffs, 0, 2, 1),\
                                    conv_mode=af.CONV_MODE.EXPAND)
+    print(lag_prod_coeffs)
     lag_prod_coeffs = af.reorder(lag_prod_coeffs, 1, 2, 0)
     lag_prod_coeffs = af.moddims(lag_prod_coeffs, params.N_LGL ** 2, 2 * params.N_LGL - 1)
 
 
     dx_dxi   = params.dx_dxi 
+    print(dx_dxi)
     A_matrix = dx_dxi * af.moddims(lagrange.integrate(lag_prod_coeffs),\
                                              params.N_LGL, params.N_LGL)
     

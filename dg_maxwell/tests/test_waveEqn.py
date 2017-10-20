@@ -136,7 +136,8 @@ def test_A_matrix():
     one obtained by numerical integral solvers.
     '''
     threshold = 1e-8
-    print(af.info())
+    
+    change_parameters(8, 10, 11, 'gaussian')
     
     reference_A_matrix = 0.1 * af.interop.np_to_af_array(np.array([\
 
@@ -175,7 +176,7 @@ def test_A_matrix():
     ]))
     
     test_A_matrix = wave_equation.A_matrix()
-    print(test_A_matrix.shape, reference_A_matrix.shape)
+    print(test_A_matrix, reference_A_matrix)
     error_array = af.abs(reference_A_matrix - test_A_matrix)
     
     assert af.max(error_array) < threshold
@@ -258,7 +259,6 @@ def test_dx_dxi():
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
-    print((wave_equation.dx_dxi_numerical(test_nodes,params.xi_LGL)))
     check_dx_dxi = abs((af.mean(wave_equation.dx_dxi_numerical
                     (test_nodes,params.xi_LGL)) - analytical_dx_dxi)) <= threshold
     
