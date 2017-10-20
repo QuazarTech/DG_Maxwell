@@ -186,6 +186,7 @@ def test_LGL_points():
     Comparing the LGL nodes obtained by LGL_points with
     the reference nodes for N = 6
     '''
+    threshold = 5e-13
     reference_nodes  = \
         af.np_to_af_array(np.array([-1.,                 -0.7650553239294647,\
                                     -0.28523151648064504, 0.28523151648064504,\
@@ -195,7 +196,7 @@ def test_LGL_points():
                          )
 
     calculated_nodes = (lagrange.LGL_points(6))
-    assert(af.max(af.abs(reference_nodes - calculated_nodes)) <= 1e-14)
+    assert(af.max(af.abs(reference_nodes - calculated_nodes)) <= threshold)
 
 
 def test_gauss_nodes():
@@ -252,13 +253,13 @@ def test_dx_dxi():
     passing nodes of an element and using the LGL points. Analytically, the
     differential would be a constant. The check has a tolerance 1e-7.
     '''
-    threshold = 1e-9
+    threshold = 1e-8
     change_parameters(8, 10, 11, 'gaussian')
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
-        
-    check_dx_dxi = abs((af.statistics.mean(wave_equation.dx_dxi_numerical
+    print((wave_equation.dx_dxi_numerical(test_nodes,params.xi_LGL)))
+    check_dx_dxi = abs((af.mean(wave_equation.dx_dxi_numerical
                     (test_nodes,params.xi_LGL)) - analytical_dx_dxi)) <= threshold
     
     assert check_dx_dxi
