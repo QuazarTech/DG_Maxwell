@@ -8,6 +8,7 @@ import matplotlib.lines as lines
 import arrayfire as af
 
 from dg_maxwell import params
+from dg_maxwell import lagrange
 
 af.set_backend(params.backend)
 
@@ -28,7 +29,7 @@ def add(a, b):
     Returns
     -------
     add : arrayfire.Array [N M L 1]  
-          returns the sum of a and b. When used along with af.broadcast
+          Sum of a and b. When used along with ``af.broadcast``
           can be used to sum different size arrays.
 
     '''
@@ -126,8 +127,8 @@ def linspace(start, end, number_of_points):
     Returns
     -------
     X : arrayfire.Array
-        An array which contains 'number_of_points' evenly spaced points
-        between 'start' and 'end'
+        An array which contains ``number_of_points`` evenly spaced points
+        between ``start`` and ``end``
 
     '''
     X = af.range(number_of_points, dtype = af.Dtype.f64)
@@ -289,18 +290,16 @@ def matmul_3D(a, b):
 
     Parameters
     ----------
-    a : af,Array [M N Q 1]
-        First set of :math:`Q` :math:`2D` arrays.
-        :math:`N \neq 1 & M \neq 1`
+    a : af.Array [M N Q 1]
+        First set of :math:`Q` 2D arrays :math:`N \\neq 1` and :math:`M \\neq 1`.
 
-    b : af,Array [N P Q 1]
-        Second set of :math:`Q` :math:`2D` arrays.
-        :math:`P \neq 1`
+    b : af.Array [N P Q 1]
+        Second set of :math:`Q` 2D arrays :math:`P \\neq 1`.
 
     Returns
     -------
     matmul : af.Array [M P Q 1]
-             Matrix multiplication of :math:`Q` sets of 2D arrays
+             Matrix multiplication of :math:`Q` sets of 2D arrays.
 
     '''
     shape_a = shape(a)
@@ -386,6 +385,65 @@ def poly1d_product(poly_a, poly_b):
                                      conv_mode = af.CONV_MODE.EXPAND))
 
 
+def integrate_1d(polynomials, order, scheme = 'gauss'):
+    '''
+    Integrates single variables using the Gauss-Legendre or Gauss-Lobatto
+    quadrature.
+    
+    Parameters
+    ----------
+    polynomials : af.Array [number_of_polynomials degree 1 1]
+                  The polynomials to be integrated.
+                  
+    order       : int
+                  Order of the quadrature.
+                  
+    scheme      : str
+                  Possible options are
+                  
+                  - ``gauss`` for using Gauss-Legendre quadrature
+                  - ``lobatto`` for using Gauss-Lobatto quadrature
+                  
+    Returns
+    -------
+    integral : af.Array [number_of_polynomials 1 1 1]
+               The integral for the respective polynomials using the given
+               quadrature scheme.
+    '''
+    integral = 0.0
+    
+    if scheme == 'gauss':
+        
+        N_g = order
+        xi_gauss      = af.np_to_af_array(lagrange.gauss_nodes(N_g))
+        gauss_weights = lagrange.gaussian_weights(N_g)
+
+        polyval_gauss = polyval_1d(polynomials, xi_gauss)
+
+        integral = af.sum(af.transpose(af.broadcast(multiply,
+                                                    af.transpose(polyval_gauss),
+                                                    gauss_weights)), dim = 1)
+        
+        return integral
+        
+    elif scheme == 'lobatto':
+        N_l = order
+        xi_lobatto      = lagrange.LGL_points(N_l)
+        lobatto_weights = lagrange.lobatto_weights(N_l)
+
+        polyval_lobatto = polyval_1d(polynomials, xi_lobatto)
+
+        integral = af.sum(af.transpose(af.broadcast(multiply,
+                                                    af.transpose(polyval_lobatto),
+                                                    lobatto_weights)), dim = 1)
+
+        return integral
+    
+    else:
+        return -1.
+
+
+
 def integrate_2d(polynomial, scheme = 'gauss'):
     '''
     Takes the coefficients of the polynomials as an argument and calculates
@@ -413,3 +471,4 @@ def integrate_2d(polynomial, scheme = 'gauss'):
     
     
     return
+

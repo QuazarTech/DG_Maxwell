@@ -6,6 +6,7 @@ import arrayfire as af
 
 from dg_maxwell import params
 from dg_maxwell import utils
+from dg_maxwell import lagrange
 
 af.set_backend(params.backend)
 
@@ -69,3 +70,51 @@ def test_poly1d_prod():
     diff_commutative = af.abs(test_poly1d_prod_commutative - ref_poly)
     
     assert af.all_true(diff == 0.) and af.all_true(diff_commutative == 0.)
+
+
+
+def test_integrate_1d():
+    '''
+    Tests the ``integrate_1d`` by comparing the integral agains the
+    analytically calculated integral. The polynomials to be integrated
+    are all the Lagrange polynomials obtained for the LGL points.
+    
+    The analytical integral is calculated in this `sage worksheet`_
+    
+    .. _sage worksheet: https://goo.gl/1uYyNJ
+    '''
+    
+    threshold = 1e-12
+    
+    N_LGL     = 8
+    xi_LGL    = lagrange.LGL_points(N_LGL)
+    eta_LGL   = lagrange.LGL_points(N_LGL)
+    _, Li_xi  = lagrange.lagrange_polynomials(xi_LGL)
+    _, Lj_eta = lagrange.lagrange_polynomials(eta_LGL)
+
+    Li_xi  = af.np_to_af_array(Li_xi)
+    Lp_xi  = Li_xi.copy()
+    
+    Li_Lp = utils.poly1d_product(Li_xi, Lp_xi)
+    
+    test_integral_gauss = utils.integrate_1d(Li_Lp, order = 9,
+                                             scheme = 'gauss')
+    
+    test_integral_lobatto = utils.integrate_1d(Li_Lp, order = N_LGL + 1,
+                                               scheme = 'lobatto')
+
+    
+    ref_integral = af.np_to_af_array(np.array([0.0333333333333,
+                                               0.196657278667,
+                                               0.318381179651,
+                                               0.384961541681,
+                                               0.384961541681,
+                                               0.318381179651,
+                                               0.196657278667,
+                                               0.0333333333333]))
+    
+    diff_gauss   = af.abs(ref_integral - test_integral_gauss)
+    diff_lobatto = af.abs(ref_integral - test_integral_lobatto)
+    
+    assert af.all_true(diff_gauss < threshold) and af.all_true(diff_lobatto < threshold)
+

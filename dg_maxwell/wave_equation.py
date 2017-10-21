@@ -140,11 +140,11 @@ def dx_dxi_analytical(x_nodes, xi):
 def A_matrix():
     '''
 
-    Calculates A matrix whose elements :math:`A_{p i}` are given by
-    :math: `A_{p i} &= \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
+    Calculates A matrix whose elements :math:`A_{pi}` are given by
+    :math:`A_{pi} = \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
 
     The integrals are computed using the integrate() function.
-    Since elements are taken to be of equal size, :math: `\\frac {dx}{dxi}
+    Since elements are taken to be of equal size, :math:`\\frac {dx}{d\\xi}`
     is same everywhere
     
     Returns
@@ -297,8 +297,9 @@ def lax_friedrichs_flux(u_n):
 
     Calculates the lax-friedrichs_flux :math:`f_i` using.
 
-    :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \\frac
-                {\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
+    .. math:: f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} \\
+                    - \\frac{\Delta x}{2\Delta t} \\
+                    (u^{i + 1}_0 - u^i_{N_{LGL} - 1})
 
     The algorithm used is explained in this `document`_
 
