@@ -37,8 +37,5 @@ def test_matmul_3D():
     diff_mat_0 = test_matmul[:, :, 0] - ref_a_0
     diff_mat_1 = test_matmul[:, :, 1] - ref_a_1
     
-    print(diff_mat_0)
-    print(diff_mat_1)
-    
     assert np.all(diff_mat_0 == 0) and np.all(diff_mat_1 == 0)
 
