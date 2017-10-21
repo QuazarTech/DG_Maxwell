@@ -34,8 +34,38 @@ def test_matmul_3D():
     
     test_matmul = np.array(utils.matmul_3D(a, b))
     
-    diff_mat_0 = test_matmul[:, :, 0] - ref_a_0
-    diff_mat_1 = test_matmul[:, :, 1] - ref_a_1
+    diff_mat_0 = np.abs(test_matmul[:, :, 0] - ref_a_0)
+    diff_mat_1 = np.abs(test_matmul[:, :, 1] - ref_a_1)
     
     assert np.all(diff_mat_0 == 0) and np.all(diff_mat_1 == 0)
 
+
+
+def test_poly1d_prod():
+    '''
+    Checks the product of the polynomials of different degrees using the
+    poly1d_product function and compares it to the analytically calculated
+    product coefficients.
+    '''
+    
+    N      = 3
+
+    N_a    = 3
+    poly_a = af.range(N * N_a, dtype = af.Dtype.u32)
+    poly_a = af.moddims(poly_a, d0 = N, d1 = N_a)
+
+    N_b    = 2
+    poly_b = af.range(N * N_b, dtype = af.Dtype.u32)
+    poly_b = af.moddims(poly_b, d0 = N, d1 = N_b)
+
+    ref_poly = af.np_to_af_array(np.array([[0., 0., 9., 18.],
+                                           [1., 8., 23., 28.],
+                                           [4., 20., 41., 40.]]))
+
+    test_poly1d_prod = utils.poly1d_product(poly_a, poly_b)
+    test_poly1d_prod_commutative = utils.poly1d_product(poly_b, poly_a)
+
+    diff     = af.abs(test_poly1d_prod - ref_poly)
+    diff_commutative = af.abs(test_poly1d_prod_commutative - ref_poly)
+    
+    assert af.all_true(diff == 0.) and af.all_true(diff_commutative == 0.)

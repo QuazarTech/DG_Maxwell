@@ -368,44 +368,23 @@ def polyval_1d(polynomials, xi):
     return af.matmul(polynomials, xi_power)
 
 
-def polyval_2D(polynomials, x, y):
+def poly1d_product(poly_a, poly_b):
     '''
-    Takes the 2D polynomials and finds it'their values at the :math:`(x, y)`
-    coordinates.
+    Finds the product of two polynomials using the arrayfire convolve1
+    function.
     
     Parameters
     ----------
-    polynomials: af.Array [number_of_polynomials N 1 1]
-                 ``number_of_polynomials`` :math:`2D` polynomials of degree
-                 :math:`N` of the form
-                 
-                 .. math:: P(x, y) = a_0y^Nx^0 + a_1y^{N - 1}x^1 + ... \\
-                           a_2y^1x^{N - 1} + a_{N + 1}y^0x^N
-                  
-    x          : af.Array [Q P 1 1]
-                 :math:`x` coordinates for which the polynomials are to be
-                 evaluated
-                 
-    y          : af.Array [Q P 1 1]
-                :math:`x` coordinates for which the polynomials are to be
-                evaluated
+    poly_a : af.Array[N degree_a 1 1]
+             :math:`N` polynomials of degree :math:`degree`
+             
+    poly_b : af.Array[N degree_b 1 1]
+             :math:`N` polynomials of degree :math:`degree_b`
     '''
-    
-    N = int(polynomials.shape[1])
-    x = af.reorder(x, d0 = 2, d1 = 1, d2 = 0)
-    y = af.reorder(y, d0 = 2, d1 = 1, d2 = 0)
-    x = af.tile(x, d0 = N)
-    y = af.tile(y, d0 = N)
-    
-    power_y = af.tile(af.range(N), d0 = 1, d1 = x.shape[1], d2 = y.shape[2])
-    power_x = af.flip(power_y, dim = 0)
-    
-    x_power = x ** power_x
-    y_power = y ** power_y
-    
-    xy = x_power * y_power
-    
-    return af.matmul(polynomials, xy)
+    return af.transpose(af.convolve1(af.transpose(poly_a),
+                                     af.transpose(poly_b),
+                                     conv_mode = af.CONV_MODE.EXPAND))
+
 
 def integrate_2d(polynomial, scheme = 'gauss'):
     '''
