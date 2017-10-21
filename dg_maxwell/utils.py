@@ -444,31 +444,47 @@ def integrate_1d(polynomials, order, scheme = 'gauss'):
 
 
 
-def integrate_2d(polynomial, scheme = 'gauss'):
+def integrate_2d(poly_xi, poly_eta, order, scheme = 'gauss'):
     '''
-    Takes the coefficients of the polynomials as an argument and calculates
-    the :math:`2D` integral using either Legendre-Gauss quadrature or
-    Gauss-Lobatto quadrature.
+    Integrates functions defined by polynomials of :math:`\\xi` and
+    :math:`\\eta` using the Gauss-Legendre or Gauss-Lobatto quadrature.
     
     Parameters
     ----------
-    polynomial : af.Array [number_of_polynomials N 1 1]
-                 ``number_of_polynomials`` :math:`2D` polynomials of degree
-                 :math:`N` of the form
+    poly_xi : af.Array [number_of_polynomials N 1 1]
+              ``number_of_polynomials`` polynomials of :math:`\\xi` with
+              degree :math:`N - 1` of the form
                  
-                 .. math:: P(x, y) = a_0y^Nx^0 + a_1y^{N - 1}x^1 + ... \\
-                           a_2y^1x^{N - 1} + a_{N + 1}y^0x^N
-                           
-    scheme     : str
-                 Quadrature scheme to be used for the numerical integration.
-                 scheme could accept ``gauss`` and ``lobatto``
+                 .. math:: P_0(\\xi) = a_0\\xi^0 + a_1\\xi^1 + ... \\
+                           a_{N - 1}\\xi^{N - 1}
+
+    poly_eta : af.Array [number_of_polynomials N 1 1]
+               ``number_of_polynomials`` polynomials of :math:`\\eta` with
+               degree :math:`N - 1` of the form
                  
+               .. math:: P_1(\\eta) = a_0\\eta^0 + a_1\\eta^1 + ... \\
+                         a_{N - 1}\\eta^{N - 1}
+    
+    order   : int
+              Order of the Gauss-Legendre or Gauss-Lobatto quadrature.
+
+    scheme  : str
+              Possible options are
+              
+              - ``gauss`` for using Gauss-Legendre quadrature
+              - ``lobatto`` for using Gauss-Lobatto quadrature
+
     Returns
     -------
-    af.Array[number_of_polynomials 1 1 1]
-    Integral for each of the polynomials.
+    integrate_poly_xi_eta : af.Array [number_of_polynomials 1 1 1]
+                            Integral
+                            
+                            .. math:: \\iint P_0(\\xi) P_1(\\eta) d\\xi d\\eta
     '''
     
-    
-    return
+    integrate_poly_xi     = integrate_1d(poly_xi, order, scheme)
+    integrate_poly_eta    = integrate_1d(poly_eta, order, scheme)
+    integrate_poly_xi_eta = integrate_poly_xi * integrate_poly_eta
+
+    return integrate_poly_xi_eta
 

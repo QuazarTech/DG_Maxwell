@@ -118,3 +118,54 @@ def test_integrate_1d():
     
     assert af.all_true(diff_gauss < threshold) and af.all_true(diff_lobatto < threshold)
 
+
+def test_integrate_2d():
+    '''
+    Tests the ``integrate_2d`` by comparing the integral agains the
+    analytically calculated integral. The integral to be calculated is
+    
+    .. math:: \\iint L_i(\\xi) L_i(\\eta) L_i(\\xi) L_i(\\eta) d\\xi d\\eta
+    
+    where :math:`L_i` are the Lagrange polynomials with
+    :math:`i \in \{0 ... 7\}`. The analytical integral is calculated
+    in this `sagews`_
+    
+    .. _sagews: https://goo.gl/KziEMs
+    '''
+    threshold = 1e-12
+    
+    N_LGL = 8
+    xi_LGL  = lagrange.LGL_points(N_LGL)
+    eta_LGL = lagrange.LGL_points(N_LGL)
+    _, Li_xi  = lagrange.lagrange_polynomials(xi_LGL)
+    _, Lj_eta = lagrange.lagrange_polynomials(eta_LGL)
+
+    Li_xi  = af.np_to_af_array(Li_xi)
+    Lj_eta = af.np_to_af_array(Lj_eta)
+    Lp_xi  = Li_xi.copy()
+    Lq_eta = Lj_eta.copy()
+    
+    Li_Lp = utils.poly1d_product(Li_xi, Lp_xi)
+    Lj_Lq = utils.poly1d_product(Lj_eta, Lq_eta)
+    
+    test_gauss_integral_Li_Lp_Lj_Lq = utils.integrate_2d(Li_Lp, Lj_Lq,
+                                                   order = 9,
+                                                   scheme = 'gauss')
+
+    test_lobatto_integral_Li_Lp_Lj_Lq = utils.integrate_2d(Li_Lp, Lj_Lq,
+                                                           order = N_LGL + 1,
+                                                           scheme = 'lobatto')
+    
+    ref_integral = af.np_to_af_array(np.array([0.00111111111111037,
+                                               0.0386740852528278,
+                                               0.101366575556200,
+                                               0.148195388573733,
+                                               0.148195388573733,
+                                               0.101366575556200,
+                                               0.0386740852528278,
+                                               0.00111111111111037]))
+    
+    diff_gauss   = af.abs(test_gauss_integral_Li_Lp_Lj_Lq - ref_integral)
+    diff_lobatto = af.abs(test_lobatto_integral_Li_Lp_Lj_Lq - ref_integral)
+    
+    assert af.all_true(diff_gauss < threshold) and af.all_true(diff_lobatto < threshold)
