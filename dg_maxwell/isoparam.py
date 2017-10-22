@@ -30,7 +30,7 @@ def isoparam_1D(x_nodes, xi):
     '''
     N_0 = (1 - xi) / 2
     N_1 = (1 + xi) / 2
-    
+
     N0_x0 = af.broadcast(utils.multiply, N_0, x_nodes[0])
     N1_x1 = af.broadcast(utils.multiply, N_1, x_nodes[1])
     

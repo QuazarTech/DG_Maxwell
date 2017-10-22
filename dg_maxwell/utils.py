@@ -59,7 +59,7 @@ def divide(a, b):
 
     '''
     quotient = a / b
-    
+
     return quotient
 
 

@@ -74,7 +74,7 @@ def lobatto_weights(n):
     to integrate using Lobatto quadrature.
     '''
     xi_LGL = LGL_points(n)
-    
+
     P = sp.legendre(n - 1)
     
     Lobatto_weights = (2 / (n * (n - 1)) / (P(xi_LGL))**2)

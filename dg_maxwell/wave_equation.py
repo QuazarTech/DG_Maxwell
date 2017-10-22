@@ -310,7 +310,7 @@ def lax_friedrichs_flux(u_n):
                     Periodic boundary conditions are used.
 
     '''
-    
+
     u_iplus1_0    = af.shift(u_n[0, :], 0, -1)
     u_i_N_LGL     = u_n[-1, :]
     flux_iplus1_0 = flux_x(u_iplus1_0)

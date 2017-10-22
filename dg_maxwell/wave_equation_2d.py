@@ -41,7 +41,7 @@ def dx_dxi(x_nodes, xi, eta):
              :math:`\\frac{\\partial x}{\\partial \\xi}` calculated at
              :math:`(\\xi, \\eta)` coordinate.
     '''
-    
+
     dN_0_dxi = -0.25*eta**2 + (0.5*eta + 0.5)*xi - 0.25*eta
     dN_1_dxi = 0.5*eta**2 - 0.5
     dN_2_dxi = -0.25*eta**2 + (-0.5*eta + 0.5)*xi + 0.25*eta
