@@ -25,7 +25,7 @@ def add(a, b):
 
     b : arrayfire.Array [1 M L 1]
         One of the arrays which need to be broadcasted and summed.
-    
+
     Returns
     -------
     add : arrayfire.Array [N M L 1]

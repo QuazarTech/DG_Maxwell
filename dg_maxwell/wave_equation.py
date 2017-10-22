@@ -87,7 +87,7 @@ def dx_dxi_numerical(x_nodes, xi):
     
     x_nodes : arrayfire.Array [N_Elements 1 1 1]
               Contains the nodes of elements.
-    
+
     xi      : arrayfire.Array [N_LGL 1 1 1]
               Values of :math: `\\xi`
     

@@ -17,7 +17,7 @@ def dx_dxi(x_nodes, xi, eta):
 
     The derivation of the analytical form of
     :math:`\\frac{\\partial x}{\\partial \\xi}` is given in this `worksheet`_.
-    
+
     .. _worksheet: https://goo.gl/ffCJvn
     
     Parameters

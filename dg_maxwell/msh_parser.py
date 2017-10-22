@@ -25,7 +25,7 @@ def read_order_2_msh(msh_file):
 
     Returns
     -------
-    
+
     tuple(np.ndarray, np.ndarray)
              Tuple of Nodes and Elements respectively.
              Nodes is a :math:`N \\times 2` array, where, :math:`N` is the

@@ -18,7 +18,7 @@ def isoparam_1D(x_nodes, xi):
 
     x_nodes : arrayfire.Array [2 1 1 1]
               Element nodes.
-    
+
     xi      : arrayfire.Array [N 1 1 1]
               Value of :math:`\\xi` coordinate for which the corresponding
               :math:`x` coordinate is to be found.

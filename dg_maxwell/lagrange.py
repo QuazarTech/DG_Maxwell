@@ -31,7 +31,7 @@ def LGL_points(N):
 
     lgl : arrayfire.Array [N 1 1 1]
           The Lagrange-Gauss-Lobatto Nodes.
-                          
+
     **See:** `document`_
     .. _document: https://goo.gl/KdG2Sv
 
