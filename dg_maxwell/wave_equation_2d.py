@@ -228,7 +228,7 @@ def A_matrix():
     A : af.Array [N_LGL^2 N_LGL^2 1 1]
         The tensor product.
     '''
-    
+
     N_LGL   = params.N_LGL
     xi_LGL  = lagrange.LGL_points(N_LGL)
     eta_LGL = lagrange.LGL_points(N_LGL)
