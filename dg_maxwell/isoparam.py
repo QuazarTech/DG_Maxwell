@@ -15,7 +15,7 @@ def isoparam_1D(x_nodes, xi):
 
     Parameters
     ----------
-    
+
     x_nodes : arrayfire.Array [2 1 1 1]
               Element nodes.
     

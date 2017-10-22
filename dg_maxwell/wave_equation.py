@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
-    
+
 import os
 
 import arrayfire as af
@@ -8,12 +8,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import trange
 import h5py
-from scipy import integrate
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
 from dg_maxwell import utils
-from dg_maxwell import isoparam
 
 af.set_backend(params.backend)
 
@@ -97,7 +95,7 @@ def dx_dxi_numerical(x_nodes, xi):
     -------
 
     dx_dxi : arrayfire.Array [N_Elements 1 1 1]
-             :math:`\\frac{dx}{d \\xi}`. 
+             :math:`\\frac{dx}{d \\xi}`.
     '''
 
     dxi = 1e-7
@@ -167,7 +165,7 @@ def A_matrix():
     lag_prod_coeffs = af.moddims(lag_prod_coeffs, params.N_LGL ** 2, 2 * params.N_LGL - 1)
 
 
-    dx_dxi   = params.dx_dxi 
+    dx_dxi   = params.dx_dxi
     A_matrix = dx_dxi * af.moddims(lagrange.integrate(lag_prod_coeffs),\
                                              params.N_LGL, params.N_LGL)
     
@@ -190,7 +188,7 @@ def flux_x(u):
     Returns
     -------
 
-    flux : list [N_Elements] 
+    flux : list [N_Elements]
            The analytical value of the flux for each element arranged in a list
            of numpy.poly1d polynomials.
 
@@ -330,7 +328,7 @@ def lax_friedrichs_flux(u_n):
                         - params.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
     
     
-    return boundary_flux 
+    return boundary_flux
 
 def analytical_u_LGL(t_n):
     '''
@@ -351,8 +349,8 @@ def analytical_u_LGL(t_n):
 
     '''
 
-    time  = t_n * params.delta_t 
-    u_t_n = af.sin(2 * np.pi * (params.element_LGL - params.c * time)) 
+    time  = t_n * params.delta_t
+    u_t_n = af.sin(2 * np.pi * (params.element_LGL - params.c * time))
 
     return u_t_n
 
@@ -519,7 +517,7 @@ def time_evolution():
 
     Solves the wave equation
     :math: `u^{t_n + 1} = b(t_n) \\times A`
-    iterated over time.shape[0] time steps t_n 
+    iterated over time.shape[0] time steps t_n
 
     Second order time stepping is used.
     It increases the accuracy of the wave evolution.
@@ -545,12 +543,10 @@ def time_evolution():
 
 
     A_inverse   = af.inverse(A_matrix())
-    element_LGL = params.element_LGL
     delta_t     = params.delta_t
     u           = params.u_init
     time        = params.time
 
-    element_boundaries = af.np_to_af_array(params.np_element_array)
 
     for t_n in trange(0, time.shape[0]):
 

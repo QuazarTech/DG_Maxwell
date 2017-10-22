@@ -4,8 +4,6 @@
 import os
 
 from matplotlib import pyplot as pl
-import arrayfire as af
-import numpy as np
 import h5py
 
 from dg_maxwell import params

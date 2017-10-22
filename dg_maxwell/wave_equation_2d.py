@@ -4,7 +4,6 @@
 import arrayfire as af
 
 from dg_maxwell import params
-from dg_maxwell import isoparam
 from dg_maxwell import lagrange
 from dg_maxwell import utils
 
@@ -15,7 +14,7 @@ def dx_dxi(x_nodes, xi, eta):
     Computes the derivative :math:`\\frac{\\partial x}{\\partial \\xi}`.
     The derivative is obtained by finding the derivative of the analytical
     function :math:`x \\equiv x(\\xi, \\eta)`.
-    
+
     The derivation of the analytical form of
     :math:`\\frac{\\partial x}{\\partial \\xi}` is given in this `worksheet`_.
     

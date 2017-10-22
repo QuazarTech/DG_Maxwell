@@ -13,7 +13,7 @@ af.set_backend(params.backend)
 def LGL_points(N):
     '''
     Calculates : math: `N` Legendre-Gauss-Lobatto (LGL) points.
-    LGL points are the roots of the polynomial 
+    LGL points are the roots of the polynomial
 
     :math: `(1 - \\xi ** 2) P_{n - 1}'(\\xi) = 0`
 
@@ -25,7 +25,7 @@ def LGL_points(N):
 
     N : int
         Number of LGL nodes required
-    
+
     Returns
     -------
 
@@ -148,7 +148,7 @@ def gaussian_weights(N):
     return gaussian_weight
 
 
-def lagrange_polynomials(x):    
+def lagrange_polynomials(x):
     '''
     A function to get the analytical form and the coefficients of
     Lagrange basis polynomials evaluated using x nodes.

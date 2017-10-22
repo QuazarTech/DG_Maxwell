@@ -22,7 +22,7 @@ def read_order_2_msh(msh_file):
 
     msh_file : str
                **.msh** file to be parsed
-    
+
     Returns
     -------
     

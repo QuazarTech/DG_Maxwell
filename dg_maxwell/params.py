@@ -9,9 +9,7 @@ af.set_backend(backend)
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils
-from dg_maxwell import isoparam
 from dg_maxwell import wave_equation
-from dg_maxwell import params
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
@@ -35,7 +33,7 @@ N_quad     = 8
 # Wave speed.
 c          = 1
 
-# The total time for which the wave is to be evolved by the simulation. 
+# The total time for which the wave is to be evolved by the simulation.
 total_time = 2.01
 
 # The c_lax to be used in the Lax-Friedrichs flux.

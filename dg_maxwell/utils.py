@@ -22,13 +22,13 @@ def add(a, b):
     ----------
     a : arrayfire.Array [N M 1 1]
         One of the arrays which need to be broadcasted and summed.
-    
+
     b : arrayfire.Array [1 M L 1]
         One of the arrays which need to be broadcasted and summed.
     
     Returns
     -------
-    add : arrayfire.Array [N M L 1]  
+    add : arrayfire.Array [N M L 1]
           Sum of a and b. When used along with ``af.broadcast``
           can be used to sum different size arrays.
 
@@ -199,7 +199,7 @@ def csv_to_numpy(filename, delimeter_ = ','):
 
     content = list()
 
-    for n, line in enumerate(csv_handler):
+    for line in csv_handler:
         content.append(list())
         for item in line:
             try:
@@ -305,10 +305,7 @@ def matmul_3D(a, b):
     shape_a = shape(a)
     shape_b = shape(b)
 
-    M = shape_a[0]
-    N = shape_a[1]
     P = shape_b[1]
-    Q = shape_a[2]
     
     a = af.transpose(a)
     a = af.reorder(a, d0 = 0, d1 = 3, d2 = 2, d3 = 1)
