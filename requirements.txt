@@ -1,4 +1,7 @@
 pytest
+pytest-cov
+coveralls
+python-coveralls
 arrayfire
 numpy
 matplotlib
