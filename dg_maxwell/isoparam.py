@@ -35,7 +35,7 @@ def isoparam_1D(x_nodes, xi):
     N1_x1 = af.broadcast(utils.multiply, N_1, x_nodes[1])
 
     x = N0_x0 + N1_x1
-    
+
     return x
 
 def isoparam_x_2D(x_nodes, xi, eta):

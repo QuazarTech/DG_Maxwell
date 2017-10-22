@@ -85,7 +85,7 @@ def multiply(a, b):
     '''
 
     product = a * b
-    
+
     return product
 
 def power(a, b):

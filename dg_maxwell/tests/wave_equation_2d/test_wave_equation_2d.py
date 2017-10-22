@@ -192,6 +192,5 @@ def test_A_matrix():
     params.N_LGL = 4
     
     A_matrix_test = wave_equation_2d.A_matrix()
-    af.display(af.abs(A_matrix_test - A_matrix_ref), 14)
     
     assert af.all_true(af.abs(A_matrix_test - A_matrix_ref) < threshold)

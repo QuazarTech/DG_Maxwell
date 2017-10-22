@@ -4,7 +4,7 @@
 import numpy as np
 
 import arrayfire as af
-backend = 'cuda'
+backend = 'cpu'
 af.set_backend(backend)
 
 from dg_maxwell import lagrange

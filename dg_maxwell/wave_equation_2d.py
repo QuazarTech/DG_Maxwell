@@ -202,7 +202,7 @@ def jacobian(x_nodes, y_nodes, xi, eta):
                     - \\frac{\\partial x}{\\partial \\eta} \
                     \\frac{\\partial y}{\\partial \\xi}
     '''
-    
+
     dx_dxi_  = dx_dxi (x_nodes, xi, eta)
     dy_deta_ = dy_deta (y_nodes, xi, eta)
     dx_deta_ = dx_deta (x_nodes, xi, eta)

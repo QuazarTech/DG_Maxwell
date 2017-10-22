@@ -139,7 +139,7 @@ def gaussian_weights(N):
                       The gaussian weights.
     '''
     index = np.arange(N) # Index `i` in `w_i`, varies from 0 to N_quad - 1
-    
+
     gaussian_nodes = gauss_nodes(N)
     gaussian_weight  = 2 / ((1 - (gaussian_nodes[index]) ** 2) *\
                        (np.polyder(sp.legendre(N))(gaussian_nodes[index])) ** 2)
