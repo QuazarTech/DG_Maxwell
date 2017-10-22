@@ -19,12 +19,12 @@ def dx_dxi(x_nodes, xi, eta):
     :math:`\\frac{\\partial x}{\\partial \\xi}` is given in this `worksheet`_.
 
     .. _worksheet: https://goo.gl/ffCJvn
-    
+
     Parameters
     ----------
     x_nodes : np.ndarray [8]
               :math:`x` nodes.
-              
+
     xi      : af.Array
               :math:`\\xi` coordinates for which
               :math:`\\frac{\\partial x}{\\partial \\xi}` has to be found.
@@ -34,7 +34,7 @@ def dx_dxi(x_nodes, xi, eta):
               :math:`\\eta` coordinate for which
               :math:`\\frac{\\partial x}{\\partial \\xi}` has to be found.
               This could be a single number or a meshgrid.
-            
+
     Returns
     -------
     dx_dxi : af.Array
@@ -50,7 +50,7 @@ def dx_dxi(x_nodes, xi, eta):
     dN_5_dxi = -0.5*eta**2 + 0.5
     dN_6_dxi = 0.25*eta**2 + (0.5*eta + 0.5)*xi + 0.25*eta
     dN_7_dxi = (-1.0*eta - 1.0)*xi
-    
+
     dx_dxi = dN_0_dxi * x_nodes[0] \
            + dN_1_dxi * x_nodes[1] \
            + dN_2_dxi * x_nodes[2] \
@@ -68,12 +68,12 @@ def dx_deta(x_nodes, xi, eta):
     Computes the derivative :math:`\\frac{\\partial x}{\\partial \\eta}`.
     The derivative is obtained by finding the derivative of the analytical
     function :math:`x \\equiv x(\\xi, \\eta)`.
-    
+
     Parameters
     ----------
     y_nodes : np.ndarray [8]
               :math:`y` nodes.
-              
+
     xi      : af.Array
               :math:`\\xi` coordinate for which
               :math:`\\frac{\\partial x}{\\partial \\eta}` has to be found.
@@ -81,7 +81,7 @@ def dx_deta(x_nodes, xi, eta):
     eta     : af.Array
               :math:`\\eta` coordinate for which
               :math:`\\frac{\\partial x}{\\partial \\eta}` has to be found.
-            
+
     Returns
     -------
     dx_deta : af.Array
@@ -119,12 +119,12 @@ def dy_dxi(y_nodes, xi, eta):
     Computes the derivative :math:`\\frac{\\partial y}{\\partial \\xi}`.
     The derivative is obtained by finding the derivative of the analytical
     function :math:`y \\equiv y(\\xi, \\eta)`.
-    
+
     Parameters
     ----------
     y_nodes : np.ndarray [8]
               :math:`y` nodes.
-              
+
     xi      : af.Array
               :math:`\\xi` coordinate for which
               :math:`\\frac{\\partial y}{\\partial \\xi}` has to be found.
@@ -132,7 +132,7 @@ def dy_dxi(y_nodes, xi, eta):
     eta     : af.Array
               :math:`\\eta` coordinate for which
               :math:`\\frac{\\partial y}{\\partial \\xi}` has to be found.
-            
+
     Returns
     -------
     af.Array
@@ -147,12 +147,12 @@ def dy_deta(y_nodes, xi, eta):
     Computes the derivative :math:`\\frac{\\partial y}{\\partial \\eta}`.
     The derivative is obtained by finding the derivative of the analytical
     function :math:`y \\equiv y(\\xi, \\eta)`.
-    
+
     Parameters
     ----------
     y_nodes : np.ndarray [8]
               :math:`y` nodes.
-              
+
     xi      : af.Array
               :math:`\\xi` coordinate for which
               :math:`\\frac{\\partial y}{\\partial \\eta}` has to be found.
@@ -160,7 +160,7 @@ def dy_deta(y_nodes, xi, eta):
     eta     : af.Array
               :math:`\\eta` coordinate for which
               :math:`\\frac{\\partial y}{\\partial \\eta}` has to be found.
-            
+
     Returns
     -------
     af.Array
@@ -174,7 +174,7 @@ def jacobian(x_nodes, y_nodes, xi, eta):
     '''
     Calculates the jocobian for the corrdinate transformation from
     :math:`xy` space to :math:`\\xi \\eta` space.
-    
+
     Parameters
     ----------
     x_nodes : np.ndarray [8]
@@ -182,7 +182,7 @@ def jacobian(x_nodes, y_nodes, xi, eta):
 
     y_nodes : np.ndarray [8]
               :math:`y` nodes.
-              
+
     xi      : af.Array
               :math:`\\xi` coordinate at which
               Jacobian has to be found.
@@ -190,12 +190,12 @@ def jacobian(x_nodes, y_nodes, xi, eta):
     eta     : af.Array
               :math:`\\eta` coordinate at which
               Jacobian has to be found.
-            
+
     Returns
     -------
     float
         Returns the Jacobian calculated using this formula.
-        
+
         .. math::   J\\Big(\\frac{x, y}{\\xi, \\eta}\Big) =
                     \\frac{\\partial x}{\\partial \\xi}  \
                     \\frac{\\partial y}{\\partial \\eta} \
@@ -215,14 +215,14 @@ def A_matrix():
     '''
     Calculates the tensor product for the given ``params.N_LGL``.
     A tensor product element is given by:
-    
+
     .. math:: [A^{pq}_{ij}] = \\iint L_p(\\xi) L_q(\\eta) \\
                                      L_i(\\xi) L_j(\\eta) d\\xi d\\eta
-    
+
     This function finds :math:`L_p(\\xi) L_i(\\xi)` and
     :math:`L_q(\\eta) L_j(\\eta)` and passes it to the ``integrate_2d``
     function.
-    
+
     Returns
     -------
     A : af.Array [N_LGL^2 N_LGL^2 1 1]
@@ -240,7 +240,7 @@ def A_matrix():
     _, Lq = lagrange.lagrange_polynomials(eta_LGL)
     Lq = af.np_to_af_array(Lq)
     Lj = Lq.copy()
-    
+
     Li = af.reorder(Li, d0 = 0, d1 = 2, d2 = 1)
     Li = af.transpose(af.tile(Li, d0 = 1, d1 = N_LGL))
     Li = af.moddims(Li, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
@@ -260,7 +260,7 @@ def A_matrix():
     Lp = af.reorder(af.transpose(Lp), d0 = 2, d1 = 1, d2 = 0)
 
     Lp_Li = af.transpose(af.convolve1(Li, Lp, conv_mode = af.CONV_MODE.EXPAND))
-    
+
     Lj = af.reorder(Lj, d0 = 0, d1 = 2, d2 = 1)
     Lj = af.tile(Lj, d0 = 1, d1 = N_LGL)
     Lj = af.moddims(Lj, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
@@ -285,5 +285,5 @@ def A_matrix():
                                       order = 9,
                                       scheme = 'gauss'),
                    d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
-    
+
     return A

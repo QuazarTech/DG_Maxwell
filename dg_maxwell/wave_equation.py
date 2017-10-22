@@ -47,17 +47,17 @@ def mapping_xi_to_x(x_nodes, xi):
     '''
     Maps points in :math: `\\xi` space to :math:`x` space using the formula
     :math:  `x = \\frac{1 - \\xi}{2} x_0 + \\frac{1 + \\xi}{2} x_1`
-    
+
     Parameters
     ----------
-    
+
     x_nodes : arrayfire.Array [2 1 1 1]
               Element nodes.
-    
+
     xi      : arrayfire.Array [N 1 1 1]
               Value of :math: `\\xi`coordinate for which the corresponding
               :math: `x` coordinate is to be found.
-    
+
     Returns
     -------
 
@@ -67,30 +67,29 @@ def mapping_xi_to_x(x_nodes, xi):
 
     N_0 = (1 - xi) / 2
     N_1 = (1 + xi) / 2
-    
+
     N0_x0 = af.broadcast(utils.multiply, N_0, x_nodes[0])
     N1_x1 = af.broadcast(utils.multiply, N_1, x_nodes[1])
-    
+
     x = N0_x0 + N1_x1
-    
+
     return x
 
 
 def dx_dxi_numerical(x_nodes, xi):
     '''
-
     Differential :math: `\\frac{dx}{d \\xi}` calculated by central
     differential method about xi using the mapping_xi_to_x function.
-    
+
     Parameters
     ----------
-    
+
     x_nodes : arrayfire.Array [N_Elements 1 1 1]
               Contains the nodes of elements.
 
     xi      : arrayfire.Array [N_LGL 1 1 1]
               Values of :math: `\\xi`
-    
+
     Returns
     -------
 
@@ -101,24 +100,23 @@ def dx_dxi_numerical(x_nodes, xi):
     dxi = 1e-7
     x2  = mapping_xi_to_x(x_nodes, xi + dxi)
     x1  = mapping_xi_to_x(x_nodes, xi - dxi)
-    
+
     dx_dxi = (x2 - x1) / (2 * dxi)
-    
+
     return dx_dxi
 
 
 def dx_dxi_analytical(x_nodes, xi):
     '''
-
     The analytical result for :math:`\\frac{dx}{d \\xi}` for a 1D element is
     :math: `\\frac{x_1 - x_0}{2}`
-    
+
     Parameters
     ----------
 
     x_nodes : arrayfire.Array [2 N_Elements 1 1]
               Contains the nodes of elements.
- 
+
     xi      : arrayfire.Array [N_LGL 1 1 1]
               Values of :math: `\\xi`.
 
@@ -128,26 +126,23 @@ def dx_dxi_analytical(x_nodes, xi):
     analytical_dx_dxi : arrayfire.Array [N_Elements 1 1 1]
                         The analytical solution of :math:
                         `\\frac{dx}{d\\xi}` for an element.
-    
     '''
     analytical_dx_dxi = (x_nodes[1] - x_nodes[0]) / 2
-    
+
     return analytical_dx_dxi
 
 
 def A_matrix():
     '''
-
     Calculates A matrix whose elements :math:`A_{pi}` are given by
     :math:`A_{pi} = \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
 
     The integrals are computed using the integrate() function.
     Since elements are taken to be of equal size, :math:`\\frac {dx}{d\\xi}`
     is same everywhere
-    
+
     Returns
     -------
-
     A_matrix : arrayfire.Array [N_LGL N_LGL 1 1]
                The value of integral of product of lagrange basis functions
                obtained by LGL points, using the integrate() function
@@ -168,16 +163,15 @@ def A_matrix():
     dx_dxi   = params.dx_dxi
     A_matrix = dx_dxi * af.moddims(lagrange.integrate(lag_prod_coeffs),\
                                              params.N_LGL, params.N_LGL)
-    
+
     return A_matrix
 
 
 def flux_x(u):
     '''
-
     A function which returns the value of flux for a given wave function u.
     :math:`f(u) = c u^k`
-    
+
     Parameters
     ----------
 
@@ -200,13 +194,12 @@ def flux_x(u):
 
 def volume_integral_flux(u_n):
     '''
-
     Calculates the volume integral of flux in the wave equation.
 
     :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
 
     This will give N values of flux integral as p varies from 0 to N - 1.
-    
+
     This integral is carried out using the analytical form of the integrand
     obtained as a linear combination of Lagrange basis polynomials.
 
@@ -214,13 +207,13 @@ def volume_integral_flux(u_n):
 
     Calculation of volume integral flux using N_LGL Lobatto quadrature points
     can be vectorized and is much faster.
-    
+
     Parameters
     ----------
 
     u : arrayfire.Array [N_LGL N_Elements 1 1]
         Amplitude of the wave at the mapped LGL nodes of each element.
-            
+
     Returns
     -------
 
@@ -292,7 +285,6 @@ def volume_integral_flux(u_n):
 
 def lax_friedrichs_flux(u_n):
     '''
-
     Calculates the lax-friedrichs_flux :math:`f_i` using.
 
     .. math:: f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} \\
@@ -309,7 +301,7 @@ def lax_friedrichs_flux(u_n):
 
     u_n : arrayfire.Array [N_LGL N_Elements 1 1]
           Amplitude of the wave at the mapped LGL nodes of each element.
-    
+
     Returns
     -------
 
@@ -323,16 +315,15 @@ def lax_friedrichs_flux(u_n):
     u_i_N_LGL     = u_n[-1, :]
     flux_iplus1_0 = flux_x(u_iplus1_0)
     flux_i_N_LGL  = flux_x(u_i_N_LGL)
-    
+
     boundary_flux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
                         - params.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
-    
-    
+
+
     return boundary_flux
 
 def analytical_u_LGL(t_n):
     '''
-
     Calculates the analytical u at the LGL points.
 
     Parameters
@@ -361,12 +352,12 @@ def surface_term(u_n):
     :math:`L_p(1) f_i - L_p(-1) f_{i - 1}`
     using the lax_friedrichs_flux function and lagrange_basis_value
     from params module.
-    
+
     Parameters
     ----------
     u_n : arrayfire.Array [N_LGL N_Elements 1 1]
           Amplitude of the wave at the mapped LGL nodes of each element.
-          
+
     Returns
     -------
     surface_term : arrayfire.Array [N_LGL N_Elements 1 1]
@@ -375,9 +366,9 @@ def surface_term(u_n):
                    from zero to :math:`N_{LGL}` and i from zero to
                    :math:`N_{Elements}`. p varies along the rows and i along
                    columns.
-    
+
     **See:** `PDF`_ describing the algorithm to obtain the surface term.
-    
+
     .. _PDF: https://goo.gl/Nhhgzx
 
     '''
@@ -386,17 +377,16 @@ def surface_term(u_n):
     L_p_1        = params.lagrange_basis_value[:, -1]
     f_i          = lax_friedrichs_flux(u_n)
     f_iminus1    = af.shift(f_i, 0, 1)
-    surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,\
-                                                                    f_iminus1)
-    
+    surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,
+                                                               f_iminus1)
+
     return surface_term
 
 
 def b_vector(u_n):
     '''
-
     Calculates the b vector for N_Elements number of elements.
-    
+
     Parameters
     ----------
 
@@ -413,17 +403,15 @@ def b_vector(u_n):
     **See:** `Report`_ for the b-vector can be found here
 
     .. _Report: https://goo.gl/sNsXXK
-
     '''
     volume_integral = volume_integral_flux(u_n)
     Surface_term    = surface_term(u_n)
     b_vector_array  = (volume_integral - Surface_term)
-    
+
     return b_vector_array
 
 def RK4_timestepping(A_inverse, u, delta_t):
     '''
-
     Implementing the Runge-Kutta (RK4) method to evolve the wave.
 
     Parameters
@@ -442,10 +430,9 @@ def RK4_timestepping(A_inverse, u, delta_t):
     -------
     delta_u : arrayfire.Array [N_LGL N_Elements 1 1]
               The change in u at the mapped LGL points.
-
     '''
 
-    k1 = af.matmul(A_inverse, b_vector(u                   ))
+    k1 = af.matmul(A_inverse, b_vector(u))
     k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2))
     k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2))
     k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    ))
@@ -456,7 +443,6 @@ def RK4_timestepping(A_inverse, u, delta_t):
 
 def RK6_timestepping(A_inverse, u, delta_t):
     '''
-
     Implementing the Runge-Kutta (RK4) method to evolve the wave.
 
     Parameters
@@ -475,10 +461,8 @@ def RK6_timestepping(A_inverse, u, delta_t):
     -------
     delta_u : arrayfire.Array [N_LGL N_Elements 1 1]
               The change in u at the mapped LGL points.
-
     '''
-
-    k1 = af.matmul(A_inverse, b_vector(u                      ))
+    k1 = af.matmul(A_inverse, b_vector(u))
     k2 = af.matmul(A_inverse, b_vector(u + 0.25 * k1 * delta_t))
     k3 = af.matmul(A_inverse, b_vector(u + (3 / 32)\
                                          * (k1 \
@@ -514,7 +498,6 @@ def RK6_timestepping(A_inverse, u, delta_t):
 
 def time_evolution():
     '''
-
     Solves the wave equation
     :math: `u^{t_n + 1} = b(t_n) \\times A`
     iterated over time.shape[0] time steps t_n
@@ -525,19 +508,17 @@ def time_evolution():
     The second order time-stepping would be
     `U^{n + 1/2} = U^n + dt / 2 (A^{-1} B(U^n))`
     `U^{n + 1}   = U^n + dt     (A^{-1} B(U^{n + 1/2}))`
-    
+
     Returns
     -------
 
     u_diff : arrayfire.Array [N_LGL N_Elements 1 1]
              The absolute of the difference between the numerical
              and analytical value of u at the LGL points.
-
     '''
-
     # Creating a folder to store hdf5 files. If it doesn't exist.
     results_directory = 'results/hdf5_%02d' %(int(params.N_LGL))
-            
+
     if not os.path.exists(results_directory):
         os.makedirs(results_directory)
 
@@ -573,7 +554,6 @@ def time_evolution():
     u_analytical = analytical_u_LGL(t_n + 1)
 
     u_diff = af.abs(u - u_analytical)
-
 
     return u_diff
 
