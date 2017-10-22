@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/QuazarTech/DG_Maxwell.svg?branch=master)](https://travis-ci.org/QuazarTech/DG_Maxwell)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/e8733cdbf1454af0ac35ae5b2d017d9f)](https://www.codacy.com/app/aman2official/DG_Maxwell_2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=QuazarTech/DG_Maxwell&amp;utm_campaign=Badge_Grade)
 [![Documentation Status](http://readthedocs.org/projects/dg-maxwell/badge/?version=latest)](http://dg-maxwell.readthedocs.io/en/latest/?badge=latest)
+[![Coverage Status](https://coveralls.io/repos/github/amanabt/DG_Maxwell/badge.svg?branch=2d_solver_A_matrix_coveralls)](https://coveralls.io/github/amanabt/DG_Maxwell?branch=2d_solver_A_matrix_coveralls)
 
 ```
 _____   _____   __  __                          _ _ 
