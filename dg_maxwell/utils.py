@@ -83,7 +83,7 @@ def multiply(a, b):
               can be used to give quotient of two different size arrays
               by multiplying elements of the broadcasted array.
     '''
-    
+
     product = a * b
     
     return product

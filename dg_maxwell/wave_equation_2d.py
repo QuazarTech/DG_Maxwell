@@ -88,7 +88,7 @@ def dx_deta(x_nodes, xi, eta):
               :math:`\\frac{\\partial x}{\\partial \\eta}` calculated at
               :math:`(\\xi, \\eta)` coordinate.
     '''
-    
+
     dN_0_deta = -(eta - xi - 1) * (0.25 * xi - 0.25) \
                 - (eta + 1) * (0.25 * xi - 0.25)
     dN_1_deta = -2 * eta * (-0.5 * xi + 0.5)
