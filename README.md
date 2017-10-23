@@ -69,7 +69,6 @@ solving the wave equation in a rectangular domain in the
 - [texlive](https://www.tug.org/texlive/)
 - [coveralls](https://pypi.python.org/pypi/coveralls)
 - [python-coveralls](https://pypi.python.org/pypi/python-coveralls/)
-- [coverage](https://pypi.python.org/pypi/coverage)
 
 ## Documentation
 The documenation for the project can be generated using `sphinx`
