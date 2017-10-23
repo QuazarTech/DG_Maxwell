@@ -67,6 +67,9 @@ solving the wave equation in a rectangular domain in the
 - [arrayfire](http://arrayfire.org)
 - [gmshtranslate](https://github.com/amanabt/gmshtranslator)
 - [texlive](https://www.tug.org/texlive/)
+- [coveralls](https://pypi.python.org/pypi/coveralls)
+- [python-coveralls](https://pypi.python.org/pypi/python-coveralls/)
+- [coverage](https://pypi.python.org/pypi/coverage)
 
 ## Documentation
 The documenation for the project can be generated using `sphinx`
@@ -79,7 +82,7 @@ The unit tests are located in the
 
 ### Dependencies
 - [pytest](https://docs.pytest.org/en/latest/#)
-
+- [pytest-cov](https://pypi.python.org/pypi/pytest-cov)
 ### Running Unit Tests
 To run the unit tests, enter the following commands
 ```
