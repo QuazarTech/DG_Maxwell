@@ -86,7 +86,7 @@ The unit tests are located in the
 To run the unit tests, enter the following commands
 ```
 $ cd path/to/the/DG_Maxwell/repo
-$ pytest
+$ pytest --verbose -r P --color=yes --cov dg_maxwell
 ```
 * The parameters of the simulation are stored in params.py in
   the app folder, These can be changed accordingly.
