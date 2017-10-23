@@ -91,7 +91,7 @@ def dx_dxi_numerical(x_nodes, xi):
     
     xi      : arrayfire.Array [N_LGL 1 1 1]
               Values of :math: `\\xi`
-    
+
     Returns
     -------
 
@@ -162,9 +162,9 @@ def A_matrix():
     print(lagrange_coeffs)
 
     # Coefficients of product of Lagrange basis polynomials.
-    lag_prod_coeffs = af.convolve1(lagrange_coeffs,\
-                                   af.reorder(lagrange_coeffs, 0, 2, 1),\
-                                   conv_mode=af.CONV_MODE.EXPAND)
+    reordered_lag_coeffs = af.reorder(lagrange_coeffs, 0, 2, 1)
+    print(reordered_lag_coeffs)
+    lag_prod_coeffs = af.convolve1(lagrange_coeffs, reordered_lag_coeffs, conv_mode=af.CONV_MODE.EXPAND)
     print(lag_prod_coeffs)
     lag_prod_coeffs = af.reorder(lag_prod_coeffs, 1, 2, 0)
     lag_prod_coeffs = af.moddims(lag_prod_coeffs, params.N_LGL ** 2, 2 * params.N_LGL - 1)

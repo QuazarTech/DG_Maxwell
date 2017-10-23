@@ -248,4 +248,5 @@ def A_matrix():
 def surface_term():
     '''
     '''
+    return
 
