@@ -168,4 +168,5 @@ def test_integrate_2d():
     diff_gauss   = af.abs(test_gauss_integral_Li_Lp_Lj_Lq - ref_integral)
     diff_lobatto = af.abs(test_lobatto_integral_Li_Lp_Lj_Lq - ref_integral)
     
+    af.display(diff_gauss, 14)
     assert af.all_true(diff_gauss < threshold) and af.all_true(diff_lobatto < threshold)
