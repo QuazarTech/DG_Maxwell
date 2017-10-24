@@ -155,25 +155,20 @@ def A_matrix():
 
     '''
 
-    # Coefficients of Lagrange basis polynomials.
-    lagrange_coeffs = params.lagrange_coeffs
-    print(lagrange_coeffs)
-    lagrange_coeffs = af.reorder(lagrange_coeffs, 1, 2, 0)
-    print(lagrange_coeffs)
+    lagrange_coeffs = af.transpose(params.lagrange_coeffs)
 
-    # Coefficients of product of Lagrange basis polynomials.
-    reordered_lag_coeffs = af.reorder(lagrange_coeffs, 0, 2, 1)
-    print(reordered_lag_coeffs)
-    lag_prod_coeffs = af.convolve1(lagrange_coeffs, reordered_lag_coeffs, conv_mode=af.CONV_MODE.EXPAND)
-    print(lag_prod_coeffs)
-    lag_prod_coeffs = af.reorder(lag_prod_coeffs, 1, 2, 0)
-    lag_prod_coeffs = af.moddims(lag_prod_coeffs, params.N_LGL ** 2, 2 * params.N_LGL - 1)
+    L_i = af.tile(lagrange_coeffs, 1, 1, params.N_LGL)
+    L_i = af.reorder(L_i, 0, 2, 1)
+    L_i = af.moddims(L_i, params.N_LGL, params.N_LGL ** 2)
+    L_p = af.tile(lagrange_coeffs, 1, params.N_LGL)
 
+    Li_Lp_coeffs = af.transpose(af.convolve1(L_i, L_p, conv_mode=af.CONV_MODE.EXPAND))
+
+    int_Li_Lp = (lagrange.integrate(Li_Lp_coeffs))
+    int_Li_Lp = af.moddims(int_Li_Lp, params.N_LGL, params.N_LGL)
 
     dx_dxi   = params.dx_dxi 
-    print(dx_dxi)
-    A_matrix = dx_dxi * af.moddims(lagrange.integrate(lag_prod_coeffs),\
-                                             params.N_LGL, params.N_LGL)
+    A_matrix = dx_dxi * int_Li_Lp
     
     return A_matrix
 
@@ -732,4 +727,3 @@ def change_parameters(LGL, Elements, quad, wave='sin'):
     params.u[:, :, 0] = params.u_init
 
     return
-

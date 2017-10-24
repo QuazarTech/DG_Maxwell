@@ -472,7 +472,7 @@ def test_b_vector():
     threshold = 1e-13
     params.c = 1
     
-    change_parameters(8, 10, 8, 'gaussian')
+    change_parameters(8, 10, 10, 'gaussian')
 
     u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(),\
                                                   params.u[:, :, 0])
@@ -504,3 +504,14 @@ def test_integrate():
     assert (calculated_integral - analytical_integral) <= threshold
 
 
+def test_advection():
+    '''
+    Unit test for advection of a sin wave
+    '''
+    threshold = 2e-7
+    change_parameters(8, 10, 8, 'sin')
+
+    u_diff = wave_equation.time_evolution()
+    L1_norm_error = lagrange.L1_norm(u_diff)
+
+    assert L1_norm_error <= threshold

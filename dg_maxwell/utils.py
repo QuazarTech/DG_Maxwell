@@ -175,27 +175,24 @@ def csv_to_numpy(filename, delimeter_ = ','):
     '''
     Reads a text file data and converts it into a numpy :math:`2D` numpy
     array.
-    
     Parameters
     ----------
     filename : str
                File which is to be read.
-    
     delimeter : str
                 Delimeter used in the document.
-                
     Returns
     -------
     content : np.array
               Read content from the file.
     '''
-    
+
     csv_handler = csv.reader(open(filename, newline='\n'),
                              delimiter = delimeter_)
 
     content = list()
 
-    for n, line in enumerate(csv_handler):
+    for line in csv_handler:
         content.append(list())
         for item in line:
             try:
@@ -205,11 +202,10 @@ def csv_to_numpy(filename, delimeter_ = ','):
                     content.pop()
                     print('popping string')
                 break
-    
-    content = np.array(content, dtype = np.float64)
-    
-    return content
 
+    content = np.array(content, dtype = np.float64)
+
+    return content
 
 def af_meshgrid(arr_0, arr_1):
     '''

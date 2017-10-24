@@ -13,10 +13,13 @@ from dg_maxwell import utils
 
 
 if __name__ == '__main__':
-    f_coeffs = (af.np_to_af_array(np.array([[1, 2, 3, 4.], [5, 6, 7, 8], [1, 2, 3, 4.]])))
-    g_coeffs = (af.np_to_af_array(np.array([[1, 2, 3., 4], [5, 6, 7, 8], [1, 2, 3, 4.]])))
-    print(f_coeffs, g_coeffs)
-    Integral = (lagrange.integrate_2D(f_coeffs, g_coeffs))
-    af.display(Integral[0], 14)
+    #f_coeffs = (af.np_to_af_array(np.array([[1, 2, 3, 4.], [5, 6, 7, 8], [1, 2, 3, 4.]])))
+    #g_coeffs = (af.np_to_af_array(np.array([[1, 2, 3., 4], [5, 6, 7, 8], [1, 2, 3, 4.]])))
+    #print(f_coeffs, g_coeffs)
+    #Integral = (lagrange.integrate_2D(f_coeffs, g_coeffs))
+    #af.display(Integral[0], 14)
+    #print(wave_equation.A_matrix())
     #print(af.mean(wave_equation.time_evolution()))
     #print(wave_equation_2d.A_matrix().shape)
+    #af.display(wave_equation_2d.A_matrix()[2, 2], 14)
+    print(af.mean(wave_equation.time_evolution()))
