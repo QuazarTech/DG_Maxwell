@@ -445,7 +445,7 @@ def test_surface_term():
     params.c = 1
     
     change_parameters(8, 10, 10, 'gaussian')
-    
+
     analytical_f_i        = (params.u[-1, :, 0])
     analytical_f_i_minus1 = (af.shift(params.u[-1, :, 0], 0, 1))
     
