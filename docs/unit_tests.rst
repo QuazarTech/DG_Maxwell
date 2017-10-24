@@ -24,3 +24,6 @@ unit_tests
    dg_maxwell.tests.test_waveEqn
    :members:
 
+.. automodule::
+   dg_maxwell.tests.utils.test_utils
+   :members:

@@ -8,12 +8,14 @@ import csv
 
 import numpy as np
 import arrayfire as af
-af.set_backend('cpu')
 
+from dg_maxwell import params
 from dg_maxwell import utils
 from dg_maxwell import msh_parser
 from dg_maxwell import lagrange
 from dg_maxwell import wave_equation_2d
+
+af.set_backend(params.backend)
 
 def test_dx_dxi():
     '''
@@ -171,3 +173,24 @@ def test_jacobian():
     check = af.abs(jacobian - jacobian_reference) < threshold
     
     assert af.all_true(check)
+
+
+def test_A_matrix():
+    '''
+    Compares the tensor product calculated using the ``A_matrix`` function
+    with an analytic value of the tensor product for :math:`N_{LGL} = 4`.
+    The analytic value of the tensor product is calculated in this
+    `document`_
+    
+    .. _document: https://goo.gl/QNWxXp
+    '''
+    threshold = 1e-12
+    
+    A_matrix_ref = af.np_to_af_array(utils.csv_to_numpy(
+        'dg_maxwell/tests/wave_equation_2d/files/A_matrix_ref.csv'))
+    
+    params.N_LGL = 4
+    
+    A_matrix_test = wave_equation_2d.A_matrix()
+    
+    assert af.all_true(af.abs(A_matrix_test - A_matrix_ref) < threshold)

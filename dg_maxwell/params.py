@@ -2,20 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+
 import arrayfire as af
-af.set_backend('opencl')
+
+backend = 'cpu'
+af.set_backend(backend)
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils
-from dg_maxwell import isoparam
 from dg_maxwell import wave_equation
-
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8
+N_LGL      = 4
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
@@ -33,7 +34,7 @@ N_quad     = 8
 # Wave speed.
 c          = 1
 
-# The total time for which the wave is to be evolved by the simulation. 
+# The total time for which the wave is to be evolved by the simulation.
 total_time = 2.01
 
 # The c_lax to be used in the Lax-Friedrichs flux.
@@ -59,7 +60,7 @@ lobatto_weights_quadrature = lagrange.lobatto_weights\
 
 
 # An array containing the coefficients of the lagrange basis polynomials.
-lagrange_coeffs            = lagrange.lagrange_polynomials(xi_LGL)
+lagrange_coeffs            = lagrange.lagrange_polynomial_coeffs(xi_LGL)
 
 # Refer corresponding functions.
 lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)

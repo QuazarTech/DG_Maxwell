@@ -7,13 +7,15 @@ sys.path.insert(0, os.path.abspath('./'))
 
 import numpy as np
 import arrayfire as af
-af.set_backend('cpu')
+
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
 from dg_maxwell import wave_equation
 from dg_maxwell import isoparam
 from dg_maxwell import utils
+
+af.set_backend(params.backend)
 
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
@@ -65,7 +67,7 @@ def change_parameters(LGL, Elements, quad, wave='sin'):
     #params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
 
     # An array containing the coefficients of the lagrange basis polynomials.
-    params.lagrange_coeffs  = lagrange.lagrange_polynomials(params.xi_LGL)
+    params.lagrange_coeffs  = lagrange.lagrange_polynomial_coeffs(params.xi_LGL)
 
     # Refer corresponding functions.
     params.lagrange_basis_value = lagrange.lagrange_function_value\
@@ -508,7 +510,7 @@ def test_advection():
     '''
     Unit test for advection of a sin wave
     '''
-    threshold = 2e-7
+    threshold = 5e-7
     change_parameters(8, 10, 8, 'sin')
 
     u_diff = wave_equation.time_evolution()
