@@ -270,19 +270,17 @@ def volume_integral_flux(u_n):
         analytical_flux_coeffs = flux_x(lagrange.\
                                         lagrange_interpolation_u(u_n))
 
-        analytical_flux_coeffs = af.reorder(analytical_flux_coeffs, 1, 0, 2)
+        analytical_flux_coeffs = af.moddims(af.transpose(af.tile(analytical_flux_coeffs, params.N_LGL)),\
+                                                         params.N_LGL, params.N_LGL * params.N_Elements)
 
-        dl_dxi_coefficients    = af.reorder(params.dl_dxi_coeffs, 1, 0)
+        dl_dxi_coefficients    = af.tile(af.reorder(params.dl_dxi_coeffs, 1, 0), 1, params.N_Elements)
 
         # The product of polynomials is calculated using af.convolve1
         volume_int_coeffs = af.convolve1(dl_dxi_coefficients,\
                                          analytical_flux_coeffs,\
                                          conv_mode=af.CONV_MODE.EXPAND)
-        volume_int_coeffs = af.reorder(volume_int_coeffs, 1, 2, 0)
-        volume_int_coeffs = af.moddims(volume_int_coeffs,\
-                                       params.N_LGL * params.N_Elements,\
-                                       2 * params.N_LGL - 2)
-
+        #print(volume_int_coeffs)
+        volume_int_coeffs = af.reorder(volume_int_coeffs, 1, 0)
 
         flux_integral = lagrange.integrate(volume_int_coeffs)
         flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
@@ -326,8 +324,7 @@ def lax_friedrichs_flux(u_n):
     
     boundary_flux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
                         - params.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
-    
-    
+
     return boundary_flux 
 
 def analytical_u_LGL(t_n):
@@ -444,11 +441,10 @@ def RK4_timestepping(A_inverse, u, delta_t):
               The change in u at the mapped LGL points.
 
     '''
-
-    k1 = af.matmul(A_inverse, b_vector(u                   ))
+    k1 = af.matmul(A_inverse, b_vector(u))
     k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2))
     k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2))
-    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    ))
+    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t))
 
     delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
@@ -547,8 +543,6 @@ def time_evolution():
     delta_t     = params.delta_t
     u           = params.u_init
     time        = params.time
-
-    element_boundaries = af.np_to_af_array(params.np_element_array)
 
     for t_n in trange(0, time.shape[0]):
 

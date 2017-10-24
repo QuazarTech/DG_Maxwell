@@ -3,7 +3,7 @@
 
 import numpy as np
 import arrayfire as af
-af.set_backend('cpu')
+af.set_backend('opencl')
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils
@@ -126,7 +126,7 @@ u[:, :, 0] = u_init
 
 
 
-
+test_array = af.np_to_af_array(np.array(u_init))
 
 
 
