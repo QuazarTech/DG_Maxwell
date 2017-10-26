@@ -287,3 +287,31 @@ def A_matrix():
                    d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
 
     return A
+
+
+def c_xi(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    c_xi = (params.c_x * dy_deta(y_nodes, xi, eta)  \
+          - params.c_y * dx_deta(x_nodes, xi, eta)) \
+            (dx_dxi(x_nodes, xi, eta) * dy_deta(y_nodes, xi, eta) \
+          -  dx_deta(x_nodes, xi, eta) * dy_dxi(y_nodes, xi, eta))
+        
+    return c_xi
+
+
+def c_eta(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    c_eta =  (params.c_x * dy_dxi(y_nodes, xi, eta)  \
+           -  params.c_y * dx_dxi(x_nodes, xi, eta)) \
+           / (dx_deta(x_nodes, xi, eta) * dy_dxi(y_nodes, xi, eta) \
+           -  dx_dxi(x_nodes, xi, eta) * dy_deta(y_nodes, xi, eta))
+        
+    return c_eta
+
+
+def volume_integral():
+    '''
+    '''
+    return
