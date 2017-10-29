@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import numpy as np
 import arrayfire as af
 
 from dg_maxwell import params
@@ -290,51 +291,92 @@ def A_matrix():
     return A
 
 
-def u_init():
+def F_x(u):
     '''
-    The boundary flux
     '''
-
-    element_LGL = isoparam.u_pq_isoparam()
-    element_LGL = af.moddims(element_LGL, params.N_LGL ** 2, 2, 3, 3)
-    element_LGL = af.reorder(element_LGL, 2, 3, 0, 1)
-    element_LGL = af.flip(element_LGL, dim=1)
-
-    element_LGL_initialize = af.reorder(element_LGL, 2, 3, 1, 0)
-
-    #u_init = np.e ** (-(element_LGL_initialize[0], 
-
-    return element_LGL
+    return params.c_x * u
 
 
-def flux_x(u):
+def F_y(u):
     '''
-    The flux in x direction
     '''
-
-    flux = params.c_x * u
-
-    return flux
+    return params.c_y * u
 
 
-def boundary_flux(u):
+def c_xi(x_nodes, y_nodes, xi, eta):
     '''
-    The flux at the element boundaries, calculated using the Lax-Friedrichs method.
     '''
-    u_right_boundary_i      = u[:, :, -params.N_LGL:, :]
-    u_left_boundary_i_plus1 = af.shift(u[:, :, :params.N_LGL, :], -1)
-    flux_vert_boundary      = (flux_x(u_left_boundary_i_plus1) \
-                                + flux_x(u_right_boundary_i)) / 2 \
-                                + params.c_lax * (u_left_boundary_i_plus1\
-                                - u_right_boundary_i)
-
-    return flux_vert_boundary
+    c_xi = (params.c_x * dy_deta(y_nodes, xi, eta)  \
+          - params.c_y * dx_deta(x_nodes, xi, eta)) \
+            (dx_dxi(x_nodes, xi, eta) * dy_deta(y_nodes, xi, eta) \
+          -  dx_deta(x_nodes, xi, eta) * dy_dxi(y_nodes, xi, eta))
+        
+    return c_xi
 
 
-
-def surface_term():
+def c_eta(x_nodes, y_nodes, xi, eta):
     '''
-    The surface term obtained for 2D advection.
+    '''
+    c_eta =  (params.c_x * dy_dxi(y_nodes, xi, eta)  \
+           -  params.c_y * dx_dxi(x_nodes, xi, eta)) \
+           / (dx_deta(x_nodes, xi, eta) * dy_dxi(y_nodes, xi, eta) \
+           -  dx_dxi(x_nodes, xi, eta) * dy_deta(y_nodes, xi, eta))
+        
+    return c_eta
+
+
+def g_dd(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    ans00  =   (dx_dxi(x_nodes, xi, eta))**2 \
+             + (dy_dxi(y_nodes, xi, eta))**2
+    ans11  =   (dx_deta(x_nodes, xi, eta))**2 \
+             + (dy_deta(y_nodes, xi, eta))**2
+    
+    ans01  =  (dx_dxi(x_nodes, xi, eta))  \
+            * (dx_deta(x_nodes, xi, eta)) \
+            + (dy_dxi(y_nodes, xi, eta))  \
+            * (dy_deta(y_nodes, xi, eta))
+    
+    ans =  [[ans00, ans01],
+            [ans01, ans11]
+           ]
+    
+    return np.array(ans)
+
+
+def g_uu(x_nodes, y_nodes, xi, eta):
+    gCov = g_dd(x_nodes, y_nodes, xi, eta)
+    
+    
+    a = gCov[0][0]
+    b = gCov[0][1]
+    c = gCov[1][0]
+    d = gCov[1][1]
+    
+    det = (a*d - b*c)
+    
+    ans = np.array([[d, -b],
+                    [-c, a]])
+    
+    return np.array(ans)/det
+
+
+def sqrtgDet(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    gCov = g_dd(x_nodes, y_nodes, xi, eta)
+    
+    a = gCov[0][0]
+    b = gCov[0][1]
+    c = gCov[1][0]
+    d = gCov[1][1]
+    
+    return (a*d - b*c)**0.5
+
+
+def volume_integral():
+    '''
     '''
     
     return

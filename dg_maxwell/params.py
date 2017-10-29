@@ -129,11 +129,11 @@ test_array = af.np_to_af_array(np.array(u_init))
 # The parameters below are for 2D advection
 # -----------------------------------------
 
-#    2D_LGL_xi  = N_LGL
-#    2D_eta_LGL = N_LGL
-#    2D_xi_LGL  = lagrange.LGL_points(2D_LGL_xi)
-#    2D_eta_LGL = lagrange.LGL_points(2D_LGL_eta)
-#
-#    N_quad_xi = N_quad
-#
-#    N_quad_eta = N_quad
+
+########################################################################
+#######################2D Wave Equation#################################
+########################################################################
+
+c_x = 1.
+c_y = 1.
+>>>>>>> f6e4c6d34f079ab8b816667e181c292930bf4af9
