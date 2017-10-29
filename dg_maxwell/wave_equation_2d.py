@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import numpy as np
 import arrayfire as af
 
 from dg_maxwell import params
@@ -289,6 +290,18 @@ def A_matrix():
     return A
 
 
+def F_x(u):
+    '''
+    '''
+    return params.c_x * u
+
+
+def F_y(u):
+    '''
+    '''
+    return params.c_y * u
+
+
 def c_xi(x_nodes, y_nodes, xi, eta):
     '''
     '''
@@ -311,7 +324,58 @@ def c_eta(x_nodes, y_nodes, xi, eta):
     return c_eta
 
 
+def g_dd(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    ans00  =   (dx_dxi(x_nodes, xi, eta))**2 \
+             + (dy_dxi(y_nodes, xi, eta))**2
+    ans11  =   (dx_deta(x_nodes, xi, eta))**2 \
+             + (dy_deta(y_nodes, xi, eta))**2
+    
+    ans01  =  (dx_dxi(x_nodes, xi, eta))  \
+            * (dx_deta(x_nodes, xi, eta)) \
+            + (dy_dxi(y_nodes, xi, eta))  \
+            * (dy_deta(y_nodes, xi, eta))
+    
+    ans =  [[ans00, ans01],
+            [ans01, ans11]
+           ]
+    
+    return np.array(ans)
+
+
+def g_uu(x_nodes, y_nodes, xi, eta):
+    gCov = g_dd(x_nodes, y_nodes, xi, eta)
+    
+    
+    a = gCov[0][0]
+    b = gCov[0][1]
+    c = gCov[1][0]
+    d = gCov[1][1]
+    
+    det = (a*d - b*c)
+    
+    ans = np.array([[d, -b],
+                    [-c, a]])
+    
+    return np.array(ans)/det
+
+
+def sqrtgDet(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    gCov = g_dd(x_nodes, y_nodes, xi, eta)
+    
+    a = gCov[0][0]
+    b = gCov[0][1]
+    c = gCov[1][0]
+    d = gCov[1][1]
+    
+    return (a*d - b*c)**0.5
+
+
 def volume_integral():
     '''
     '''
+    
     return
