@@ -212,6 +212,34 @@ def jacobian(x_nodes, y_nodes, xi, eta):
     
     return (dx_dxi_ * dy_deta_) - (dx_deta_ * dy_dxi_)
 
+def dxi_dx(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    dy_deta_ = dy_deta(y_nodes, xi, eta)
+    
+    return dy_deta_ / jacobian(x_nodes, y_nodes, xi, eta)
+
+def dxi_dy(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    dx_deta_ = dx_deta(x_nodes, xi, eta)
+    
+    return -dx_deta_ / jacobian(x_nodes, y_nodes, xi, eta)
+
+def deta_dx(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    dy_dxi_ = dy_dxi(y_nodes, xi, eta)
+    
+    return -dy_dxi_ / jacobian(x_nodes, y_nodes, xi, eta)
+
+def deta_dy (x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    dx_dxi_ = dx_dxi(x_nodes, xi, eta)
+    
+    return dx_dxi_ / jacobian(x_nodes, y_nodes, xi, eta)
+
 
 def A_matrix():
     '''
