@@ -16,7 +16,7 @@ from dg_maxwell import wave_equation
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 4
+N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
@@ -120,12 +120,7 @@ if (wave=='gaussian'):
 
 
 
-# Initializing the amplitudes. Change u_init to required initial conditions.
-u          = af.constant(0, N_LGL, N_Elements, time.shape[0],\
-                                 dtype = af.Dtype.f64)
-u[:, :, 0] = u_init
-
-
+c_x = 1
 
 test_array = af.np_to_af_array(np.array(u_init))
 

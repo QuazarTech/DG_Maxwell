@@ -4,6 +4,7 @@
 import arrayfire as af
 
 from dg_maxwell import params
+from dg_maxwell import isoparam
 from dg_maxwell import lagrange
 from dg_maxwell import utils
 
@@ -287,3 +288,52 @@ def A_matrix():
                    d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
 
     return A
+
+
+def u_init():
+    '''
+    The boundary flux
+    '''
+
+    element_LGL = isoparam.u_pq_isoparam()
+    element_LGL = af.moddims(element_LGL, params.N_LGL ** 2, 2, 3, 3)
+    element_LGL = af.reorder(element_LGL, 2, 3, 0, 1)
+    element_LGL = af.flip(element_LGL, dim=1)
+
+    element_LGL_initialize = af.reorder(element_LGL, 2, 3, 1, 0)
+
+    #u_init = np.e ** (-(element_LGL_initialize[0], 
+
+    return element_LGL
+
+
+def flux_x(u):
+    '''
+    The flux in x direction
+    '''
+
+    flux = params.c_x * u
+
+    return flux
+
+
+def boundary_flux(u):
+    '''
+    The flux at the element boundaries, calculated using the Lax-Friedrichs method.
+    '''
+    u_right_boundary_i      = u[:, :, -params.N_LGL:, :]
+    u_left_boundary_i_plus1 = af.shift(u[:, :, :params.N_LGL, :], -1)
+    flux_vert_boundary      = (flux_x(u_left_boundary_i_plus1) \
+                                + flux_x(u_right_boundary_i)) / 2 \
+                                + params.c_lax * (u_left_boundary_i_plus1\
+                                - u_right_boundary_i)
+
+    return flux_vert_boundary
+
+
+
+def surface_term():
+    '''
+    The surface term obtained for 2D advection.
+    '''
+    return

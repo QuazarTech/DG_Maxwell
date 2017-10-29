@@ -36,14 +36,15 @@ def test_dx_dxi():
     N_LGL   = 16
     xi_LGL  = lagrange.LGL_points(N_LGL)
     eta_LGL = lagrange.LGL_points(N_LGL)
+
     Xi  = af.data.tile(af.array.transpose(xi_LGL), d0 = N_LGL)
     Eta = af.data.tile(eta_LGL, d0 = 1, d1 = N_LGL)
-    
+
     dx_dxi  = wave_equation_2d.dx_dxi(nodes[elements[0]][:, 0],
                                       Xi, Eta)
-    
+
     check = af.abs((dx_dxi - dx_dxi_reference)) < threshold
-    
+
     assert af.all_true(check)
     
     

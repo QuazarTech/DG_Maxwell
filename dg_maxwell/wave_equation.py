@@ -322,6 +322,7 @@ def lax_friedrichs_flux(u_n):
 
 def analytical_u_LGL(t_n):
     '''
+
     Calculates the analytical u at the LGL points.
 
     Parameters

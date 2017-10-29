@@ -21,9 +21,9 @@ def test_read_order_2_msh():
     and elements are compared against the test_nodes and test_elements
     respectively, which are created by manually reading the mesh file.
     '''
-    
+
     threshold = 1e-14
-    
+
     test_nodes = [[-2, -1                                    ],
                   [2, -1                                     ],
                   [2, 1                                      ],
@@ -39,18 +39,18 @@ def test_read_order_2_msh():
                   [0, 0                                      ],
                   [0.9999999999997291, -1.312838726619248e-12],
                   [-0.9999999999997291, 1.312838726619248e-12]]
-                  
+
     test_nodes = np.array(test_nodes)
-    
+
     test_elements = [[2, 9, 8, 12, 4, 6, 1, 7, 13],
                      [8, 10, 3, 11, 0, 5, 4, 12, 14]]
-    
+
     test_elements = np.array(test_elements)
-    
+
     nodes, elements = msh_parser.read_order_2_msh(
         os.path.abspath('./dg_maxwell/tests/msh_parser/mesh/rectangular.msh'))
-    
+
     node_test = np.all((nodes - test_nodes) < threshold)
     element_test = np.all((elements == test_elements))
-    
+
     assert node_test & element_test
