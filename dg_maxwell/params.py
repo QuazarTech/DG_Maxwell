@@ -15,10 +15,10 @@ from dg_maxwell import wave_equation
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 4
+N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
-N_Elements = 10
+N_Elements = 3
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
@@ -109,7 +109,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
 
 # The wave to be advected is either a sin or a Gaussian wave.
 # This parameter can take values 'sin' or 'gaussian'.
-wave = 'sin'
+wave = 'gaussian'
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 if (wave=='sin'):
