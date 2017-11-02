@@ -441,7 +441,7 @@ def RK4_timestepping(A_inverse, u, delta_t):
 
 def RK6_timestepping(A_inverse, u, delta_t):
     '''
-    Implementing the Runge-Kutta (RK4) method to evolve the wave.
+    Implementing the Runge-Kutta (RK6) method to evolve the wave.
 
     Parameters
     ----------

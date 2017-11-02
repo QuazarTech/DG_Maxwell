@@ -9,7 +9,7 @@ import h5py
 from dg_maxwell import params
 
 pl.rcParams['figure.figsize'  ] = 9.6, 6.
-pl.rcParams['figure.dpi'      ] = 300
+pl.rcParams['figure.dpi'      ] = 100
 pl.rcParams['image.cmap'      ] = 'jet'
 pl.rcParams['lines.linewidth' ] = 1.5
 pl.rcParams['font.family'     ] = 'serif'

@@ -155,7 +155,7 @@ def test_integrate_2d():
     test_lobatto_integral_Li_Lp_Lj_Lq = utils.integrate_2d(Li_Lp, Lj_Lq,
                                                            order = N_LGL + 1,
                                                            scheme = 'lobatto')
-    
+
     ref_integral = af.np_to_af_array(np.array([0.00111111111111037,
                                                0.0386740852528278,
                                                0.101366575556200,
@@ -164,7 +164,7 @@ def test_integrate_2d():
                                                0.101366575556200,
                                                0.0386740852528278,
                                                0.00111111111111037]))
-    
+
     diff_gauss   = af.abs(test_gauss_integral_Li_Lp_Lj_Lq - ref_integral)
     diff_lobatto = af.abs(test_lobatto_integral_Li_Lp_Lj_Lq - ref_integral)
     

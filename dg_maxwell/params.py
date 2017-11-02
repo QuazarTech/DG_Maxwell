@@ -29,7 +29,7 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-N_quad     = 8
+N_quad     = N_LGL
 
 # Wave speed.
 c          = 1
@@ -109,7 +109,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
 
 # The wave to be advected is either a sin or a Gaussian wave.
 # This parameter can take values 'sin' or 'gaussian'.
-wave = 'sin'
+wave = 'gaussian'
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 if (wave=='sin'):
@@ -135,5 +135,4 @@ test_array = af.np_to_af_array(np.array(u_init))
 ########################################################################
 
 c_x = 1.
-c_y = 1.
->>>>>>> f6e4c6d34f079ab8b816667e181c292930bf4af9
+c_y = 0

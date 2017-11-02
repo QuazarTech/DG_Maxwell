@@ -483,4 +483,4 @@ def polynomial_derivative(polynomial):
         d0 = 1, d1 = polynomial.shape[1]))
     
     return polynomial[:, : -1] * derivtive_multiplier
-
+ 
