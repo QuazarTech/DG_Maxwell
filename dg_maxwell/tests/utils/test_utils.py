@@ -169,3 +169,11 @@ def test_integrate_2d():
     diff_lobatto = af.abs(test_lobatto_integral_Li_Lp_Lj_Lq - ref_integral)
     
     assert af.all_true(diff_gauss < threshold) and af.all_true(diff_lobatto < threshold)
+
+
+def test_polyval_1d():
+    '''
+    '''
+    
+    
+    return

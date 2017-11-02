@@ -19,7 +19,7 @@ x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
-N_Elements = 10
+N_Elements = 3
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
