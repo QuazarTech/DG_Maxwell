@@ -479,9 +479,9 @@ def integrate_2d(poly_xi, poly_eta, order, scheme = 'gauss'):
 def polynomial_derivative(polynomial):
     '''
     '''
-    derivtive_multiplier = af.transpose(af.tile(
-        af.flip(af.range(polynomial.shape[0] - 1) + 1),
-        d0 = 1, d1 = polynomial.shape[1]))
+    derivtive_multiplier = af.tile(af.transpose(af.flip(
+        af.range(polynomial.shape[1]))),
+                                   d0 = polynomial.shape[0])
     
-    return polynomial[:, : -1] * derivtive_multiplier
+    return (polynomial * derivtive_multiplier)[:, : -1]
 
