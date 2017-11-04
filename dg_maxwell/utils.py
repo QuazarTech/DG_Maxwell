@@ -526,3 +526,69 @@ def polyval_2d(poly_2d, xi, eta):
     poly_val = af.reorder(poly_val, d0 = 2, d1 = 1, d2 = 0)
 
     return poly_val
+
+
+def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
+    '''
+    '''
+    xi_gauss  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
+    eta_gauss = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
+
+    Xi, Eta = af_meshgrid(xi_gauss, eta_gauss)
+
+    Xi  = af.flat(Xi)
+    Eta = af.flat(Eta)
+
+    w_i = lagrange.gaussian_weights(N_quad)
+    w_j = lagrange.gaussian_weights(N_quad)
+
+    W_i, W_j = af_meshgrid(w_i, w_j)
+
+    W_i = af.flat(W_i)
+    W_j = af.flat(W_j)
+
+    P_xi_eta_quad_val = polyval_2d(poly_xi_eta, Xi, Eta)
+
+    integral = af.sum(W_i * W_j * P_xi_eta_quad_val)
+
+    return integral
+
+
+def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
+    '''
+    '''
+    xi_LGL  = lagrange.LGL_points(N_quad)
+    eta_LGL = lagrange.LGL_points(N_quad)
+
+    Xi, Eta = af_meshgrid(xi_LGL, eta_LGL)
+
+    Xi  = af.flat(Xi)
+    Eta = af.flat(Eta)
+
+    w_i = lagrange.lobatto_weights(N_quad)
+    w_j = lagrange.lobatto_weights(N_quad)
+
+    W_i, W_j = af_meshgrid(w_i, w_j)
+
+    W_i = af.flat(W_i)
+    W_j = af.flat(W_j)
+
+    P_xi_eta_quad_val = polyval_2d(poly_xi_eta, Xi, Eta)
+
+    integral = af.sum(W_i * W_j * P_xi_eta_quad_val)
+    
+    return integral
+
+def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
+    '''
+    '''
+    if scheme is 'gauss':
+        return gauss_quad_multivar_poly(poly_xi_eta, N_quad)
+    
+    elif scheme is 'lobatto':
+        return lobatto_quad_multivar_poly(poly_xi_eta, N_quad)
+    
+    else:
+        return
+
+    return
