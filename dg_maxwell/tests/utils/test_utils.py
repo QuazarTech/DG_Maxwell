@@ -171,9 +171,53 @@ def test_integrate_2d():
     assert af.all_true(diff_gauss < threshold) and af.all_true(diff_lobatto < threshold)
 
 
-def test_polyval_1d():
+def test_polyval_2d():
     '''
+    Tests the ``utils.polyval_2d`` function by evaluating the polynomial
+    
+    .. math:: P_0(\\xi) P_1(\\eta)
+    
+    here,
+    
+    .. math:: P_0(\\xi) = 3 \, \\xi^{2} + 2 \, \\xi + 1
+    
+    .. math:: P_1(\\eta) = 3 \, \\eta^{2} + 2 \, \\eta + 1
+    
+    at corresponding ``linspace`` points in :math:`\\xi \\in [-1, 1]` and
+    :math:`\\eta \\in [-1, 1]`.
+    
+    This value is then compared with the reference value calculated analytically.
+    The reference values are calculated in
+    `polynomial_product_two_variables.sagews`_
+    
+    .. _polynomial_product_two_variables.sagews: https://goo.gl/KwG7k9
+    
     '''
+    threshold = 1e-12
     
+    poly_xi_degree = 4
+    poly_xi = af.flip(af.np_to_af_array(np.arange(1, poly_xi_degree)))
+
+    poly_eta_degree = 4
+    poly_eta = af.flip(af.np_to_af_array(np.arange(1, poly_eta_degree)))
     
-    return
+    poly_xi_eta = utils.polynomial_product_coeffs(poly_xi, poly_eta)
+    
+    xi  = utils.linspace(-1, 1, 8)
+    eta = utils.linspace(-1, 1, 8)
+    
+    polyval_xi_eta = utils.polyval_2d(poly_xi_eta, xi, eta)
+    
+    polyval_xi_eta_ref = af.np_to_af_array(
+        np.array([4.00000000000000,
+                  1.21449396084962,
+                  0.481466055810080,
+                  0.601416076634741,
+                  1.81424406497291,
+                  5.79925031236988,
+                  15.6751353602663,
+                  36.0000000000000]))
+    
+    diff = af.abs(polyval_xi_eta - polyval_xi_eta_ref)
+    
+    assert af.all_true(diff < threshold)
