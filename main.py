@@ -7,15 +7,12 @@ from dg_maxwell import params
 from dg_maxwell import lagrange
 from dg_maxwell import wave_equation_2d
 from dg_maxwell import wave_equation
+from dg_maxwell import utils
 from dg_maxwell import isoparam
 from dg_maxwell import msh_parser
 
-#nodes, elements = msh_parser.read_order_2_msh('Square_N_Elements_9.msh')
-#wave_equation.time_evolution()
-#print((wave_equation.volume_integral_flux(params.u_init)))
-#print(lagrange.integrate(params.lagrange_coeffs))
-#print(wave_equation_2d.A_matrix())
-#print(params.u_init)
-#pl.plot((params.element_LGL), (params.u_init))
-#pl.show()
-print(params.dl_dxi_coeffs)
+poly1_coeffs = af.reorder(af.transpose(af.np_to_af_array(np.array([[1, 2, 3.], [1, 2, 3]]))), 0, 2, 1)
+poly2_coeffs = af.reorder(af.transpose(af.np_to_af_array(np.array([[-2, 4, 7.], [-2, 4, 7.]]))), 0, 2, 1)
+print(poly1_coeffs, poly2_coeffs)
+print(utils.polynomial_product_coeffs(poly1_coeffs, poly2_coeffs))
+print(wave_equation_2d.Li_Lj_coeffs()[:, :, 1])

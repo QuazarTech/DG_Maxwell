@@ -119,61 +119,29 @@ def test_integrate_1d():
     assert af.all_true(diff_gauss < threshold) and af.all_true(diff_lobatto < threshold)
 
 
-def test_integrate_2d():
+def test_polynomial_product_coeffs():
     '''
-    Tests the ``integrate_2d`` by comparing the integral agains the
-    analytically calculated integral. The integral to be calculated is
-    
-    .. math:: \\iint L_i(\\xi) L_i(\\eta) L_i(\\xi) L_i(\\eta) d\\xi d\\eta
-    
-    where :math:`L_i` are the Lagrange polynomials with
-    :math:`i \in \{0 ... 7\}`. The analytical integral is calculated
-    in this `sagews`_
-    
-    .. _sagews: https://goo.gl/KziEMs
     '''
     threshold = 1e-12
-    
-    N_LGL = 8
-    xi_LGL  = lagrange.LGL_points(N_LGL)
-    eta_LGL = lagrange.LGL_points(N_LGL)
-    _, Li_xi  = lagrange.lagrange_polynomials(xi_LGL)
-    _, Lj_eta = lagrange.lagrange_polynomials(eta_LGL)
 
-    Li_xi  = af.np_to_af_array(Li_xi)
-    Lj_eta = af.np_to_af_array(Lj_eta)
-    Lp_xi  = Li_xi.copy()
-    Lq_eta = Lj_eta.copy()
+    poly1 = af.reorder(\
+            af.transpose(\
+            af.np_to_af_array(np.array([[1, 2, 3., 4], [5, -2, -4.7211, 2]]))), 0, 2, 1)
     
-    Li_Lp = utils.poly1d_product(Li_xi, Lp_xi)
-    Lj_Lq = utils.poly1d_product(Lj_eta, Lq_eta)
-    
-    test_gauss_integral_Li_Lp_Lj_Lq = utils.integrate_2d(Li_Lp, Lj_Lq,
-                                                   order = 9,
-                                                   scheme = 'gauss')
+    poly2 = af.reorder(\
+            af.transpose(\
+            af.np_to_af_array(np.array([[-2, 4, 7., 9], [1, 0, -9.1124, 7]]))), 0, 2, 1)
 
-    test_lobatto_integral_Li_Lp_Lj_Lq = utils.integrate_2d(Li_Lp, Lj_Lq,
-                                                           order = N_LGL + 1,
-                                                           scheme = 'lobatto')
+    numerical_product_coeffs    = utils.polynomial_product_coeffs(poly1, poly2)
+    analytical_product_coeffs_1 = af.np_to_af_array(np.array([[-2, -4, 6, -8],\
+                                                            [4, 8, 12, 16],\
+                                                            [7, 14, 21, 28],\
+                                                            [9, 18, 27, 36]]))
 
-    ref_integral = af.np_to_af_array(np.array([0.00111111111111037,
-                                               0.0386740852528278,
-                                               0.101366575556200,
-                                               0.148195388573733,
-                                               0.148195388573733,
-                                               0.101366575556200,
-                                               0.0386740852528278,
-                                               0.00111111111111037]))
+    analytical_product_coeffs_2 = af.np_to_af_array(np.array([[5, 2, -4.7211, 2],\
+                                                            [0, 0, 0, 0],\
+                                                            [-45.562, 18.2248, 43.02055164, -18.2248],\
+                                                            [35, 14, -33.0477, 14]]))
 
-    diff_gauss   = af.abs(test_gauss_integral_Li_Lp_Lj_Lq - ref_integral)
-    diff_lobatto = af.abs(test_lobatto_integral_Li_Lp_Lj_Lq - ref_integral)
-    
-    assert af.all_true(diff_gauss < threshold) and af.all_true(diff_lobatto < threshold)
-
-
-def test_polyval_1d():
-    '''
-    '''
-    
-    
-    return
+    assert af.max(numerical_product_coeffs[:, :, 0] - analytical_product_coeffs_1 + \
+                  numerical_product_coeffs[:, :, 1] - analytical_product_coeffs_2) < threshold

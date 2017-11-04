@@ -26,8 +26,8 @@ def test_isoparam_x():
     '''
     threshold = 1e-7
 
-    x_nodes = af.np_to_af_array(np.array([0., 0.2, 0., 0.5, 1., 0.8, 1., 0.5]))
-    y_nodes = af.np_to_af_array(np.array([1., 0.5, 0., 0.2, 0., 0.5,  1., 0.8]))
+    x_nodes = (np.array([0., 0.2, 0., 0.5, 1., 0.8, 1., 0.5]))
+    y_nodes = (np.array([1., 0.5, 0., 0.2, 0., 0.5,  1., 0.8]))
 
     xi = np.array([-0.71565335, -0.6604077, -0.87006188, -0.59216134,
                    0.73777285])
@@ -59,3 +59,4 @@ def test_isoparam_x():
     L1norm_y_test_y = np.abs(y - test_y).sum()
 
     assert (L1norm_x_test_x < threshold) & (L1norm_y_test_y < threshold)
+

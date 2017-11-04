@@ -403,8 +403,30 @@ def sqrtgDet(x_nodes, y_nodes, xi, eta):
     return (a*d - b*c)**0.5
 
 
-def volume_integral():
+def Li_Lj_coeffs():
     '''
     '''
-    
+    Li_xi  = af.moddims(af.tile(af.reorder(params.lagrange_coeffs, 1, 2, 0), 1,\
+                                params.N_LGL), params.N_LGL, 1, params.N_LGL ** 2)
+    Lj_eta = af.tile(af.reorder(params.lagrange_coeffs, 1, 2, 0), 1, 1, params.N_LGL)
+
+    Li_Lj_coeffs = utils.polynomial_product_coeffs(Li_xi, Lj_eta)
+
+    return Li_Lj_coeffs
+
+def integrate_2d(product_coeff_tile, N_quad, scheme='Gaussian'):
+    '''
+    '''
+    if (scheme == 'Gaussian'):
+        xi_gaussian_nodes  = af.reorder(af.flat(af.transpose(\
+                                     af.tile(params.gauss_points, 1, N_quad))), 2, 1, 0)
+        eta_gaussian_nodes = af.reorder(\
+                                     af.flat(af.tile(params.gauss_points, 1, N_quad)), 2, 1, 0)
+
+        gauss_weights_xi  = af.reorder(af.flat(af.transpose(af.tile\
+                            (params.gauss_weights, 1, N_quad))), 2, 1, 0)
+        gauss_weights_eta = af.reorder(af.flat(af.tile(params.gauss_weights, 1, N_quad)), 2, 1, 0)
+
+        index = af.flip(af.range(params.product_coeff_tile.shape[0]))
+
     return
