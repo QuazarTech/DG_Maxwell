@@ -430,10 +430,10 @@ def Li_Lj_coeffs(N_LGL):
 
     return Li_Lj_coeffs
 
-def lag_interpolation_2d(f_ij):
+def lag_interpolation_2d(f_ij, N_LGL):
     '''
     '''
-    Li_xi_Lj_eta_coeffs = Li_Lj_coeffs()
+    Li_xi_Lj_eta_coeffs = Li_Lj_coeffs(N_LGL)
     f_ij = af.reorder(f_ij, 2, 1, 0)
     
     f_ij_Li_Lj_coeffs = af.broadcast(utils.multiply, f_ij, Li_xi_Lj_eta_coeffs)
