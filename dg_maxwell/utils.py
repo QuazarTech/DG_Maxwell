@@ -485,3 +485,20 @@ def polynomial_derivative(polynomial):
     
     return (polynomial * derivtive_multiplier)[:, : -1]
 
+
+
+def two_variable_polynomial_product(poly1_coeffs, poly2_coeffs):
+    '''
+    '''
+    poly1_coeffs_tile = af.transpose(af.tile(poly1_coeffs, 1, poly1_coeffs.shape[0]))
+    poly2_coeffs_tile = af.tile(poly2_coeffs, 1, poly2_coeffs.shape[0])
+
+    product_coeffs = poly1_coeffs_tile * poly2_coeffs_tile
+
+    return product_coeffs
+
+
+def polyval_2d(poly_2d):
+    '''
+    '''
+    
