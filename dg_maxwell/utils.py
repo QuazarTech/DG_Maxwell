@@ -501,36 +501,43 @@ def polynomial_product_coeffs(poly1_coeffs, poly2_coeffs):
 def polyval_2d(poly_2d, xi, eta):
     '''
     '''
-    
-    poly_xy = af.tile(poly_2d, d0 = 1, d1 = 1, d2 = xi.shape[0])
-    
-    xi_power = af.flip(af.range(poly_xy.shape[1], dtype = af.Dtype.u32))
-    xi_power = af.tile(af.transpose(xi_power), d0 = poly_xy.shape[0])
+    poly_2d_shape = shape(poly_2d)
+    poly_xy = af.tile(poly_2d, d0 = 1, d1 = 1, d2 = 1, d3 = xi.shape[0])
+    poly_xy_shape = shape(poly_xy)
+    # print(poly_xy)
+    xi_power = af.flip(af.range(poly_xy_shape[1], dtype = af.Dtype.u32))
+    xi_power = af.tile(af.transpose(xi_power), d0 = poly_xy_shape[0])
     xi_power = af.tile(xi_power, d0 = 1, d1 = 1, d2 = xi.shape[0])
-    
-    eta_power = af.flip(af.range(poly_xy.shape[0], dtype = af.Dtype.u32))
-    eta_power = af.tile(eta_power, d0 = 1, d1 = poly_xy.shape[1])
+
+    eta_power = af.flip(af.range(poly_xy_shape[0], dtype = af.Dtype.u32))
+    eta_power = af.tile(eta_power, d0 = 1, d1 = poly_xy_shape[1])
     eta_power = af.tile(eta_power, d0 = 1, d1 = 1, d2 = eta.shape[0])
-    
+
     Xi = af.reorder(xi, d0 = 2, d1 = 1, d2 = 0)
-    Xi = af.tile(Xi, d0 = poly_xy.shape[0], d1 = poly_xy.shape[1])
+    Xi = af.tile(Xi, d0 = poly_xy_shape[0], d1 = poly_xy_shape[1])
     Xi = Xi**xi_power
+    Xi = af.reorder(Xi, d0 = 0, d1 = 1, d2 = 3, d3 = 2)
+    Xi = af.tile(Xi, d0 = 1, d1 = 1, d2 = poly_2d_shape[2])
+    # print(Xi)
 
     Eta = af.reorder(eta, d0 = 2, d1 = 1, d2 = 0)
-    Eta = af.tile(Eta, d0 = poly_xy.shape[0], d1 = poly_xy.shape[1])
+    Eta = af.tile(Eta, d0 = poly_xy_shape[0], d1 = poly_xy_shape[1])
     Eta = Eta**eta_power
-    
+    Eta = af.reorder(Eta, d0 = 0, d1 = 1, d2 = 3, d3 = 2)
+    Eta = af.tile(Eta, d0 = 1, d1 = 1, d2 = poly_2d_shape[2])
+    # print(Eta)
+
     Xi_Eta = Xi * Eta
+
     poly_val = poly_xy * Xi_Eta
     poly_val = af.sum(af.sum(poly_val, dim = 0), dim = 1)
-    poly_val = af.reorder(poly_val, d0 = 2, d1 = 1, d2 = 0)
+    poly_val = af.reorder(poly_val, d0 = 2, d1 = 3, d2 = 0, d3 = 1)
 
     return poly_val
 
 
 def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
     '''
-    
     '''
     xi_gauss  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
     eta_gauss = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
