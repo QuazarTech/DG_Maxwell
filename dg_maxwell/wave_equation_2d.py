@@ -414,21 +414,26 @@ def sqrtgDet(x_nodes, y_nodes, xi, eta):
     return (a*d - b*c)**0.5
 
 
-def Li_Lj_coeffs():
+def Li_Lj_coeffs(N_LGL):
     '''
     '''
-    Li_xi  = af.moddims(af.tile(af.reorder(params.lagrange_coeffs, 1, 2, 0), 1,\
-                                params.N_LGL), params.N_LGL, 1, params.N_LGL ** 2)
-    Lj_eta = af.tile(af.reorder(params.lagrange_coeffs, 1, 2, 0), 1, 1, params.N_LGL)
+    xi_LGL = lagrange.LGL_points(N_LGL)
+    lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
+
+    Li_xi  = af.moddims(af.tile(af.reorder(lagrange_coeffs, 1, 2, 0),
+                                1, N_LGL),
+                        N_LGL, 1, N_LGL ** 2)
+    
+    Lj_eta = af.tile(af.reorder(lagrange_coeffs, 1, 2, 0), 1, 1, N_LGL)
 
     Li_Lj_coeffs = utils.polynomial_product_coeffs(Li_xi, Lj_eta)
 
     return Li_Lj_coeffs
 
-def lag_interpolation_2d(f_ij):
+def lag_interpolation_2d(f_ij, N_LGL):
     '''
     '''
-    Li_xi_Lj_eta_coeffs = Li_Lj_coeffs()
+    Li_xi_Lj_eta_coeffs = Li_Lj_coeffs(N_LGL)
     f_ij = af.reorder(f_ij, 2, 1, 0)
 
     f_ij_Li_Lj_coeffs = af.broadcast(utils.multiply, f_ij, Li_xi_Lj_eta_coeffs)

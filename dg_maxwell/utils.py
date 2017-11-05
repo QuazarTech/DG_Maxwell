@@ -530,6 +530,7 @@ def polyval_2d(poly_2d, xi, eta):
 
 def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
     '''
+    
     '''
     xi_gauss  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
     eta_gauss = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
@@ -581,6 +582,44 @@ def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
 
 def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
     '''
+    Evaluates the integral
+    
+    .. math:: \\iint P(\\xi, \\eta) \\partial \\xi \\partial \\eta
+    
+    using 
+    
+    Parameters
+    ----------
+    poly_xi : af.Array [number_of_polynomials N 1 1]
+              ``number_of_polynomials`` polynomials of :math:`\\xi` with
+              degree :math:`N - 1` of the form
+
+                 .. math:: P_0(\\xi) = a_0\\xi^0 + a_1\\xi^1 + ... \\
+                           a_{N - 1}\\xi^{N - 1}
+
+    poly_eta : af.Array [number_of_polynomials N 1 1]
+               ``number_of_polynomials`` polynomials of :math:`\\eta` with
+               degree :math:`N - 1` of the form
+
+               .. math:: P_1(\\eta) = a_0\\eta^0 + a_1\\eta^1 + ... \\
+                         a_{N - 1}\\eta^{N - 1}
+
+    order   : int
+              Order of the Gauss-Legendre or Gauss-Lobatto quadrature.
+
+    scheme  : str
+              Possible options are
+
+              - ``gauss`` for using Gauss-Legendre quadrature
+              - ``lobatto`` for using Gauss-Lobatto quadrature
+
+    Returns
+    -------
+    integrate_poly_xi_eta : af.Array [number_of_polynomials 1 1 1]
+                            Integral
+
+                            .. math:: \\iint P_0(\\xi) P_1(\\eta) d\\xi d\\eta
+
     '''
     if scheme is 'gauss':
         return gauss_quad_multivar_poly(poly_xi_eta, N_quad)

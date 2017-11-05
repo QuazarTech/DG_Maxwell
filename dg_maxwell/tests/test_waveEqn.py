@@ -244,7 +244,7 @@ def test_lagrange_coeffs():
     
     `https://goo.gl/6EFX5S`
     '''
-    threshold = 1e-12
+    threshold = 1e-13
 
     change_parameters(8, 10, 11, 'gaussian')
     basis_array_analytical = np.zeros([8, 8])
