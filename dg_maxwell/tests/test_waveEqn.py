@@ -232,6 +232,23 @@ def test_dx_dxi_analytical():
     assert check_analytical_dx_dxi
 
 
+def test_LGL_points():
+    '''
+    Comparing the LGL nodes obtained by LGL_points with
+    the reference nodes for N = 6
+    '''
+    threshold = 5e-13
+    reference_nodes  = \
+        af.np_to_af_array(np.array([-1.,                 -0.7650553239294647,\
+                                    -0.28523151648064504, 0.28523151648064504,\
+                                     0.7650553239294647,  1. \
+                                   ] \
+                                  ) \
+                         )
+
+    calculated_nodes = (lagrange.LGL_points(6))
+    assert(af.max(af.abs(reference_nodes - calculated_nodes)) <= threshold)
+
 def test_lagrange_coeffs():
     '''
     Function to test the lagrange_coeffs in global_variables module by
@@ -459,47 +476,3 @@ def test_integrate():
 
     assert (calculated_integral - analytical_integral) <= threshold
 
-
-def test_interpolation():
-    '''
-    '''
-    threshold = 2e-6
-    change_parameters(16, 2, 10, 'gaussian')
-
-    xi_i  = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
-    eta_j = af.tile(params.xi_LGL, params.N_LGL)
-    f_ij  = np.e ** (-(xi_i**2 + eta_j**2) / (0.6 ** 2))
-    interpolated_f = wave_equation_2d.lag_interpolation_2d(f_ij)
-    xi  = utils.linspace(-1, 1, 20)
-    eta = utils.linspace(-1, 1, 20)
-    assert (af.max(af.abs(utils.polyval_2d(interpolated_f, xi, eta) - np.e**(- (xi ** 2 + eta ** 2) / (0.6 ** 2)))) < threshold)
-
-
-def test_Li_Lj_coeffs():
-    '''
-    '''
-    threshold = 2e-9
-    change_parameters(8, 10, 8, 'gaussian')
-
-    numerical_L3_xi_L4_eta_coeffs = wave_equation_2d.Li_Lj_coeffs()[:, :, 28]
-
-    analytical_L3_xi_L4_eta_coeffs = af.np_to_af_array(np.array([\
-            [-129.727857225405, 27.1519390573796, 273.730966722451, - 57.2916772505673\
-            , - 178.518337439857, 37.3637484073274, 34.5152279428116, -7.22401021413973], \
-            [- 27.1519390573797, 5.68287960923199, 57.2916772505669, - 11.9911032408375,\
-            - 37.3637484073272, 7.82020331954072, 7.22401021413968, - 1.51197968793550 ],\
-            [273.730966722451, - 57.2916772505680,- 577.583286622990, 120.887730163458,\
-            376.680831166362, - 78.8390033617950, - 72.8285112658236, 15.2429504489039],\
-            [57.2916772505673, - 11.9911032408381, - 120.887730163459, 25.3017073771593, \
-            78.8390033617947, -16.5009417437969, - 15.2429504489039, 3.19033760747451],\
-            [- 178.518337439857, 37.3637484073272, 376.680831166362, - 78.8390033617954,\
-            - 245.658854496594, 51.4162061168383, 47.4963607700889, - 9.94095116237084],\
-            [- 37.3637484073274, 7.82020331954070, 78.8390033617948, - 16.5009417437970,\
-            - 51.4162061168385, 10.7613717277423, 9.94095116237085, -2.08063330348620],\
-            [34.5152279428116, - 7.22401021413972, - 72.8285112658235, 15.2429504489038,\
-            47.4963607700889, - 9.94095116237085, - 9.18307744707700, 1.92201092760671],\
-            [7.22401021413973, - 1.51197968793550, -15.2429504489039, 3.19033760747451,\
-            9.94095116237084, - 2.08063330348620, - 1.92201092760671, 0.402275383947182]]))
-
-    af.display(numerical_L3_xi_L4_eta_coeffs - analytical_L3_xi_L4_eta_coeffs, 14)
-    assert (af.max(af.abs(numerical_L3_xi_L4_eta_coeffs - analytical_L3_xi_L4_eta_coeffs)) <= threshold)
