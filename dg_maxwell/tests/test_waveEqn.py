@@ -244,7 +244,7 @@ def test_lagrange_coeffs():
     
     `https://goo.gl/6EFX5S`
     '''
-    threshold = 6e-10
+    threshold = 1e-12
 
     change_parameters(8, 10, 11, 'gaussian')
     basis_array_analytical = np.zeros([8, 8])
@@ -319,7 +319,7 @@ def test_lagrange_coeffs():
                 
     basis_array_analytical = af.interop.np_to_af_array(basis_array_analytical)
     
-    assert af.sum(af.abs(basis_array_analytical - params.lagrange_coeffs))\
+    assert af.max(af.abs(basis_array_analytical - params.lagrange_coeffs))\
                                                                < threshold
 
 
@@ -468,8 +468,8 @@ def test_interpolation():
     eta_j = af.tile(params.xi_LGL, params.N_LGL)
     f_ij  = np.e ** (-(xi_i**2 + eta_j**2) / (0.6 ** 2))
     interpolated_f = wave_equation_2d.lag_interpolation_2d(f_ij)
-    xi  = utils.linspace(-1, 1, 8)
-    eta = utils.linspace(-1, 1, 8)
+    xi  = utils.linspace(-1, 1, 20)
+    eta = utils.linspace(-1, 1, 20)
     assert (af.max(af.abs(utils.polyval_2d(interpolated_f, xi, eta) - np.e**(- (xi ** 2 + eta ** 2) / (0.6 ** 2)))) < threshold)
 
 
