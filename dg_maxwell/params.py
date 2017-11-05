@@ -15,7 +15,7 @@ from dg_maxwell import wave_equation
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8
+N_LGL      = 16
 
 # Number of elements the domain is to be divided into.
 N_Elements = 3

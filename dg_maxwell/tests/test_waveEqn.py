@@ -461,21 +461,23 @@ def test_integrate():
 def test_interpolation():
     '''
     '''
-    threshold = 8e-8
+    threshold = 2e-6
+    change_parameters(16, 2, 10, 'gaussian')
 
     xi_i  = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
     eta_j = af.tile(params.xi_LGL, params.N_LGL)
-    f_ij  = np.e ** (xi_i + eta_j)
+    f_ij  = np.e ** (-(xi_i**2 + eta_j**2) / (0.6 ** 2))
     interpolated_f = wave_equation_2d.lag_interpolation_2d(f_ij)
     xi  = utils.linspace(-1, 1, 8)
     eta = utils.linspace(-1, 1, 8)
-    assert (af.mean(utils.polyval_2d(interpolated_f, xi, eta) - np.e**(xi+eta)) < threshold)
+    assert (af.max(af.abs(utils.polyval_2d(interpolated_f, xi, eta) - np.e**(- (xi ** 2 + eta ** 2) / (0.6 ** 2)))) < threshold)
 
 
 def test_Li_Lj_coeffs():
     '''
     '''
     threshold = 2e-9
+    change_parameters(8, 10, 8, 'gaussian')
 
     numerical_L3_xi_L4_eta_coeffs = wave_equation_2d.Li_Lj_coeffs()[:, :, 28]
 
