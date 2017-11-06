@@ -530,7 +530,6 @@ def polyval_2d(poly_2d, xi, eta):
 
 def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
     '''
-    
     '''
     xi_gauss  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
     eta_gauss = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
