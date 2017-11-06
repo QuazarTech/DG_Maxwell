@@ -12,13 +12,17 @@ from dg_maxwell import utils
 af.set_backend(params.backend)
 
 diff_l0 = params.dl_dxi_coeffs[0]
-val_at_lgl_points = (utils.polyval_1d(diff_l0, params.xi_LGL))
 xi = params.xi_LGL
-u_i = np.e**(-xi**2/0.6**2)
-F_ij = (af.transpose(val_at_lgl_points) * u_i)
-int_coeffs = (af.sum(af.tile(F_ij, 1, params.N_LGL) * params.lagrange_coeffs, 0))
+u_i = np.e**(-(xi)**2/0.6**2)
+#print(u_i)
+F_ij = af.sum(af.broadcast(utils.multiply, u_i, params.lagrange_coeffs), 0)
+#print(F_ij)
+vol_int_coeffs = af.convolve1(af.transpose(diff_l0), af.transpose(F_ij), conv_mode=af.CONV_MODE.EXPAND)
+#print(vol_int_coeffs)
+af.display(lagrange.integrate(F_ij), 14)
+#int_coeffs = (af.sum(af.tile(F_ij, 1, params.N_LGL) * params.lagrange_coeffs, 0))
 #af.display(lagrange.integrate(int_coeffs), 14)
-num_vol_int = (wave_equation.volume_integral_flux(params.u_init))
+#num_vol_int = (wave_equation.volume_integral_flux(params.u_init))
 
 reference_vol_int = af.transpose(af.interop.np_to_af_array(np.array
         ([
@@ -53,4 +57,4 @@ reference_vol_int = af.transpose(af.interop.np_to_af_array(np.array
         [-0.0176615086879, 0.00344551201015 ,0.00432019709409, 0.00362050204766,\
         0.00236838757932, 0.00130167737191, 0.000588597708116, 0.00201663487667]\
         ])))
-print(af.max(num_vol_int - reference_vol_int))
+#print(af.max(af.abs(num_vol_int - reference_vol_int)))

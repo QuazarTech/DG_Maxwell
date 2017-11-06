@@ -28,7 +28,7 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-N_quad     = 9
+N_quad     = 15
 
 # Wave speed.
 c          = 1
