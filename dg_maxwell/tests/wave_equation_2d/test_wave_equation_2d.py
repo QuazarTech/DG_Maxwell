@@ -209,7 +209,9 @@ def test_interpolation():
     interpolated_f = wave_equation_2d.lag_interpolation_2d(f_ij, N_LGL)
     xi  = utils.linspace(-1, 1, 8)
     eta = utils.linspace(-1, 1, 8)
-    assert (af.mean(utils.polyval_2d(interpolated_f, xi, eta) - np.e**(xi+eta)) < threshold)
+    
+    assert (af.mean(af.transpose(utils.polyval_2d(interpolated_f, xi, eta))
+                    - np.e**(xi+eta)) < threshold)
 
 
 def test_Li_Lj_coeffs():

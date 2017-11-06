@@ -239,7 +239,7 @@ def test_polyval_2d():
     xi  = utils.linspace(-1, 1, 8)
     eta = utils.linspace(-1, 1, 8)
     
-    polyval_xi_eta = utils.polyval_2d(poly_xi_eta, xi, eta)
+    polyval_xi_eta = af.transpose(utils.polyval_2d(poly_xi_eta, xi, eta))
     
     polyval_xi_eta_ref = af.np_to_af_array(
         np.array([4.00000000000000,
