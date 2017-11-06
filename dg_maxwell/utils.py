@@ -555,7 +555,7 @@ def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
     W_i = af.flat(W_i)
     W_j = af.flat(W_j)
 
-    P_xi_eta_quad_val = polyval_2d(poly_xi_eta, Xi, Eta)
+    P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
 
     integral = af.sum(W_i * W_j * P_xi_eta_quad_val)
 
@@ -581,7 +581,7 @@ def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
     W_i = af.flat(W_i)
     W_j = af.flat(W_j)
 
-    P_xi_eta_quad_val = polyval_2d(poly_xi_eta, Xi, Eta)
+    P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
 
     integral = af.sum(W_i * W_j * P_xi_eta_quad_val)
     
