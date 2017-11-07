@@ -5,8 +5,14 @@ import numpy as np
 import arrayfire as af
 
 from dg_maxwell import params
+from dg_maxwell import msh_parser
 from dg_maxwell import lagrange
 from dg_maxwell import utils
+
+import os
+import sys
+import csv
+sys.path.insert(0, os.path.abspath('../'))
 
 af.set_backend(params.backend)
 
@@ -330,27 +336,6 @@ def F_y(u):
     return params.c_y * u
 
 
-def c_xi(x_nodes, y_nodes, xi, eta):
-    '''
-    '''
-    c_xi = (params.c_x * dy_deta(y_nodes, xi, eta)  \
-          - params.c_y * dx_deta(x_nodes, xi, eta)) \
-            (dx_dxi(x_nodes, xi, eta) * dy_deta(y_nodes, xi, eta) \
-          -  dx_deta(x_nodes, xi, eta) * dy_dxi(y_nodes, xi, eta))
-        
-    return c_xi
-
-
-def c_eta(x_nodes, y_nodes, xi, eta):
-    '''
-    '''
-    c_eta =  (params.c_x * dy_dxi(y_nodes, xi, eta)  \
-           -  params.c_y * dx_dxi(x_nodes, xi, eta)) \
-           / (dx_deta(x_nodes, xi, eta) * dy_dxi(y_nodes, xi, eta) \
-           -  dx_dxi(x_nodes, xi, eta) * dy_deta(y_nodes, xi, eta))
-        
-    return c_eta
-
 
 def g_dd(x_nodes, y_nodes, xi, eta):
     '''
@@ -383,10 +368,10 @@ def g_uu(x_nodes, y_nodes, xi, eta):
     
     det = (a*d - b*c)
     
-    ans = np.array([[d, -b],
-                    [-c, a]])
+    ans = [[d / det, -b / det],
+           [-c / det, a / det]]
     
-    return np.array(ans)/det
+    return ans
 
 
 def sqrtgDet(x_nodes, y_nodes, xi, eta):
@@ -401,17 +386,32 @@ def sqrtgDet(x_nodes, y_nodes, xi, eta):
     
     return (a*d - b*c)**0.5
 
-def sqrtgDet(x_nodes, y_nodes, xi, eta):
+def F_xi(u):
     '''
     '''
-    gCov = g_dd(x_nodes, y_nodes, xi, eta)
-    
-    a = gCov[0][0]
-    b = gCov[0][1]
-    c = gCov[1][0]
-    d = gCov[1][1]
-    
-    return (a*d - b*c)**0.5
+    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+    xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, params.N_LGL)))
+    eta_j  = af.tile(params.xi_LGL, params.N_LGL)
+
+    dxi_by_dx = dxi_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
+    dxi_by_dy = dxi_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
+    F_xi_u = F_x(u) * dxi_by_dx + F_y(u) * dxi_by_dy
+
+    return F_xi_u
+
+
+def F_eta(u):
+    '''
+    '''
+    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+    xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, params.N_LGL)))
+    eta_j  = af.tile(params.xi_LGL, params.N_LGL)
+
+    deta_by_dx = deta_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
+    deta_by_dy = deta_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
+    F_xi_u = F_x(u) * deta_by_dx + F_y(u) * deta_by_dy
+
+    return F_eta_u
 
 
 def Li_Lj_coeffs(N_LGL):
@@ -440,3 +440,121 @@ def lag_interpolation_2d(f_ij, N_LGL):
     interpolated_f    = af.sum(f_ij_Li_Lj_coeffs, 2)
 
     return interpolated_f
+
+
+def volume_integral(N_quadrature, int_scheme):
+    '''
+    '''
+    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+
+    xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
+    eta_j  = af.tile(params.xi_LGL, params.N_LGL)
+
+    u_ij   = np.e ** (- (xi_i ** 2) / (0.6 ** 2))
+
+    dLp_dxi = af.moddims(af.tile(af.reorder(params.dl_dxi_coeffs, 2, 0, 1), params.N_LGL), params.N_LGL ** 2, params.N_LGL - 1)
+    Lq_eta  = af.tile(params.lagrange_coeffs, params.N_LGL)
+    g_ab    = g_uu(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], np.array(xi_i), np.array(eta_j))
+
+    volume_integral = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
+    dlp_dxi_ij_v = af.reorder(utils.polyval_1d(dLp_dxi, xi_i), 2, 3, 1, 0)
+    Lq_eta_ij_v  = af.reorder(utils.polyval_1d(Lq_eta, eta_j), 2, 3, 1, 0)
+    F_xi_v       = af.reorder(F_xi(u_ij), 2, 3, 0, 1)
+    vol_int_pq_v = af.np_to_af_array(np.zeros([params.N_LGL, params.N_LGL, params.N_LGL ** 2]))
+    a = (af.reorder(utils.polyval_1d(dLp_dxi[0], xi_i), 2, 3, 1, 0))
+    b = (af.reorder(utils.polyval_1d(Lq_eta[0], eta_j), 2, 3, 1, 0))
+    c = (F_xi_v)
+    d = (Li_Lj_coeffs(params.N_LGL))
+    #print(af.broadcast(utils.multiply, a * b * c, d).shape)
+    ii = 0
+    print(af.sum(af.broadcast(utils.multiply, af.reorder(utils.polyval_1d(dLp_dxi[ii], xi_i), 2, 3, 1, 0) 
+        * af.reorder(utils.polyval_1d(Lq_eta[ii], eta_j), 2, 3, 1, 0)
+        * F_xi_v, Li_Lj_coeffs(params.N_LGL)), 2).shape)
+
+
+
+    for p in range(params.N_LGL):
+        for q in range(params.N_LGL):
+            index = p * params.N_LGL + q
+            dLp_dxi_ij = af.transpose(utils.polyval_1d(dLp_dxi[index], xi_i))
+            Lq_eta_ij  = af.transpose(utils.polyval_1d(Lq_eta[index], eta_j))
+
+            volume_integral_pq   = F_xi(u_ij) * dLp_dxi_ij * Lq_eta_ij
+            vol_int_interpolated = lag_interpolation_2d(volume_integral_pq, params.N_LGL)
+            volume_integral[index] = utils.integrate_2d_multivar_poly(vol_int_interpolated, N_quad = N_quadrature, scheme = int_scheme)
+
+
+    return volume_integral
+
+def analytical_vol_int():
+    '''
+    '''
+    csv_handler = csv.reader(open('volume_integral_pq_2d_analytical.csv',
+                                  newline='\n'), delimiter=',')
+    
+    content = list()
+    
+    for n, line in enumerate(csv_handler):
+        content.append(list())
+        for item in line:
+            try:
+                content[-1].append(float(item))
+            except ValueError:
+                if content[-1] == []:
+                    content.pop()
+                    print('popping string')
+                break
+    
+    volume_integral_pq_analytical = af.np_to_af_array(np.array(content))
+    return volume_integral_pq_analytical
+
+def lax_friedrichs_flux(u):
+    '''
+    '''
+    u_xi_1_boundary_right = u[:params.N_LGL]
+    u_xi_1_boundary_left  = u[-params.N_LGL:]
+
+    u_xi_minus1_boundary_left  = u[-params.N_LGL:]
+    u_xi_minus1_boundary_right = u[:params.N_LGL]
+
+    u_eta_1_boundary_up   = u[params.N_LGL:params.N_LGL ** 2:params.N_LGL]
+    u_eta_1_boundary_down = u[0:-params.N_LGL:params.N_LGL]
+    
+    u_eta_minus1_boundary_down   = u[params.N_LGL:params.N_LGL ** 2:params.N_LGL]
+    u_eta_minus1_boundary_up     = u[0:-params.N_LGL:params.N_LGL]
+
+    return
+
+
+
+
+def surface_term(u, nodes, elements):
+    '''
+    '''
+    xi_LGL  = lagrange.LGL_points(params.N_LGL)
+    eta_LGL = lagrange.LGL_points(params.N_LGL)
+    xi_i    = af.flat(af.transpose(af.tile(xi_LGL, 1, params.N_LGL)))
+    eta_j   = af.tile(xi_LGL, params.N_LGL)
+
+    lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
+
+
+    Lp_coeffs = af.moddims(af.tile(af.reorder(af.transpose(lagrange_coeffs), 2, 1, 0),\
+                              params.N_LGL), params.N_LGL ** 2, params.N_LGL)
+    Lp_1      = utils.polyval_1d(Lp_coeffs, xi_LGL[-1])
+
+    Lq_coeffs = af.tile(lagrange_coeffs, params.N_LGL)
+
+    F_xi_surface_term = F_xi(u)
+
+    g_ab = g_uu(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], np.array(xi_i), np.array(eta_j))
+    g_00 = (af.np_to_af_array(g_ab[0][0]))
+    g_01 = (af.np_to_af_array(g_ab[0][1]))
+    g_10 = (af.np_to_af_array(g_ab[1][0]))
+    g_11 = (af.np_to_af_array(g_ab[1][1]))
+
+    surface_term_xi_right = 0
+
+
+
+    return
