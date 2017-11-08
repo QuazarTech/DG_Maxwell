@@ -409,7 +409,7 @@ def F_eta(u):
 
     deta_by_dx = deta_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
     deta_by_dy = deta_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
-    F_xi_u = F_x(u) * deta_by_dx + F_y(u) * deta_by_dy
+    F_eta_u = F_x(u) * deta_by_dx + F_y(u) * deta_by_dy
 
     return F_eta_u
 
@@ -511,22 +511,41 @@ def analytical_vol_int():
 def lax_friedrichs_flux(u):
     '''
     '''
+
+    diff_u_boundary = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
+
     u_xi_1_boundary_right = u[:params.N_LGL]
     u_xi_1_boundary_left  = u[-params.N_LGL:]
+    u[-params.N_LGL:]     = (u_xi_1_boundary_right + u_xi_1_boundary_left) / 2
+
+    diff_u_boundary[-params.N_LGL:]  = (u_xi_1_boundary_right - u_xi_1_boundary_left)
 
     u_xi_minus1_boundary_left  = u[-params.N_LGL:]
     u_xi_minus1_boundary_right = u[:params.N_LGL]
+    u[:params.N_LGL]           = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
 
-    u_eta_1_boundary_up   = u[params.N_LGL:params.N_LGL ** 2:params.N_LGL]
-    u_eta_1_boundary_down = u[0:-params.N_LGL:params.N_LGL]
+    diff_u_boundary[:params.N_LGL]  = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
+
+    u_eta_1_boundary_up   = u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+    u_eta_1_boundary_down = u[0:-params.N_LGL + 1:params.N_LGL]
+
+    u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up + u_eta_1_boundary_down) / 2
+
+    diff_u_boundary[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up - u_eta_1_boundary_down)
+
     
-    u_eta_minus1_boundary_down   = u[params.N_LGL:params.N_LGL ** 2:params.N_LGL]
-    u_eta_minus1_boundary_up     = u[0:-params.N_LGL:params.N_LGL]
-
-    return
+    u_eta_minus1_boundary_down   = u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+    u_eta_minus1_boundary_up     = u[0:-params.N_LGL + 1:params.N_LGL]
 
 
+    u[0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down + u_eta_minus1_boundary_up) / 2
+    diff_u_boundary[0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down - u_eta_minus1_boundary_down)
 
+    F_xi_element  = F_xi(u)  - params.c_lax * diff_u_boundary
+    F_eta_element = F_eta(u) - params.c_lax * diff_u_boundary
+
+
+    return F_xi_element, F_eta_element
 
 def surface_term(u, nodes, elements):
     '''
@@ -542,8 +561,12 @@ def surface_term(u, nodes, elements):
     Lp_coeffs = af.moddims(af.tile(af.reorder(af.transpose(lagrange_coeffs), 2, 1, 0),\
                               params.N_LGL), params.N_LGL ** 2, params.N_LGL)
     Lp_1      = utils.polyval_1d(Lp_coeffs, xi_LGL[-1])
+    Lp_minus1 = utils.polyval_1d(Lp_coeffs, xi_LGL[0])
 
-    Lq_coeffs = af.tile(lagrange_coeffs, params.N_LGL)
+
+#    Lq_coeffs = af.tile(lagrange_coeffs, params.N_LGL)
+#    Lq_1      = utils.polyval_1d(Lq_coeffs, xi_LGL[-1])
+#    Lq_minus1 = utils.polyval_1d(Lq_coeffs, xi_LGL[0])
 
     F_xi_surface_term = F_xi(u)
 
@@ -553,8 +576,47 @@ def surface_term(u, nodes, elements):
     g_10 = (af.np_to_af_array(g_ab[1][0]))
     g_11 = (af.np_to_af_array(g_ab[1][1]))
 
-    surface_term_xi_right = 0
+    F_xi_element  = lax_friedrichs_flux(u)[0]
+    F_eta_element = lax_friedrichs_flux(u)[1]
+    surface_term_pq  = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
+
+    for p in range(params.N_LGL):
+        Lp_1 = utils.polyval_1d(lagrange_coeffs[p], xi_LGL[-1])
+        Lp_minus1 = utils.polyval_1d(lagrange_coeffs[p], xi_LGL[0])
+        for q in range(params.N_LGL):
+
+            Lq_1      = utils.polyval_1d(lagrange_coeffs[q], eta_LGL[-1])
+            Lq_minus1 = utils.polyval_1d(lagrange_coeffs[q], eta_LGL[0])
+            Lq_eta    = af.transpose(utils.polyval_1d(lagrange_coeffs[q], eta_LGL))
+            Lp_xi = af.transpose(utils.polyval_1d(lagrange_coeffs[p], xi_LGL))
+
+            # The First integral
+            Lq_eta_F_xi_LGL      = Lq_eta * F_xi_element[-params.N_LGL:] * g_00[-params.N_LGL:]
+            lag_interpolation_1  = af.sum(af.broadcast(utils.multiply, Lq_eta_F_xi_LGL, lagrange_coeffs), 0)
+            surface_term_pq_xi_1 = af.sum(Lp_1) * lagrange.integrate((lag_interpolation_1))
 
 
+            # The second integral
+            Lp_xi_F_xi_LGL = Lp_xi * F_xi_element[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]\
+                                   * g_01[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
 
-    return
+            lag_interpolation_2 = af.sum(af.broadcast(utils.multiply, Lp_xi_F_xi_LGL, lagrange_coeffs), 0)
+            surface_term_pq_eta_1    = af.sum(Lq_1) * lagrange.integrate(lag_interpolation_2)
+
+            # The third integral
+            Lq_eta_F_xi_LGL     = Lq_eta * F_xi_element[:params.N_LGL] * g_00[:params.N_LGL]
+            lag_interpolation_3 = af.sum(af.broadcast(utils.multiply, Lq_eta_F_xi_LGL, lagrange_coeffs), 0)
+            surface_term_pq_xi_minus1 = af.sum(Lp_minus1) * lagrange.integrate((lag_interpolation_3))
+
+            # The fourth integral
+            Lp_xi_F_xi_LGL = Lp_xi * F_xi_element[0:-params.N_LGL + 1:params.N_LGL]\
+                                   * g_01[0:-params.N_LGL + 1:params.N_LGL]
+
+            lag_interpolation_4 = af.sum(af.broadcast(utils.multiply, Lp_xi_F_xi_LGL, lagrange_coeffs), 0)
+            surface_term_pq_eta_1    = af.sum(Lq_1) * lagrange.integrate(lag_interpolation_2)
+
+            surface_term_pq[p * params.N_LGL + q]  =  surface_term_pq_eta_1\
+                                                    + surface_term_pq_xi_minus1\
+                                                    + surface_term_pq_xi_1
+
+    return surface_term_pq

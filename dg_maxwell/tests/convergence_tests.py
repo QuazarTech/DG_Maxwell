@@ -1,3 +1,6 @@
+import arrayfire as af
+import numpy as np
+
 from dg_maxwell import params
 from dg_maxwell import wave_equation
 
