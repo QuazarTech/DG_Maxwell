@@ -243,6 +243,7 @@ def volume_integral_flux(u_n):
     # passing the coefficients of the Lagrange interpolated polynomial.
     if(params.volume_integral_scheme == 'lobatto_quadrature'\
         and params.N_quad == params.N_LGL):
+        print('option1')
 
         # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
         F_u_n                  = af.reorder(flux_x(u_n), 2, 0, 1)
@@ -258,7 +259,7 @@ def volume_integral_flux(u_n):
     # Using the integrate() function to calculate the volume integral term
     # by passing the Lagrange interpolated polynomial.
     else:
-        #print('option3')
+        print('option3')
         analytical_flux_coeffs = flux_x(lagrange.\
                                         lagrange_interpolation_u(u_n))
 

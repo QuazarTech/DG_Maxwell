@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath('./'))
 
 import numpy as np
 import arrayfire as af
-
+from matplotlib import pyplot as pl
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
@@ -22,7 +22,7 @@ af.set_backend(params.backend)
 
 
 
-def change_parameters(LGL, Elements, quad, wave='sin'):
+def change_parameters(LGL, Elements, quad, wave='sin', scheme='lobatto_quadrature'):
     '''
 
     Changes the parameters of the simulation. Used only for convergence tests.
@@ -50,6 +50,9 @@ def change_parameters(LGL, Elements, quad, wave='sin'):
 
     # Array containing the LGL points in xi space.
     params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
+
+    params.volume_integral_scheme = scheme
+    params.scheme                 = scheme
 
     # N_Gauss number of Gauss nodes.
     params.gauss_points  = af.np_to_af_array(lagrange.gauss_nodes\

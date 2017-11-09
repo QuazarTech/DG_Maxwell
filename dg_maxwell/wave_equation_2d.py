@@ -9,6 +9,8 @@ from dg_maxwell import msh_parser
 from dg_maxwell import lagrange
 from dg_maxwell import utils
 
+from tqdm import trange
+
 import os
 import sys
 import csv
@@ -389,7 +391,9 @@ def sqrtgDet(x_nodes, y_nodes, xi, eta):
 def F_xi(u):
     '''
     '''
-    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+    nodes    = params.nodes
+    elements = params.elements
+
     xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, params.N_LGL)))
     eta_j  = af.tile(params.xi_LGL, params.N_LGL)
 
@@ -403,7 +407,9 @@ def F_xi(u):
 def F_eta(u):
     '''
     '''
-    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+    nodes    = params.nodes
+    elements = params.elements
+
     xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, params.N_LGL)))
     eta_j  = af.tile(params.xi_LGL, params.N_LGL)
 
@@ -442,34 +448,35 @@ def lag_interpolation_2d(f_ij, N_LGL):
     return interpolated_f
 
 
-def volume_integral(N_quadrature, int_scheme):
+def volume_integral(u, N_quadrature, int_scheme):
     '''
     '''
-    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+    nodes    = params.nodes
+    elements = params.elements
 
     xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
     eta_j  = af.tile(params.xi_LGL, params.N_LGL)
 
-    u_ij   = np.e ** (- (xi_i ** 2) / (0.6 ** 2))
+    u_ij    = u
 
     dLp_dxi = af.moddims(af.tile(af.reorder(params.dl_dxi_coeffs, 2, 0, 1), params.N_LGL), params.N_LGL ** 2, params.N_LGL - 1)
     Lq_eta  = af.tile(params.lagrange_coeffs, params.N_LGL)
     g_ab    = g_uu(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], np.array(xi_i), np.array(eta_j))
 
     volume_integral = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
-    dlp_dxi_ij_v = af.reorder(utils.polyval_1d(dLp_dxi, xi_i), 2, 3, 1, 0)
-    Lq_eta_ij_v  = af.reorder(utils.polyval_1d(Lq_eta, eta_j), 2, 3, 1, 0)
-    F_xi_v       = af.reorder(F_xi(u_ij), 2, 3, 0, 1)
-    vol_int_pq_v = af.np_to_af_array(np.zeros([params.N_LGL, params.N_LGL, params.N_LGL ** 2]))
-    a = (af.reorder(utils.polyval_1d(dLp_dxi[0], xi_i), 2, 3, 1, 0))
-    b = (af.reorder(utils.polyval_1d(Lq_eta[0], eta_j), 2, 3, 1, 0))
-    c = (F_xi_v)
-    d = (Li_Lj_coeffs(params.N_LGL))
-    #print(af.broadcast(utils.multiply, a * b * c, d).shape)
-    ii = 0
-    print(af.sum(af.broadcast(utils.multiply, af.reorder(utils.polyval_1d(dLp_dxi[ii], xi_i), 2, 3, 1, 0) 
-        * af.reorder(utils.polyval_1d(Lq_eta[ii], eta_j), 2, 3, 1, 0)
-        * F_xi_v, Li_Lj_coeffs(params.N_LGL)), 2).shape)
+#    dlp_dxi_ij_v = af.reorder(utils.polyval_1d(dLp_dxi, xi_i), 2, 3, 1, 0)
+#    Lq_eta_ij_v  = af.reorder(utils.polyval_1d(Lq_eta, eta_j), 2, 3, 1, 0)
+#    F_xi_v       = af.reorder(F_xi(u_ij), 2, 3, 0, 1)
+#    vol_int_pq_v = af.np_to_af_array(np.zeros([params.N_LGL, params.N_LGL, params.N_LGL ** 2]))
+#    a = (af.reorder(utils.polyval_1d(dLp_dxi[0], xi_i), 2, 3, 1, 0))
+#    b = (af.reorder(utils.polyval_1d(Lq_eta[0], eta_j), 2, 3, 1, 0))
+#    c = (F_xi_v)
+#    d = (Li_Lj_coeffs(params.N_LGL))
+#    #print(af.broadcast(utils.multiply, a * b * c, d).shape)
+#    ii = 0
+#    print(af.sum(af.broadcast(utils.multiply, af.reorder(utils.polyval_1d(dLp_dxi[ii], xi_i), 2, 3, 1, 0) 
+#        * af.reorder(utils.polyval_1d(Lq_eta[ii], eta_j), 2, 3, 1, 0)
+#        * F_xi_v, Li_Lj_coeffs(params.N_LGL)), 2).shape)
 
 
 
@@ -547,9 +554,12 @@ def lax_friedrichs_flux(u):
 
     return F_xi_element, F_eta_element
 
-def surface_term(u, nodes, elements):
+def surface_term(u):
     '''
     '''
+    nodes    = params.nodes
+    elements = params.elements
+
     xi_LGL  = lagrange.LGL_points(params.N_LGL)
     eta_LGL = lagrange.LGL_points(params.N_LGL)
     xi_i    = af.flat(af.transpose(af.tile(xi_LGL, 1, params.N_LGL)))
@@ -620,3 +630,59 @@ def surface_term(u, nodes, elements):
                                                     + surface_term_pq_xi_1
 
     return surface_term_pq
+
+
+def b_vector(u):
+    '''
+    '''
+    surface_term_u_pq    = surface_term(u)
+    volume_integral_pq   = volume_integral(u, params.N_LGL + 1, 'gauss')
+    b_vector_array       = surface_term_u_pq - volume_integral_pq
+
+    return b_vector_array
+
+
+def RK4_timestepping(A_inverse, u, delta_t):
+    '''
+    Implementing the Runge-Kutta (RK4) method to evolve the wave.
+
+    Parameters
+    ----------
+    A_inverse : arrayfire.Array[N_LGL N_LGL 1 1]
+                The inverse of the A matrix which was calculated
+                using A_matrix() function.
+
+    u         : arrayfire.Array[N_LGL N_Elements 1 1]
+                u at the mapped LGL points
+
+    delta_t   : float64
+                The time-step by which u is to be evolved.
+
+    Returns
+    -------
+    delta_u : arrayfire.Array [N_LGL N_Elements 1 1]
+              The change in u at the mapped LGL points.
+    '''
+
+    k1 = af.matmul(A_inverse, b_vector(u))
+    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2))
+    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2))
+    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    ))
+
+    delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+    return delta_u
+
+def time_evolution():
+    '''
+    '''
+    A_inverse = af.inverse(A_matrix())
+    delta_t   = params.delta_t
+    time      = params.time
+    u         = params.u_init_2d
+    print(A_inverse)
+    print(b_vector(u))
+    
+    for t_n in trange(0, 10):
+        u += RK4_timestepping(A_inverse, u, delta_t)
+        print(u)

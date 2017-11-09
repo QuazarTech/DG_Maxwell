@@ -9,13 +9,14 @@ af.set_backend(backend)
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils
+from dg_maxwell import msh_parser
 from dg_maxwell import wave_equation
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 16
+N_LGL      = 11
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
@@ -28,7 +29,7 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-N_quad     = 18
+N_quad     = 16
 
 # Wave speed.
 c          = 1
@@ -109,7 +110,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
 
 # The wave to be advected is either a sin or a Gaussian wave.
 # This parameter can take values 'sin' or 'gaussian'.
-wave = 'gaussian'
+wave = 'sin'
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 if (wave=='sin'):
@@ -131,5 +132,11 @@ u[:, :, 0] = u_init
 #######################2D Wave Equation#################################
 ########################################################################
 
-c_x = 1.
-c_y = 0
+c_x = 1
+c_y = 0.
+#nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+
+xi_i   = af.flat(af.transpose(af.tile(xi_LGL, 1, N_LGL)))
+eta_j  = af.tile(xi_LGL, N_LGL)
+
+u_init_2d = np.e ** (- (xi_i ** 2) / (0.6 ** 2))
