@@ -4,7 +4,7 @@
 import numpy as np
 
 import arrayfire as af
-backend = 'opencl'
+backend = 'cpu'
 device = 0
 
 af.set_backend(backend)
