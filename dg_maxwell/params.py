@@ -138,5 +138,3 @@ nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
 
 xi_i   = af.flat(af.transpose(af.tile(xi_LGL, 1, N_LGL)))
 eta_j  = af.tile(xi_LGL, N_LGL)
-
-u_init_2d = np.e ** (- (xi_i ** 2) / (0.6 ** 2))

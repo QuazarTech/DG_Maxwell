@@ -248,7 +248,7 @@ def deta_dy (x_nodes, y_nodes, xi, eta):
     return dx_dxi_ / jacobian(x_nodes, y_nodes, xi, eta)
 
 
-def A_matrix():
+def A_matrix(N_LGL):
     '''
     Calculates the tensor product for the given ``params.N_LGL``.
     A tensor product element is given by:
