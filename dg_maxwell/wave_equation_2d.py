@@ -422,13 +422,39 @@ def Li_Lj_coeffs(N_LGL):
 
     return Li_Lj_coeffs
 
-def lag_interpolation_2d(f_ij, N_LGL):
+def lag_interpolation_2d(u_e_ij, N_LGL):
     '''
+    Does the lagrange interpolation of a function.
+    
+    Parameters
+    ----------
+    
+    u_e_ij : af.Array [N_LGL^2 N_elements 1 1]
+             Value of the function calculated at the :math:`(\\xi_i, \\eta_j)`
+             points in this form
+             
+             .. math:: \\xi_i = [\\xi_0, \\xi_0, ..., \\xi_0, \\xi_1, \\
+                       ... ..., \\xi_N]
+             .. math:: \\eta_j = [\\eta_0, \\eta_1, ..., \\eta_N, \\
+                       \\eta_0, ... ..., \\eta_N]
+    
+    N_LGL : int
+            Number of LGL points
+    
+    Returns
+    -------
+    interpolated_f : af.Array [N_LGL N_LGL N_elements 1]
+                     Interpolation polynomials for ``N_elements`` elements.
     '''
-    Li_xi_Lj_eta_coeffs = Li_Lj_coeffs(N_LGL)
-    f_ij = af.reorder(f_ij, 2, 1, 0)
+    u_e_ij_shape = utils.shape(u_e_ij)
 
-    f_ij_Li_Lj_coeffs = af.broadcast(utils.multiply, f_ij, Li_xi_Lj_eta_coeffs)
-    interpolated_f    = af.sum(f_ij_Li_Lj_coeffs, 2)
+    Li_xi_Lj_eta_coeffs = af.tile(Li_Lj_coeffs(N_LGL), d0 = 1,
+                                  d1 = 1, d2 = 1, d3 = u_e_ij_shape[1])
+    u_e_ij = af.reorder(u_e_ij, 2, 3, 0, 1)
+
+    f_ij_Li_Lj_coeffs = af.broadcast(utils.multiply, u_e_ij,
+                                     Li_xi_Lj_eta_coeffs)
+    interpolated_f    = af.reorder(af.sum(f_ij_Li_Lj_coeffs, 2),
+                                   0, 1, 3, 2)
 
     return interpolated_f
