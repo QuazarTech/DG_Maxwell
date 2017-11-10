@@ -385,7 +385,7 @@ def sqrtgDet(x_nodes, y_nodes, xi, eta):
     
     return (a*d - b*c)**0.5
 
-def F_xi(u):
+def F_xi(u, nodes, elements):
     '''
     '''
     nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
@@ -401,7 +401,7 @@ def F_xi(u):
     return F_xi_u
 
 
-def F_eta(u):
+def F_eta(u, nodes, elements):
     '''
     '''
     nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
@@ -460,21 +460,6 @@ def volume_integral(u, N_quadrature, int_scheme):
     g_ab    = g_uu(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], np.array(xi_i), np.array(eta_j))
 
     volume_integral = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
-#    dlp_dxi_ij_v = af.reorder(utils.polyval_1d(dLp_dxi, xi_i), 2, 3, 1, 0)
-#    Lq_eta_ij_v  = af.reorder(utils.polyval_1d(Lq_eta, eta_j), 2, 3, 1, 0)
-#    F_xi_v       = af.reorder(F_xi(u_ij), 2, 3, 0, 1)
-#    vol_int_pq_v = af.np_to_af_array(np.zeros([params.N_LGL, params.N_LGL, params.N_LGL ** 2]))
-#    a = (af.reorder(utils.polyval_1d(dLp_dxi[0], xi_i), 2, 3, 1, 0))
-#    b = (af.reorder(utils.polyval_1d(Lq_eta[0], eta_j), 2, 3, 1, 0))
-#    c = (F_xi_v)
-#    d = (Li_Lj_coeffs(params.N_LGL))
-#    #print(af.broadcast(utils.multiply, a * b * c, d).shape)
-#    ii = 0
-#    print(af.sum(af.broadcast(utils.multiply, af.reorder(utils.polyval_1d(dLp_dxi[ii], xi_i), 2, 3, 1, 0) 
-#        * af.reorder(utils.polyval_1d(Lq_eta[ii], eta_j), 2, 3, 1, 0)
-#        * F_xi_v, Li_Lj_coeffs(params.N_LGL)), 2).shape)
-
-
 
     for p in range(params.N_LGL):
         for q in range(params.N_LGL):
@@ -514,41 +499,81 @@ def analytical_vol_int():
 def lax_friedrichs_flux(u):
     '''
     '''
+    u = af.reorder(af.moddims(u, N_LGL ** 2, 10, 10), 2, 1, 0)
 
-    diff_u_boundary = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
+    diff_u_boundary = af.np_to_af_array(np.zeros([10, 10, params.N_LGL ** 2]))
 
-    u_xi_1_boundary_right = u[:params.N_LGL]
-    u_xi_1_boundary_left  = u[-params.N_LGL:]
-    u[-params.N_LGL:]     = (u_xi_1_boundary_right + u_xi_1_boundary_left) / 2
+    u_xi_1_boundary_right   = u[:, :, :params.N_LGL]
+    u_xi_1_boundary_left    = u[:, :. -params.N_LGL:]
+    u[:, :, -params.N_LGL:] = (u_xi_1_boundary_right + u_xi_1_boundary_left) / 2
 
-    diff_u_boundary[-params.N_LGL:]  = (u_xi_1_boundary_right - u_xi_1_boundary_left)
+    diff_u_boundary[:, :, -params.N_LGL:] = (u_xi_1_boundary_right - u_xi_1_boundary_left)
 
-    u_xi_minus1_boundary_left  = u[-params.N_LGL:]
-    u_xi_minus1_boundary_right = u[:params.N_LGL]
-    u[:params.N_LGL]           = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
+    u_xi_minus1_boundary_left  = u[:, :, -params.N_LGL:]
+    u_xi_minus1_boundary_right = u[:, :, :params.N_LGL]
+    u[:, :, :params.N_LGL]     = (u_xi_minus1_boundary_left + u_xi_minus1_boundary_right) / 2
 
-    diff_u_boundary[:params.N_LGL]  = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
+    diff_u_boundary[:, :, :params.N_LGL] = (u_xi_minus1_boundary_left - u_xi_minus1_boundary_right)
 
-    u_eta_1_boundary_up   = u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
-    u_eta_1_boundary_down = u[0:-params.N_LGL + 1:params.N_LGL]
+    u_eta_1_boundary_up   = u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+    u_eta_1_boundary_down = u[:, :, 0:-params.N_LGL + 1:params.N_LGL]
 
-    u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up + u_eta_1_boundary_down) / 2
+    u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
+                                                              +u_eta_1_boundary_down) / 2
 
-    diff_u_boundary[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up - u_eta_1_boundary_down)
-
-    
-    u_eta_minus1_boundary_down   = u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
-    u_eta_minus1_boundary_up     = u[0:-params.N_LGL + 1:params.N_LGL]
-
-
-    u[0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down + u_eta_minus1_boundary_up) / 2
-    diff_u_boundary[0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down - u_eta_minus1_boundary_down)
-
-    F_xi_element  = F_xi(u)  - params.c_lax * diff_u_boundary
-    F_eta_element = F_eta(u) - params.c_lax * diff_u_boundary
+    diff_u_boundary[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
+                                                                             -u_eta_1_boundary_down)
 
 
-    return F_xi_element, F_eta_element
+    u_eta_minus1_boundary_down = u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+    u_eta_minus1_boundary_up   = u[:, :, 0:-params.N_LGL + 1:params.N_LGL]
+    u[:, :, 0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down\
+                                               + u_eta_minus1_boundary_up) / 2
+
+    diff_u_boundary[:, :, 0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down\
+                                                             - u_eta_minus1_boundary_up)
+
+
+    u = af.moddims(af.reorder(u, 2, 1, 0), params.N_LGL ** 2, 100)
+    F_xi_e_ij  = F_xi(u) - params.c_lax * diff_u_boundary
+    F_eta_e_ij = F_eta(u) - params.c_lax * diff_u_boundary
+
+
+
+#    diff_u_boundary = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
+#
+#    u_xi_1_boundary_right = u[:params.N_LGL]
+#    u_xi_1_boundary_left  = u[-params.N_LGL:]
+#    u[-params.N_LGL:]     = (u_xi_1_boundary_right + u_xi_1_boundary_left) / 2
+#
+#    diff_u_boundary[-params.N_LGL:]  = (u_xi_1_boundary_right - u_xi_1_boundary_left)
+#
+#    u_xi_minus1_boundary_left  = u[-params.N_LGL:]
+#    u_xi_minus1_boundary_right = u[:params.N_LGL]
+#    u[:params.N_LGL]           = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
+#
+#    diff_u_boundary[:params.N_LGL]  = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
+#
+#    u_eta_1_boundary_up   = u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+#    u_eta_1_boundary_down = u[0:-params.N_LGL + 1:params.N_LGL]
+#
+#    u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up + u_eta_1_boundary_down) / 2
+#
+#    diff_u_boundary[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up - u_eta_1_boundary_down)
+#
+#
+#    u_eta_minus1_boundary_down   = u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+#    u_eta_minus1_boundary_up     = u[0:-params.N_LGL + 1:params.N_LGL]
+#
+#
+#    u[0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down + u_eta_minus1_boundary_up) / 2
+#    diff_u_boundary[0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down - u_eta_minus1_boundary_down)
+#
+#    F_xi_element  = F_xi(u)  - params.c_lax * diff_u_boundary
+#    F_eta_element = F_eta(u) - params.c_lax * diff_u_boundary
+
+
+    return F_xi_ij, F_eta_ij
 
 def surface_term(u):
     '''

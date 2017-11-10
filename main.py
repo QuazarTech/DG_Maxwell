@@ -22,7 +22,6 @@ print(af.matmul(A_mat, af.inverse(A_mat)))
 
 
 
-
 #print(af.matmul(af.inverse(A_matrix), A_matrix))
 
 #error_gauss   = af.np_to_af_array(np.zeros([15]))
