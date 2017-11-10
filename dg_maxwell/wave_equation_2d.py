@@ -301,13 +301,9 @@ def A_matrix(N_LGL):
                                                                 d1 = 2,
                                                                 d2 = 0))
                                                      
-    A = []
-    for index in np.arange(Lp_Li_Lq_Lj_tp.shape[2]):
-        print(index)
-        A.append(utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp[:, :, index],
-                                                N_quad = 9, scheme = 'gauss'))
+    A = utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp,
+                                         N_quad = 9, scheme = 'gauss')
     
-    A = af.np_to_af_array(np.array(A))
     A = af.moddims(A, d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
     
     return A

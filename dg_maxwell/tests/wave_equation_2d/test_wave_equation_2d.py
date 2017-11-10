@@ -189,9 +189,9 @@ def test_A_matrix():
     A_matrix_ref = af.np_to_af_array(utils.csv_to_numpy(
         'dg_maxwell/tests/wave_equation_2d/files/A_matrix_ref.csv'))
     
-    params.N_LGL = 4
+    N_LGL = 4
     
-    A_matrix_test = wave_equation_2d.A_matrix()
+    A_matrix_test = wave_equation_2d.A_matrix(N_LGL)
     
     assert af.all_true(af.abs(A_matrix_test - A_matrix_ref) < threshold)
 
