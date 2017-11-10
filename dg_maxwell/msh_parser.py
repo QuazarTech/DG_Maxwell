@@ -12,6 +12,7 @@ from dg_maxwell import utils
 from dg_maxwell import params
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def read_order_2_msh(msh_file):
     '''

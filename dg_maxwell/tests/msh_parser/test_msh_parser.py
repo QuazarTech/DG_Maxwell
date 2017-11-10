@@ -12,6 +12,7 @@ from dg_maxwell import msh_parser
 from dg_maxwell import params
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def test_read_order_2_msh():
     '''

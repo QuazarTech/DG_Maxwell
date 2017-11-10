@@ -4,8 +4,11 @@
 import numpy as np
 
 import arrayfire as af
-backend = 'cpu'
+backend = 'opencl'
+device = 0
+
 af.set_backend(backend)
+af.set_device(device)
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils

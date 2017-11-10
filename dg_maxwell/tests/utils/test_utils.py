@@ -9,6 +9,7 @@ from dg_maxwell import utils
 from dg_maxwell import lagrange
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def test_matmul_3D():
     '''

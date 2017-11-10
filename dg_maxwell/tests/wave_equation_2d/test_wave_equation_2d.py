@@ -16,6 +16,7 @@ from dg_maxwell import lagrange
 from dg_maxwell import wave_equation_2d
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def test_dx_dxi():
     '''

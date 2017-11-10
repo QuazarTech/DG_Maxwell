@@ -17,7 +17,7 @@ from dg_maxwell import isoparam
 from dg_maxwell import utils
 
 af.set_backend(params.backend)
-
+af.set_device(params.device)
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
 
