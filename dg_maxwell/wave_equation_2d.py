@@ -240,7 +240,7 @@ def deta_dy (x_nodes, y_nodes, xi, eta):
     return dx_dxi_ / jacobian(x_nodes, y_nodes, xi, eta)
 
 
-def A_matrix():
+def A_matrix(N_LGL):
     '''
     Calculates the tensor product for the given ``params.N_LGL``.
     A tensor product element is given by:
@@ -258,63 +258,58 @@ def A_matrix():
         The tensor product.
     '''
 
-    N_LGL   = params.N_LGL
     xi_LGL  = lagrange.LGL_points(N_LGL)
     eta_LGL = lagrange.LGL_points(N_LGL)
 
-    _, Lp = lagrange.lagrange_polynomials(xi_LGL)
-    Lp = af.np_to_af_array(Lp)
-    Li = Lp.copy()
+    _, Lp_xi  = lagrange.lagrange_polynomials(xi_LGL)
+    _, Lq_eta = lagrange.lagrange_polynomials(eta_LGL)
+    Lp_xi = af.np_to_af_array(Lp_xi)
+    Lq_eta = af.np_to_af_array(Lq_eta)
+    Li_xi = Lp_xi.copy()
+    Lj_eta = Lq_eta.copy()
 
-    _, Lq = lagrange.lagrange_polynomials(eta_LGL)
-    Lq = af.np_to_af_array(Lq)
-    Lj = Lq.copy()
+    Lp_xi_tp = af.reorder(Lp_xi, d0 = 2, d1 = 0, d2 = 1)
+    Lp_xi_tp = af.tile(Lp_xi_tp, d0 = N_LGL * N_LGL * N_LGL)
+    Lp_xi_tp = af.moddims(Lp_xi_tp, d0 = N_LGL * N_LGL * N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
+    Lp_xi_tp = af.reorder(Lp_xi_tp, d0 = 0, d1 = 2, d2 = 1)
 
-    Li = af.reorder(Li, d0 = 0, d1 = 2, d2 = 1)
-    Li = af.transpose(af.tile(Li, d0 = 1, d1 = N_LGL))
-    Li = af.moddims(Li, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
-    Li = af.transpose(af.tile(Li, d0 = 1, d1 = N_LGL * N_LGL))
-    Li = af.transpose(af.moddims(af.transpose(Li),
-                                 d0 = N_LGL * N_LGL * N_LGL * N_LGL,
-                                 d1 = 1, d2 = N_LGL))
-    Li = af.reorder(Li, d0 = 2, d1 = 1, d2 = 0)
+    Lq_eta_tp = af.reorder(Lq_eta, d0 = 0, d1 = 2, d2 = 1)
+    Lq_eta_tp = af.tile(Lq_eta_tp, d0 = N_LGL, d1 = N_LGL * N_LGL)
+    Lq_eta_tp = af.moddims(af.transpose(Lq_eta_tp), d0 = N_LGL * N_LGL * N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
+    Lq_eta_tp = af.reorder(Lq_eta_tp, d0 = 0, d1 = 2, d2 = 1)
 
-    Lp = af.reorder(Lp, d0 = 0, d1 = 2, d2 = 1)
-    Lp = af.transpose(af.tile(Lp, d0 = 1, d1 = N_LGL))
-    Lp = af.moddims(Lp, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
-    Lp = af.tile(Lp, d0 = 1, d1 = N_LGL * N_LGL)
-    Lp = af.moddims(af.transpose(Lp),
-                    d0 = N_LGL * N_LGL * N_LGL * N_LGL,
-                    d1 = 1, d2 = N_LGL)
-    Lp = af.reorder(af.transpose(Lp), d0 = 2, d1 = 1, d2 = 0)
+    Li_xi_tp = af.reorder(Li_xi, d0 = 2, d1 = 0, d2 = 1)
+    Li_xi_tp = af.tile(Li_xi_tp, d0 = N_LGL)
+    Li_xi_tp = af.moddims(Li_xi_tp, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
+    Li_xi_tp = af.reorder(Li_xi_tp, d0 = 0, d1 = 2, d2 = 1)
+    Li_xi_tp = af.tile(Li_xi_tp, d0 = N_LGL * N_LGL)
 
-    Lp_Li = af.transpose(af.convolve1(Li, Lp, conv_mode = af.CONV_MODE.EXPAND))
+    Lj_eta_tp = af.reorder(Lj_eta, d0 = 0, d1 = 2, d2 = 1)
+    Lj_eta_tp = af.tile(Lj_eta_tp, d0 = N_LGL)
+    Lj_eta_tp = af.reorder(Lj_eta_tp, d0 = 0, d1 = 2, d2 = 1)
+    Lj_eta_tp = af.tile(Lj_eta_tp, d0 = N_LGL * N_LGL)
 
-    Lj = af.reorder(Lj, d0 = 0, d1 = 2, d2 = 1)
-    Lj = af.tile(Lj, d0 = 1, d1 = N_LGL)
-    Lj = af.moddims(Lj, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
-    Lj = af.transpose(af.tile(Lj, d0 = 1, d1 = N_LGL * N_LGL))
-    Lj = af.moddims(af.transpose(Lj),
-                    d0 = N_LGL * N_LGL * N_LGL * N_LGL,
-                    d1 = 1, d2 = N_LGL)
-    Lj = af.reorder(Lj, d0 = 2, d1 = 0, d2 = 1)
+    Lp_Li_tp = utils.poly1d_product(Lp_xi_tp, Li_xi_tp)
+    Lq_Lj_tp = utils.poly1d_product(Lq_eta_tp, Lj_eta_tp)
 
-    Lq = af.reorder(Lq, d0 = 0, d1 = 2, d2 = 1)
-    Lq = af.tile(Lq, d0 = 1, d1 = N_LGL)
-    Lq = af.moddims(Lq, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
-    Lq = af.tile(Lq, d0 = 1, d1 = N_LGL * N_LGL)
-    Lq = af.moddims(af.transpose(Lq),
-                    d0 = N_LGL * N_LGL * N_LGL * N_LGL,
-                    d1 = 1, d2 = N_LGL)
-    Lq = af.reorder(af.transpose(Lq), d0 = 2, d1 = 1, d2 = 0)
-
-    Lq_Lj = af.transpose(af.convolve1(Lj, Lq, conv_mode = af.CONV_MODE.EXPAND))
-
-    A = af.moddims(utils.integrate_2d(Lp_Li, Lq_Lj,
-                                      order = 9,
-                                      scheme = 'gauss'),
-                   d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
-
+    Lp_Li_Lq_Lj_tp = utils.polynomial_product_coeffs(af.reorder(Lp_Li_tp,
+                                                                d0 = 1,
+                                                                d1 = 2,
+                                                                d2 = 0),
+                                                     af.reorder(Lq_Lj_tp,
+                                                                d0 = 1,
+                                                                d1 = 2,
+                                                                d2 = 0))
+                                                     
+    A = []
+    for index in np.arange(Lp_Li_Lq_Lj_tp.shape[2]):
+        print(index)
+        A.append(utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp[:, :, index],
+                                                N_quad = 9, scheme = 'gauss'))
+    
+    A = af.np_to_af_array(np.array(A))
+    A = af.moddims(A, d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
+    
     return A
 
 
