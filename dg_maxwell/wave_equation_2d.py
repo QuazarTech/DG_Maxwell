@@ -473,25 +473,26 @@ def lag_interpolation_2d(u_e_ij, N_LGL):
 def lax_friedrichs_flux(u):
     '''
     '''
+    params.N_LGL = 8
     u = af.reorder(af.moddims(u, params.N_LGL ** 2, 10, 10), 2, 1, 0)
 
     diff_u_boundary = af.np_to_af_array(np.zeros([10, 10, params.N_LGL ** 2]))
 
-    u_xi_1_boundary_right   = u[:, :, :params.N_LGL]
-    u_xi_1_boundary_left    = u[:, :, -params.N_LGL:]
-    u[:, :, -params.N_LGL:] = (u_xi_1_boundary_right + u_xi_1_boundary_left) / 2
+    u_xi_minus1_boundary_right   = u[:, :, :params.N_LGL]
+    u_xi_minus1_boundary_left    = af.shift(u[:, :, -params.N_LGL:], d0=0, d1 = 1)
+    u[:, :, :params.N_LGL] = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
+    
+    diff_u_boundary[:, :, :params.N_LGL] = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
 
-    diff_u_boundary[:, :, -params.N_LGL:] = (u_xi_1_boundary_right - u_xi_1_boundary_left)
-
-    u_xi_minus1_boundary_left  = u[:, :, -params.N_LGL:]
-    u_xi_minus1_boundary_right = u[:, :, :params.N_LGL]
+    u_xi_1_boundary_left  = u[:, :, -params.N_LGL:]
+    u_xi_1_boundary_right = af.shift(u[:, :, :params.N_LGL], d0=0, d1=-1)
     u[:, :, :params.N_LGL]     = (u_xi_minus1_boundary_left + u_xi_minus1_boundary_right) / 2
+    
+    diff_u_boundary[:, :, -params.N_LGL:] = (u_xi_minus1_boundary_left - u_xi_minus1_boundary_right)
 
-    diff_u_boundary[:, :, :params.N_LGL] = (u_xi_minus1_boundary_left - u_xi_minus1_boundary_right)
-
-    u_eta_1_boundary_up   = u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
-    u_eta_1_boundary_down = u[:, :, 0:-params.N_LGL + 1:params.N_LGL]
-
+    u_eta_1_boundary_down = u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+    u_eta_1_boundary_up   = af.shift(u[:, :, 0:-params.N_LGL + 1:params.N_LGL], d0=1)
+    
     u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
                                                               +u_eta_1_boundary_down) / 2
 
@@ -499,7 +500,7 @@ def lax_friedrichs_flux(u):
                                                                              -u_eta_1_boundary_down)
 
 
-    u_eta_minus1_boundary_down = u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+    u_eta_minus1_boundary_down = af.shift(u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL], d0=-1)
     u_eta_minus1_boundary_up   = u[:, :, 0:-params.N_LGL + 1:params.N_LGL]
     u[:, :, 0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down\
                                                + u_eta_minus1_boundary_up) / 2
@@ -509,45 +510,13 @@ def lax_friedrichs_flux(u):
 
 
     u = af.moddims(af.reorder(u, 2, 1, 0), params.N_LGL ** 2, 100)
-    F_xi_e_ij  = F_xi(u) - params.c_lax * diff_u_boundary
-    F_eta_e_ij = F_eta(u) - params.c_lax * diff_u_boundary
+    diff_u_boundary = af.moddims(af.reorder(diff_u_boundary, 2, 1, 0), params.N_LGL ** 2, 100)
+    F_xi_e_ij  = F_xi(u, dxi_dx, deta_dy) - params.c_lax * diff_u_boundary
+    F_eta_e_ij = F_eta(u, deta_dx, deta_dy) - params.c_lax * diff_u_boundary
+
+    return F_xi_e_ij, F_eta_e_ij
 
 
-
-#    diff_u_boundary = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
-#
-#    u_xi_1_boundary_right = u[:params.N_LGL]
-#    u_xi_1_boundary_left  = u[-params.N_LGL:]
-#    u[-params.N_LGL:]     = (u_xi_1_boundary_right + u_xi_1_boundary_left) / 2
-#
-#    diff_u_boundary[-params.N_LGL:]  = (u_xi_1_boundary_right - u_xi_1_boundary_left)
-#
-#    u_xi_minus1_boundary_left  = u[-params.N_LGL:]
-#    u_xi_minus1_boundary_right = u[:params.N_LGL]
-#    u[:params.N_LGL]           = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
-#
-#    diff_u_boundary[:params.N_LGL]  = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
-#
-#    u_eta_1_boundary_up   = u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
-#    u_eta_1_boundary_down = u[0:-params.N_LGL + 1:params.N_LGL]
-#
-#    u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up + u_eta_1_boundary_down) / 2
-#
-#    diff_u_boundary[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up - u_eta_1_boundary_down)
-#
-#
-#    u_eta_minus1_boundary_down   = u[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
-#    u_eta_minus1_boundary_up     = u[0:-params.N_LGL + 1:params.N_LGL]
-#
-#
-#    u[0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down + u_eta_minus1_boundary_up) / 2
-#    diff_u_boundary[0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down - u_eta_minus1_boundary_down)
-#
-#    F_xi_element  = F_xi(u)  - params.c_lax * diff_u_boundary
-#    F_eta_element = F_eta(u) - params.c_lax * diff_u_boundary
-
-
-    return F_xi_ij, F_eta_ij
 
 def surface_term(u):
     '''
