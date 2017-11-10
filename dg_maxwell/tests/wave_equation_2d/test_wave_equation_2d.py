@@ -248,39 +248,3 @@ def test_Li_Lj_coeffs():
     af.display(numerical_L3_xi_L4_eta_coeffs - analytical_L3_xi_L4_eta_coeffs, 14)
     assert (af.max(af.abs(numerical_L3_xi_L4_eta_coeffs - analytical_L3_xi_L4_eta_coeffs)) <= threshold)
 
-def test_surface_term_2d():
-    '''
-    link to sage worksheet https://goo.gl/bvcjBG
-    '''
-    threshold = 1e-11
-    
-    params.N_LGL = 16
-    analytical_surface_term_xi_1_boundary = af.np_to_af_array(np.array(
-                                        [0.000518137698965616, 0.00316169869369534, 0.00555818937089650,\
-                                         0.00772576775028549, 0.00957686227446707, 0.0110358302160314,\
-                                         0.0120429724206691, 0.0125570655998897, 0.0125570656010149,\
-                                         0.0120429724194322, 0.0110358302175448, 0.00957686227250284,\
-                                         0.00772576775253881 , 0.00555818936935162 , 0.00316169869299086,\
-                                         0.000518137700074415 ]))
-
-    analytical_surface_term_xi_minus1_boundary = af.np_to_af_array(np.array(
-                                             [0.000518137699431318, 0.00316169869653708, 0.00555818937589221,\
-                                              0.00772576775722942, 0.00957686228307477, 0.0110358302259504, \
-                                              0.0120429724314933, 0.0125570656111760, 0.0125570656123012, \
-                                              0.0120429724302564, 0.0110358302274638, 0.00957686228111053, \
-                                              0.00772576775948273, 0.00555818937434732, 0.00316169869583259, \
-                                              0.000518137700540118]))
-    xi_LGL = lagrange.LGL_points(params.N_LGL)
-    xi_i   = af.flat(af.transpose(af.tile(xi_LGL, 1, params.N_LGL)))
-    eta_j  = af.tile(xi_LGL, params.N_LGL)
-
-    u_init_2d = np.e ** (- (xi_i ** 2) / (0.6 ** 2))
-    print(u_init_2d.shape)
-
-    numerical_surface_term = wave_equation_2d.surface_term(u_init_2d)
-    print(af.mean(af.abs(numerical_surface_term[params.N_LGL:-params.N_LGL])))
-
-    error = af.mean(af.abs(numerical_surface_term[-params.N_LGL:] - analytical_surface_term_xi_1_boundary))\
-           +af.mean(af.abs(numerical_surface_term[:params.N_LGL] - analytical_surface_term_xi_minus1_boundary))
-
-    assert error<= threshold

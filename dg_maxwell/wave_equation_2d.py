@@ -473,12 +473,12 @@ def lag_interpolation_2d(u_e_ij, N_LGL):
 def lax_friedrichs_flux(u):
     '''
     '''
-    u = af.reorder(af.moddims(u, N_LGL ** 2, 10, 10), 2, 1, 0)
+    u = af.reorder(af.moddims(u, params.N_LGL ** 2, 10, 10), 2, 1, 0)
 
     diff_u_boundary = af.np_to_af_array(np.zeros([10, 10, params.N_LGL ** 2]))
 
     u_xi_1_boundary_right   = u[:, :, :params.N_LGL]
-    u_xi_1_boundary_left    = u[:, :. -params.N_LGL:]
+    u_xi_1_boundary_left    = u[:, :, -params.N_LGL:]
     u[:, :, -params.N_LGL:] = (u_xi_1_boundary_right + u_xi_1_boundary_left) / 2
 
     diff_u_boundary[:, :, -params.N_LGL:] = (u_xi_1_boundary_right - u_xi_1_boundary_left)
@@ -572,7 +572,7 @@ def surface_term(u):
 #    Lq_1      = utils.polyval_1d(Lq_coeffs, xi_LGL[-1])
 #    Lq_minus1 = utils.polyval_1d(Lq_coeffs, xi_LGL[0])
 
-    F_xi_surface_term = F_xi(u)
+    F_xi_surface_term = F_xi(u, nodes, elements)
 
     g_ab = g_uu(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], np.array(xi_i), np.array(eta_j))
     g_00 = (af.np_to_af_array(g_ab[0][0]))
