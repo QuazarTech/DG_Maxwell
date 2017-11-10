@@ -18,6 +18,7 @@ import csv
 sys.path.insert(0, os.path.abspath('../'))
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def dx_dxi(x_nodes, xi, eta):
     '''
