@@ -250,6 +250,7 @@ def test_Li_Lj_coeffs():
 
 def test_surface_term_2d():
     '''
+    link to sage worksheet https://goo.gl/bvcjBG
     '''
     threshold = 1e-11
     

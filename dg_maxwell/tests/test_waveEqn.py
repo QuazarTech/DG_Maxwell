@@ -476,4 +476,3 @@ def test_integrate():
     analytical_integral = 8.514285714285714
 
     assert (calculated_integral - analytical_integral) <= threshold
-
