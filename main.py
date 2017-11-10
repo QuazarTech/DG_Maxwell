@@ -16,21 +16,8 @@ af.set_backend(params.backend)
 
 
 
-#print(wave_equation_2d.A_matrix())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+A_mat = wave_equation_2d.A_matrix(9)
+print(af.matmul(A_mat, af.inverse(A_mat)))
 
 
 

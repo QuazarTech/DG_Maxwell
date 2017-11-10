@@ -3,6 +3,7 @@
 
 import numpy as np
 import arrayfire as af
+af.set_backend('cpu')
 
 from dg_maxwell import params
 from dg_maxwell import msh_parser
@@ -265,37 +266,60 @@ def A_matrix(N_LGL):
     A : af.Array [N_LGL^2 N_LGL^2 1 1]
         The tensor product.
     '''
+    print(af.info())
     N_LGL = params.N_LGL
     xi_LGL = lagrange.LGL_points(N_LGL)
     lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
+
+    xi_LGL  = lagrange.LGL_points(N_LGL)
+    eta_LGL = lagrange.LGL_points(N_LGL)
+
+    _, Lp_xi  = lagrange.lagrange_polynomials(xi_LGL)
+    _, Lq_eta = lagrange.lagrange_polynomials(eta_LGL)
+    Lp_xi = af.np_to_af_array(Lp_xi)
+    Lq_eta = af.np_to_af_array(Lq_eta)
+    Li_xi = Lp_xi.copy()
+    Lj_eta = Lq_eta.copy()
+
+    Lp_xi_tp = af.reorder(Lp_xi, d0 = 2, d1 = 0, d2 = 1)
+    Lp_xi_tp = af.tile(Lp_xi_tp, d0 = N_LGL * N_LGL * N_LGL)
+    Lp_xi_tp = af.moddims(Lp_xi_tp, d0 = N_LGL * N_LGL * N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
+    Lp_xi_tp = af.reorder(Lp_xi_tp, d0 = 0, d1 = 2, d2 = 1)
+
+    Lq_eta_tp = af.reorder(Lq_eta, d0 = 0, d1 = 2, d2 = 1)
+    Lq_eta_tp = af.tile(Lq_eta_tp, d0 = N_LGL, d1 = N_LGL * N_LGL)
+    Lq_eta_tp = af.moddims(af.transpose(Lq_eta_tp), d0 = N_LGL * N_LGL * N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
+    Lq_eta_tp = af.reorder(Lq_eta_tp, d0 = 0, d1 = 2, d2 = 1)
+
+    Li_xi_tp = af.reorder(Li_xi, d0 = 2, d1 = 0, d2 = 1)
+    Li_xi_tp = af.tile(Li_xi_tp, d0 = N_LGL)
+    Li_xi_tp = af.moddims(Li_xi_tp, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
+    Li_xi_tp = af.reorder(Li_xi_tp, d0 = 0, d1 = 2, d2 = 1)
+    Li_xi_tp = af.tile(Li_xi_tp, d0 = N_LGL * N_LGL)
+
+    Lj_eta_tp = af.reorder(Lj_eta, d0 = 0, d1 = 2, d2 = 1)
+    Lj_eta_tp = af.tile(Lj_eta_tp, d0 = N_LGL)
+    Lj_eta_tp = af.reorder(Lj_eta_tp, d0 = 0, d1 = 2, d2 = 1)
+    Lj_eta_tp = af.tile(Lj_eta_tp, d0 = N_LGL * N_LGL)
+
+    Lp_Li_tp = utils.poly1d_product(Lp_xi_tp, Li_xi_tp)
+    Lq_Lj_tp = utils.poly1d_product(Lq_eta_tp, Lj_eta_tp)
+
+    Lp_Li_Lq_Lj_tp = utils.polynomial_product_coeffs(af.reorder(Lp_Li_tp,
+                                                                d0 = 1,
+                                                                d1 = 2,
+                                                                d2 = 0),
+                                                     af.reorder(Lq_Lj_tp,
+                                                                d0 = 1,
+                                                                d1 = 2,
+                                                                d2 = 0))
+                                                     
+    A = utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp,
+                                         N_quad = params.N_LGL, scheme = 'gauss')
     
-    A_matrix = af.np_to_af_array(np.zeros([N_LGL ** 2, N_LGL ** 2]))
+    A = af.moddims(A, d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
 
-    for p in range(params.N_LGL):
-        Lp_coeffs = lagrange_coeffs[p]
-        for q in range(params.N_LGL):
-            Lq_coeffs = lagrange_coeffs[q]
-            for i in range(params.N_LGL):
-                Li_coeffs = lagrange_coeffs[i]
-                for j in range(params.N_LGL):
-                    Lj_coeffs = lagrange_coeffs[j]
-                    Lp_Li = af.convolve1(af.transpose(Lp_coeffs),\
-                            af.transpose(Li_coeffs),\
-                            conv_mode=af.CONV_MODE.EXPAND)
-                    Lq_Lj = af.convolve1(af.transpose(Lq_coeffs),\
-                            af.transpose(Lj_coeffs),\
-                            conv_mode=af.CONV_MODE.EXPAND)
-                    
-                    integrand_coeffs = utils.polynomial_product_coeffs(\
-                                       (Lp_Li),\
-                                       (Lq_Lj))
-
-                    A_matrix[p * N_LGL + q, i * N_LGL + j] = utils.integrate_2d_multivar_poly(\
-                              integrand_coeffs,\
-                              N_LGL + 1, 'gauss')
-
-
-    return A_matrix
+    return A
 
 
 def F_x(u):
@@ -648,10 +672,15 @@ def RK4_timestepping(A_inverse, u, delta_t):
 def time_evolution():
     '''
     '''
-    A_inverse = af.inverse(A_matrix())
+    A_inverse = af.inverse(A_matrix(params.N_LGL))
+    xi_LGL = lagrange.LGL_points(params.N_LGL)
+    xi_i   = af.flat(af.transpose(af.tile(xi_LGL, 1, params.N_LGL)))
+    eta_j  = af.tile(xi_LGL, params.N_LGL)
+
+    u_init_2d = np.e ** (- (xi_i ** 2) / (0.6 ** 2))
     delta_t   = params.delta_t
     time      = params.time
-    u         = params.u_init_2d
+    u         = u_init_2d
     print(A_inverse)
     print(b_vector(u))
     

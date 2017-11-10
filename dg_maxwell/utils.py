@@ -539,6 +539,7 @@ def polyval_2d(poly_2d, xi, eta):
 def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
     '''
     '''
+    shape_poly_2d = shape(poly_xi_eta)
     xi_gauss  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
     eta_gauss = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
 
@@ -552,19 +553,21 @@ def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
 
     W_i, W_j = af_meshgrid(w_i, w_j)
 
-    W_i = af.flat(W_i)
-    W_j = af.flat(W_j)
+    W_i = af.tile(af.flat(W_i), d0 = 1, d1 = shape_poly_2d[2])
+    W_j = af.tile(af.flat(W_j), d0 = 1, d1 = shape_poly_2d[2])
 
     P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
 
-    integral = af.sum(W_i * W_j * P_xi_eta_quad_val)
-
-    return integral
+    integral = af.sum(W_i * W_j * P_xi_eta_quad_val, dim = 0)
+    
+    return af.transpose(integral)
 
 
 def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
     '''
     '''
+    shape_poly_2d = shape(poly_xi_eta)
+
     xi_LGL  = lagrange.LGL_points(N_quad)
     eta_LGL = lagrange.LGL_points(N_quad)
 
@@ -578,14 +581,15 @@ def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
 
     W_i, W_j = af_meshgrid(w_i, w_j)
 
-    W_i = af.flat(W_i)
-    W_j = af.flat(W_j)
+    W_i = af.tile(af.flat(W_i), d0 = 1, d1 = shape_poly_2d[2])
+    W_j = af.tile(af.flat(W_j), d0 = 1, d1 = shape_poly_2d[2])
 
     P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
 
-    integral = af.sum(W_i * W_j * P_xi_eta_quad_val)
-    
-    return integral
+    integral = af.sum(W_i * W_j * P_xi_eta_quad_val, dim = 0)
+
+    return af.transpose(integral)
+
 
 def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
     '''
@@ -597,21 +601,13 @@ def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
     
     Parameters
     ----------
-    poly_xi : af.Array [number_of_polynomials N 1 1]
-              ``number_of_polynomials`` polynomials of :math:`\\xi` with
-              degree :math:`N - 1` of the form
+    poly_xi_eta : multivar_poly
+                  The multivariable polynomial returned by the method
+                  :py:meth:`dg_maxwell.utils.polynomial_product_coeffs`
+                  Multiple polynomials can be returned, differnt polynomials
+                  should be in the :math:`3^{rd}` dimension.
 
-                 .. math:: P_0(\\xi) = a_0\\xi^0 + a_1\\xi^1 + ... \\
-                           a_{N - 1}\\xi^{N - 1}
-
-    poly_eta : af.Array [number_of_polynomials N 1 1]
-               ``number_of_polynomials`` polynomials of :math:`\\eta` with
-               degree :math:`N - 1` of the form
-
-               .. math:: P_1(\\eta) = a_0\\eta^0 + a_1\\eta^1 + ... \\
-                         a_{N - 1}\\eta^{N - 1}
-
-    order   : int
+    N_quad  : int
               Order of the Gauss-Legendre or Gauss-Lobatto quadrature.
 
     scheme  : str
@@ -625,7 +621,8 @@ def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
     integrate_poly_xi_eta : af.Array [number_of_polynomials 1 1 1]
                             Integral
 
-                            .. math:: \\iint P_0(\\xi) P_1(\\eta) d\\xi d\\eta
+                            .. math:: \\iint P(\\xi, \\eta) \\partial\\xi \\
+                                      \\partial\\eta
 
     '''
     if scheme is 'gauss':
