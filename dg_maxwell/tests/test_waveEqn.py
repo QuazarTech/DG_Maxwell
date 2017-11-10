@@ -22,7 +22,7 @@ af.set_backend(params.backend)
 
 
 
-def change_parameters(LGL, Elements, quad, wave='sin', scheme='lobatto_quadrature'):
+def change_parameters(LGL, Elements, quad, wave='sin'):
     '''
 
     Changes the parameters of the simulation. Used only for convergence tests.
@@ -51,8 +51,6 @@ def change_parameters(LGL, Elements, quad, wave='sin', scheme='lobatto_quadratur
     # Array containing the LGL points in xi space.
     params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
 
-    params.volume_integral_scheme = scheme
-    params.scheme                 = scheme
 
     # N_Gauss number of Gauss nodes.
     params.gauss_points  = af.np_to_af_array(lagrange.gauss_nodes\

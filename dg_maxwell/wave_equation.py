@@ -557,4 +557,3 @@ def time_evolution():
     u_diff = af.abs(u - u_analytical)
 
     return u_diff
-

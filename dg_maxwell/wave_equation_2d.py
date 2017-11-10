@@ -265,65 +265,37 @@ def A_matrix():
     A : af.Array [N_LGL^2 N_LGL^2 1 1]
         The tensor product.
     '''
+    N_LGL = params.N_LGL
+    xi_LGL = lagrange.LGL_points(N_LGL)
+    lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
+    
+    A_matrix = af.np_to_af_array(np.zeros([N_LGL ** 2, N_LGL ** 2]))
 
-    N_LGL   = params.N_LGL
-    xi_LGL  = lagrange.LGL_points(N_LGL)
-    eta_LGL = lagrange.LGL_points(N_LGL)
+    for p in range(params.N_LGL):
+        Lp_coeffs = lagrange_coeffs[p]
+        for q in range(params.N_LGL):
+            Lq_coeffs = lagrange_coeffs[q]
+            for i in range(params.N_LGL):
+                Li_coeffs = lagrange_coeffs[i]
+                for j in range(params.N_LGL):
+                    Lj_coeffs = lagrange_coeffs[j]
+                    Lp_Li = af.convolve1(af.transpose(Lp_coeffs),\
+                            af.transpose(Li_coeffs),\
+                            conv_mode=af.CONV_MODE.EXPAND)
+                    Lq_Lj = af.convolve1(af.transpose(Lq_coeffs),\
+                            af.transpose(Lj_coeffs),\
+                            conv_mode=af.CONV_MODE.EXPAND)
+                    
+                    integrand_coeffs = utils.polynomial_product_coeffs(\
+                                       (Lp_Li),\
+                                       (Lq_Lj))
 
-    _, Lp = lagrange.lagrange_polynomials(xi_LGL)
-    Lp = af.np_to_af_array(Lp)
-    Li = Lp.copy()
+                    A_matrix[p * N_LGL + q, i * N_LGL + j] = utils.integrate_2d_multivar_poly(\
+                              integrand_coeffs,\
+                              N_LGL + 1, 'gauss')
 
-    _, Lq = lagrange.lagrange_polynomials(eta_LGL)
-    Lq = af.np_to_af_array(Lq)
-    Lj = Lq.copy()
 
-    Li = af.reorder(Li, d0 = 0, d1 = 2, d2 = 1)
-    Li = af.transpose(af.tile(Li, d0 = 1, d1 = N_LGL))
-    Li = af.moddims(Li, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
-    Li = af.transpose(af.tile(Li, d0 = 1, d1 = N_LGL * N_LGL))
-    Li = af.transpose(af.moddims(af.transpose(Li),
-                                 d0 = N_LGL * N_LGL * N_LGL * N_LGL,
-                                 d1 = 1, d2 = N_LGL))
-    Li = af.reorder(Li, d0 = 2, d1 = 1, d2 = 0)
-
-    Lp = af.reorder(Lp, d0 = 0, d1 = 2, d2 = 1)
-    Lp = af.transpose(af.tile(Lp, d0 = 1, d1 = N_LGL))
-    Lp = af.moddims(Lp, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
-    Lp = af.tile(Lp, d0 = 1, d1 = N_LGL * N_LGL)
-    Lp = af.moddims(af.transpose(Lp),
-                    d0 = N_LGL * N_LGL * N_LGL * N_LGL,
-                    d1 = 1, d2 = N_LGL)
-    Lp = af.reorder(af.transpose(Lp), d0 = 2, d1 = 1, d2 = 0)
-
-    Lp_Li = af.transpose(af.convolve1(Li, Lp, conv_mode = af.CONV_MODE.EXPAND))
-
-    Lj = af.reorder(Lj, d0 = 0, d1 = 2, d2 = 1)
-    Lj = af.tile(Lj, d0 = 1, d1 = N_LGL)
-    Lj = af.moddims(Lj, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
-    Lj = af.transpose(af.tile(Lj, d0 = 1, d1 = N_LGL * N_LGL))
-    Lj = af.moddims(af.transpose(Lj),
-                    d0 = N_LGL * N_LGL * N_LGL * N_LGL,
-                    d1 = 1, d2 = N_LGL)
-    Lj = af.reorder(Lj, d0 = 2, d1 = 0, d2 = 1)
-
-    Lq = af.reorder(Lq, d0 = 0, d1 = 2, d2 = 1)
-    Lq = af.tile(Lq, d0 = 1, d1 = N_LGL)
-    Lq = af.moddims(Lq, d0 = N_LGL * N_LGL, d1 = 1, d2 = N_LGL)
-    Lq = af.tile(Lq, d0 = 1, d1 = N_LGL * N_LGL)
-    Lq = af.moddims(af.transpose(Lq),
-                    d0 = N_LGL * N_LGL * N_LGL * N_LGL,
-                    d1 = 1, d2 = N_LGL)
-    Lq = af.reorder(af.transpose(Lq), d0 = 2, d1 = 1, d2 = 0)
-
-    Lq_Lj = af.transpose(af.convolve1(Lj, Lq, conv_mode = af.CONV_MODE.EXPAND))
-
-    A = af.moddims(utils.integrate_2d(Lp_Li, Lq_Lj,
-                                      order = 9,
-                                      scheme = 'gauss'),
-                   d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
-
-    return A
+    return A_matrix
 
 
 def F_x(u):
@@ -391,11 +363,11 @@ def sqrtgDet(x_nodes, y_nodes, xi, eta):
 def F_xi(u):
     '''
     '''
-    nodes    = params.nodes
-    elements = params.elements
+    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
 
-    xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, params.N_LGL)))
-    eta_j  = af.tile(params.xi_LGL, params.N_LGL)
+    xi_LGL = lagrange.LGL_points(params.N_LGL)
+    xi_i   = af.flat(af.transpose(af.tile(xi_LGL, params.N_LGL)))
+    eta_j  = af.tile(xi_LGL, params.N_LGL)
 
     dxi_by_dx = dxi_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
     dxi_by_dy = dxi_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
@@ -407,11 +379,11 @@ def F_xi(u):
 def F_eta(u):
     '''
     '''
-    nodes    = params.nodes
-    elements = params.elements
+    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
 
-    xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, params.N_LGL)))
-    eta_j  = af.tile(params.xi_LGL, params.N_LGL)
+    xi_LGL = lagrange.LGL_points(params.N_LGL)
+    xi_i   = af.flat(af.transpose(af.tile(xi_LGL, params.N_LGL)))
+    eta_j  = af.tile(xi_LGL, params.N_LGL)
 
     deta_by_dx = deta_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
     deta_by_dy = deta_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
@@ -451,8 +423,7 @@ def lag_interpolation_2d(f_ij, N_LGL):
 def volume_integral(u, N_quadrature, int_scheme):
     '''
     '''
-    nodes    = params.nodes
-    elements = params.elements
+    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
 
     xi_i   = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
     eta_j  = af.tile(params.xi_LGL, params.N_LGL)
@@ -557,8 +528,7 @@ def lax_friedrichs_flux(u):
 def surface_term(u):
     '''
     '''
-    nodes    = params.nodes
-    elements = params.elements
+    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
 
     xi_LGL  = lagrange.LGL_points(params.N_LGL)
     eta_LGL = lagrange.LGL_points(params.N_LGL)
@@ -587,6 +557,8 @@ def surface_term(u):
     g_11 = (af.np_to_af_array(g_ab[1][1]))
 
     F_xi_element  = lax_friedrichs_flux(u)[0]
+    nodes    = params.nodes
+    elements = params.elements
     F_eta_element = lax_friedrichs_flux(u)[1]
     surface_term_pq  = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
 
@@ -683,6 +655,6 @@ def time_evolution():
     print(A_inverse)
     print(b_vector(u))
     
-    for t_n in trange(0, 10):
+    for t_n in trange(0, 1):
         u += RK4_timestepping(A_inverse, u, delta_t)
         print(u)
