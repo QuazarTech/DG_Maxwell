@@ -7,16 +7,17 @@ sys.path.insert(0, os.path.abspath('./'))
 
 import numpy as np
 import arrayfire as af
-
+from matplotlib import pyplot as pl
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
 from dg_maxwell import wave_equation
+from dg_maxwell import wave_equation_2d
 from dg_maxwell import isoparam
 from dg_maxwell import utils
 
 af.set_backend(params.backend)
-
+af.set_device(params.device)
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
 
@@ -49,6 +50,7 @@ def change_parameters(LGL, Elements, quad, wave='sin'):
 
     # Array containing the LGL points in xi space.
     params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
+
 
     # N_Gauss number of Gauss nodes.
     params.gauss_points  = af.np_to_af_array(lagrange.gauss_nodes\
@@ -280,6 +282,23 @@ def test_dx_dxi_analytical():
     assert check_analytical_dx_dxi
 
 
+def test_LGL_points():
+    '''
+    Comparing the LGL nodes obtained by LGL_points with
+    the reference nodes for N = 6
+    '''
+    threshold = 5e-13
+    reference_nodes  = \
+        af.np_to_af_array(np.array([-1.,                 -0.7650553239294647,\
+                                    -0.28523151648064504, 0.28523151648064504,\
+                                     0.7650553239294647,  1. \
+                                   ] \
+                                  ) \
+                         )
+
+    calculated_nodes = (lagrange.LGL_points(6))
+    assert(af.max(af.abs(reference_nodes - calculated_nodes)) <= threshold)
+
 def test_lagrange_coeffs():
     '''
     Function to test the lagrange_coeffs in global_variables module by
@@ -292,7 +311,7 @@ def test_lagrange_coeffs():
     
     `https://goo.gl/6EFX5S`
     '''
-    threshold = 6e-10
+    threshold = 1e-10
 
     change_parameters(8, 10, 11, 'gaussian')
     basis_array_analytical = np.zeros([8, 8])
@@ -367,8 +386,10 @@ def test_lagrange_coeffs():
                 
     basis_array_analytical = af.interop.np_to_af_array(basis_array_analytical)
     
-    assert af.sum(af.abs(basis_array_analytical - params.lagrange_coeffs))\
-                                                               < threshold
+    print(af.max(af.abs(basis_array_analytical - params.lagrange_coeffs)))
+    
+    assert af.max(af.abs(basis_array_analytical - params.lagrange_coeffs)) \
+            < threshold
 
 
 def test_volume_integral_flux():
@@ -504,6 +525,7 @@ def test_integrate():
     analytical_integral = 8.514285714285714
 
     assert (calculated_integral - analytical_integral) <= threshold
+<<<<<<< HEAD
 
 
 def test_advection():
@@ -517,3 +539,5 @@ def test_advection():
     L1_norm_error = lagrange.L1_norm(u_diff)
 
     assert L1_norm_error <= threshold
+=======
+>>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599

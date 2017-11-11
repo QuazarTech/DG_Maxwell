@@ -12,6 +12,7 @@ from dg_maxwell import isoparam
 from dg_maxwell import params
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def test_isoparam_x():
     '''

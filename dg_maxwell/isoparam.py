@@ -12,6 +12,7 @@ from dg_maxwell import lagrange
 from dg_maxwell import msh_parser
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def isoparam_1D(x_nodes, xi):
     '''

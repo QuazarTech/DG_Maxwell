@@ -6,20 +6,24 @@ import numpy as np
 import arrayfire as af
 
 backend = 'cpu'
+device = 0
+
 af.set_backend(backend)
+af.set_device(device)
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils
+from dg_maxwell import msh_parser
 from dg_maxwell import wave_equation
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8
+N_LGL      = 11
 
 # Number of elements the domain is to be divided into.
-N_Elements = 3
+N_Elements = 10
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
@@ -29,7 +33,11 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
+<<<<<<< HEAD
 N_quad     = N_LGL
+=======
+N_quad     = 9
+>>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599
 
 # Wave speed.
 c          = 1
@@ -109,7 +117,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
 
 # The wave to be advected is either a sin or a Gaussian wave.
 # This parameter can take values 'sin' or 'gaussian'.
-wave = 'gaussian'
+wave = 'sin'
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 if (wave=='sin'):

@@ -11,6 +11,7 @@ from dg_maxwell import params
 from dg_maxwell import lagrange
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def add(a, b):
     '''
@@ -478,6 +479,7 @@ def integrate_2d(poly_xi, poly_eta, order, scheme = 'gauss'):
 def polynomial_derivative(polynomial):
     '''
     '''
+<<<<<<< HEAD
     derivtive_multiplier = af.tile(af.transpose(af.flip( af.range(polynomial.shape[1]))), d0 = polynomial.shape[0])
     return (polynomial * derivtive_multiplier)[:, : -1] 
 
@@ -491,3 +493,161 @@ def polynomial_product_coeffs(poly1_coeffs, poly2_coeffs):
     product_coeffs = poly1_coeffs_tile * poly2_coeffs_tile
 
     return product_coeffs
+=======
+    derivtive_multiplier = af.tile(af.transpose(af.flip(
+        af.range(polynomial.shape[1]))),
+                                   d0 = polynomial.shape[0])
+    
+    return (polynomial * derivtive_multiplier)[:, : -1]
+
+
+
+def polynomial_product_coeffs(poly1_coeffs, poly2_coeffs):
+    '''
+    '''
+    poly1_coeffs_tile = af.transpose(af.tile(poly1_coeffs, 1, poly1_coeffs.shape[0]))
+    poly2_coeffs_tile = af.tile(poly2_coeffs, 1, poly2_coeffs.shape[0])
+
+    product_coeffs = poly1_coeffs_tile * poly2_coeffs_tile
+
+    return product_coeffs
+
+
+def polyval_2d(poly_2d, xi, eta):
+    '''
+    '''
+    poly_2d_shape = shape(poly_2d)
+    poly_xy = af.tile(poly_2d, d0 = 1, d1 = 1, d2 = 1, d3 = xi.shape[0])
+    poly_xy_shape = shape(poly_xy)
+    # print(poly_xy)
+    xi_power = af.flip(af.range(poly_xy_shape[1], dtype = af.Dtype.u32))
+    xi_power = af.tile(af.transpose(xi_power), d0 = poly_xy_shape[0])
+    xi_power = af.tile(xi_power, d0 = 1, d1 = 1, d2 = xi.shape[0])
+
+    eta_power = af.flip(af.range(poly_xy_shape[0], dtype = af.Dtype.u32))
+    eta_power = af.tile(eta_power, d0 = 1, d1 = poly_xy_shape[1])
+    eta_power = af.tile(eta_power, d0 = 1, d1 = 1, d2 = eta.shape[0])
+
+    Xi = af.reorder(xi, d0 = 2, d1 = 1, d2 = 0)
+    Xi = af.tile(Xi, d0 = poly_xy_shape[0], d1 = poly_xy_shape[1])
+    Xi = Xi**xi_power
+    Xi = af.reorder(Xi, d0 = 0, d1 = 1, d2 = 3, d3 = 2)
+    Xi = af.tile(Xi, d0 = 1, d1 = 1, d2 = poly_2d_shape[2])
+    # print(Xi)
+
+    Eta = af.reorder(eta, d0 = 2, d1 = 1, d2 = 0)
+    Eta = af.tile(Eta, d0 = poly_xy_shape[0], d1 = poly_xy_shape[1])
+    Eta = Eta**eta_power
+    Eta = af.reorder(Eta, d0 = 0, d1 = 1, d2 = 3, d3 = 2)
+    Eta = af.tile(Eta, d0 = 1, d1 = 1, d2 = poly_2d_shape[2])
+    # print(Eta)
+
+    Xi_Eta = Xi * Eta
+
+    poly_val = poly_xy * Xi_Eta
+    poly_val = af.sum(af.sum(poly_val, dim = 0), dim = 1)
+    poly_val = af.reorder(poly_val, d0 = 2, d1 = 3, d2 = 0, d3 = 1)
+
+    return poly_val
+
+
+def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
+    '''
+    '''
+    shape_poly_2d = shape(poly_xi_eta)
+    xi_gauss  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
+    eta_gauss = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
+
+    Xi, Eta = af_meshgrid(xi_gauss, eta_gauss)
+
+    Xi  = af.flat(Xi)
+    Eta = af.flat(Eta)
+
+    w_i = lagrange.gaussian_weights(N_quad)
+    w_j = lagrange.gaussian_weights(N_quad)
+
+    W_i, W_j = af_meshgrid(w_i, w_j)
+
+    W_i = af.tile(af.flat(W_i), d0 = 1, d1 = shape_poly_2d[2])
+    W_j = af.tile(af.flat(W_j), d0 = 1, d1 = shape_poly_2d[2])
+
+    P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
+
+    integral = af.sum(W_i * W_j * P_xi_eta_quad_val, dim = 0)
+    
+    return af.transpose(integral)
+
+
+def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
+    '''
+    '''
+    shape_poly_2d = shape(poly_xi_eta)
+
+    xi_LGL  = lagrange.LGL_points(N_quad)
+    eta_LGL = lagrange.LGL_points(N_quad)
+
+    Xi, Eta = af_meshgrid(xi_LGL, eta_LGL)
+
+    Xi  = af.flat(Xi)
+    Eta = af.flat(Eta)
+
+    w_i = lagrange.lobatto_weights(N_quad)
+    w_j = lagrange.lobatto_weights(N_quad)
+
+    W_i, W_j = af_meshgrid(w_i, w_j)
+
+    W_i = af.tile(af.flat(W_i), d0 = 1, d1 = shape_poly_2d[2])
+    W_j = af.tile(af.flat(W_j), d0 = 1, d1 = shape_poly_2d[2])
+
+    P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
+
+    integral = af.sum(W_i * W_j * P_xi_eta_quad_val, dim = 0)
+
+    return af.transpose(integral)
+
+
+def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
+    '''
+    Evaluates the integral
+    
+    .. math:: \\iint P(\\xi, \\eta) \\partial \\xi \\partial \\eta
+    
+    using 
+    
+    Parameters
+    ----------
+    poly_xi_eta : multivar_poly
+                  The multivariable polynomial returned by the method
+                  :py:meth:`dg_maxwell.utils.polynomial_product_coeffs`
+                  Multiple polynomials can be returned, differnt polynomials
+                  should be in the :math:`3^{rd}` dimension.
+
+    N_quad  : int
+              Order of the Gauss-Legendre or Gauss-Lobatto quadrature.
+
+    scheme  : str
+              Possible options are
+
+              - ``gauss`` for using Gauss-Legendre quadrature
+              - ``lobatto`` for using Gauss-Lobatto quadrature
+
+    Returns
+    -------
+    integrate_poly_xi_eta : af.Array [number_of_polynomials 1 1 1]
+                            Integral
+
+                            .. math:: \\iint P(\\xi, \\eta) \\partial\\xi \\
+                                      \\partial\\eta
+
+    '''
+    if scheme is 'gauss':
+        return gauss_quad_multivar_poly(poly_xi_eta, N_quad)
+    
+    elif scheme is 'lobatto':
+        return lobatto_quad_multivar_poly(poly_xi_eta, N_quad)
+    
+    else:
+        return
+
+    return
+>>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599

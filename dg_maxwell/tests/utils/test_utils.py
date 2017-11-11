@@ -9,6 +9,7 @@ from dg_maxwell import utils
 from dg_maxwell import lagrange
 
 af.set_backend(params.backend)
+af.set_device(params.device)
 
 def test_matmul_3D():
     '''
@@ -138,6 +139,7 @@ def test_polynomial_product_coeffs():
                                                             [7, 14, 21, 28],\
                                                             [9, 18, 27, 36]]))
 
+<<<<<<< HEAD
     analytical_product_coeffs_2 = af.np_to_af_array(np.array([[5, 2, -4.7211, 2],\
                                                             [0, 0, 0, 0],\
                                                             [-45.562, 18.2248, 43.02055164, -18.2248],\
@@ -145,3 +147,89 @@ def test_polynomial_product_coeffs():
 
     assert af.max(numerical_product_coeffs[:, :, 0] - analytical_product_coeffs_1 + \
                   numerical_product_coeffs[:, :, 1] - analytical_product_coeffs_2) < threshold
+=======
+def test_polynomial_product_coeffs():
+    '''
+    '''
+    threshold = 1e-12
+
+    poly1 = af.reorder(
+        af.transpose(
+            af.np_to_af_array(np.array([[1, 2, 3., 4],
+                                        [5, -2, -4.7211, 2]]))),
+            0, 2, 1)
+    
+    poly2 = af.reorder(
+        af.transpose(
+            af.np_to_af_array(np.array([[-2, 4, 7., 9],
+                                        [1, 0, -9.1124, 7]]))),
+            0, 2, 1)
+
+    numerical_product_coeffs    = utils.polynomial_product_coeffs(poly1, poly2)
+    analytical_product_coeffs_1 = af.np_to_af_array(
+        np.array([[-2, -4, -6, -8],
+                  [4, 8, 12, 16],
+                  [7, 14, 21, 28],
+                  [9, 18, 27, 36]]))
+
+    analytical_product_coeffs_2 = af.np_to_af_array(
+        np.array([[5, -2, -4.7211, 2],
+                  [0, 0, 0, 0],
+                  [-45.562, 18.2248, 43.02055164, -18.2248],
+                  [35, -14, -33.0477, 14]]))
+    
+    print(numerical_product_coeffs)
+    assert af.max(af.abs(numerical_product_coeffs[:, :, 0] - analytical_product_coeffs_1 + \
+                  numerical_product_coeffs[:, :, 1] - analytical_product_coeffs_2)) < threshold
+
+def test_polyval_2d():
+    '''
+    Tests the ``utils.polyval_2d`` function by evaluating the polynomial
+    
+    .. math:: P_0(\\xi) P_1(\\eta)
+    
+    here,
+    
+    .. math:: P_0(\\xi) = 3 \, \\xi^{2} + 2 \, \\xi + 1
+    
+    .. math:: P_1(\\eta) = 3 \, \\eta^{2} + 2 \, \\eta + 1
+    
+    at corresponding ``linspace`` points in :math:`\\xi \\in [-1, 1]` and
+    :math:`\\eta \\in [-1, 1]`.
+    
+    This value is then compared with the reference value calculated analytically.
+    The reference values are calculated in
+    `polynomial_product_two_variables.sagews`_
+    
+    .. _polynomial_product_two_variables.sagews: https://goo.gl/KwG7k9
+    
+    '''
+    threshold = 1e-12
+    
+    poly_xi_degree = 4
+    poly_xi = af.flip(af.np_to_af_array(np.arange(1, poly_xi_degree)))
+
+    poly_eta_degree = 4
+    poly_eta = af.flip(af.np_to_af_array(np.arange(1, poly_eta_degree)))
+    
+    poly_xi_eta = utils.polynomial_product_coeffs(poly_xi, poly_eta)
+    
+    xi  = utils.linspace(-1, 1, 8)
+    eta = utils.linspace(-1, 1, 8)
+    
+    polyval_xi_eta = af.transpose(utils.polyval_2d(poly_xi_eta, xi, eta))
+    
+    polyval_xi_eta_ref = af.np_to_af_array(
+        np.array([4.00000000000000,
+                  1.21449396084962,
+                  0.481466055810080,
+                  0.601416076634741,
+                  1.81424406497291,
+                  5.79925031236988,
+                  15.6751353602663,
+                  36.0000000000000]))
+    
+    diff = af.abs(polyval_xi_eta - polyval_xi_eta_ref)
+    
+    assert af.all_true(diff < threshold)
+>>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599
