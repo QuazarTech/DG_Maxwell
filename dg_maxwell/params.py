@@ -4,8 +4,8 @@
 import numpy as np
 
 import arrayfire as af
-backend = 'cpu'
-device = 0
+backend = 'opencl'
+device = 1
 
 af.set_backend(backend)
 af.set_device(device)
@@ -136,4 +136,4 @@ u[:, :, 0] = u_init
 ########################################################################
 
 c_x = 1.
-c_y = 0
+c_y = 1.

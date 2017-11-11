@@ -267,8 +267,6 @@ def A_matrix(N_LGL):
     A : af.Array [N_LGL^2 N_LGL^2 1 1]
         The tensor product.
     '''
-    print(af.info())
-    N_LGL = params.N_LGL
     xi_LGL = lagrange.LGL_points(N_LGL)
     lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
 
@@ -316,7 +314,8 @@ def A_matrix(N_LGL):
                                                                 d2 = 0))
                                                      
     A = utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp,
-                                         N_quad = params.N_LGL, scheme = 'gauss')
+                                         N_quad = N_LGL + 1,
+                                         scheme = 'gauss')
     
     A = af.moddims(A, d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
 
