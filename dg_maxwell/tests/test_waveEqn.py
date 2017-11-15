@@ -525,19 +525,3 @@ def test_integrate():
     analytical_integral = 8.514285714285714
 
     assert (calculated_integral - analytical_integral) <= threshold
-<<<<<<< HEAD
-
-
-def test_advection():
-    '''
-    Unit test for advection of a sin wave
-    '''
-    threshold = 5e-7
-    change_parameters(8, 10, 8, 'sin')
-
-    u_diff = wave_equation.time_evolution()
-    L1_norm_error = lagrange.L1_norm(u_diff)
-
-    assert L1_norm_error <= threshold
-=======
->>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599

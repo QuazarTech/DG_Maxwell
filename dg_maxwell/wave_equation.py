@@ -244,7 +244,7 @@ def volume_integral_flux(u_n):
     # passing the coefficients of the Lagrange interpolated polynomial.
     if(params.volume_integral_scheme == 'lobatto_quadrature'\
         and params.N_quad == params.N_LGL):
-        print('option1')
+        #print('option1')
 
         # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
         F_u_n                  = af.reorder(flux_x(u_n), 2, 0, 1)
@@ -260,7 +260,7 @@ def volume_integral_flux(u_n):
     # Using the integrate() function to calculate the volume integral term
     # by passing the Lagrange interpolated polynomial.
     else:
-        print('option3')
+        #print('option3')
         analytical_flux_coeffs = flux_x(lagrange.\
                                         lagrange_interpolation_u(u_n))
 
@@ -555,155 +555,3 @@ def time_evolution():
     u_diff = af.abs(u - u_analytical)
 
     return u_diff
-<<<<<<< HEAD
-
-
-def convergence_test():
-    '''
-
-    Used to obtain plots of L1 norm versus parameters (Number of elements
-    or N_LGL).
-    
-    '''
-    L1_norm_option_1 = np.zeros([10])
-    N_lgl            = (np.arange(10) + 3).astype(float)
-    L1_norm_option_3 = np.zeros([10])
-
-    for i in range(0, 10):
-        change_parameters(i + 3, 10, i + 3)
-        u_diff = time_evolution()
-        L1_norm_option_1[i] = lagrange.L1_norm(u_diff)
-        change_parameters(i + 3, 10, i + 4)
-        u_diff = time_evolution()
-        L1_norm_option_3[i] = lagrange.L1_norm(u_diff)
-
-
-    print(L1_norm_option_1, L1_norm_option_3)
-    normalization = 0.00281 / (3 **(-3))
-    plt.loglog(N_lgl, L1_norm_option_1, marker='o', label='option 1')
-    plt.loglog(N_lgl, L1_norm_option_3, marker='o', label='option 3')
-    plt.xlabel('No. of LGL points')
-    plt.ylabel('L1 norm of error')
-    plt.title('L1 norm after 1 full advection')
-    plt.loglog(N_lgl, normalization * N_lgl **(-N_lgl), color='black',\
-                          linestyle='--', label='$N_{LGL}^{-N_{LGL}}$')
-    plt.legend(loc='best')
-
-    plt.show()
-
-
-def change_parameters(LGL, Elements, quad, wave='sin'):
-    '''
-
-    Changes the parameters of the simulation. Used only for convergence tests.
-
-    Parameters
-    ----------
-    LGL      : int
-               The new N_LGL.
-
-    Elements : int
-               The new N_Elements.
-
-    '''
-    # The domain of the function.
-    params.x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
-
-    # The number of LGL points into which an element is split.
-    params.N_LGL      = LGL
-
-    # Number of elements the domain is to be divided into.
-    params.N_Elements = Elements
-
-    # The number quadrature points to be used for integration.
-    params.N_quad     = quad
-
-    # Array containing the LGL points in xi space.
-    params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
-
-    # N_Gauss number of Gauss nodes.
-    params.gauss_points  = af.np_to_af_array(lagrange.gauss_nodes\
-                                                    (params.N_quad))
-
-    # The Gaussian weights.
-    params.gauss_weights = lagrange.gaussian_weights(params.N_quad)
-
-    # The lobatto nodes to be used for integration.
-    params.lobatto_quadrature_nodes   = lagrange.LGL_points(params.N_quad)
-
-    # The lobatto weights to be used for integration.
-    params.lobatto_weights_quadrature = lagrange.lobatto_weights\
-                                        (params.N_quad)
-
-    # A list of the Lagrange polynomials in poly1d form.
-    #params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
-
-    # An array containing the coefficients of the lagrange basis polynomials.
-    params.lagrange_coeffs  = af.np_to_af_array(\
-                              lagrange.lagrange_polynomials(params.xi_LGL)[1])
-
-    # Refer corresponding functions.
-    params.lagrange_basis_value = lagrange.lagrange_function_value\
-                                           (params.lagrange_coeffs)
-
-
-    # While evaluating the volume integral using N_LGL
-    # lobatto quadrature points, The integration can be vectorized
-    # and in this case the coefficients of the differential of the
-    # Lagrange polynomials is required
-    params.diff_pow      = (af.flip(af.transpose(af.range(params.N_LGL - 1) + 1), 1))
-    params.dl_dxi_coeffs = (af.broadcast(utils.multiply, params.lagrange_coeffs[:, :-1], params.diff_pow))
-
-
-
-    # Obtaining an array consisting of the LGL points mapped onto the elements.
-
-    params.element_size    = af.sum((params.x_nodes[1] - params.x_nodes[0])\
-                                                        / params.N_Elements)
-    params.elements_xi_LGL = af.constant(0, params.N_Elements, params.N_LGL)
-    params.elements        = utils.linspace(af.sum(params.x_nodes[0]),
-                             af.sum(params.x_nodes[1] - params.element_size),\
-                                                            params.N_Elements)
-
-    params.np_element_array   = np.concatenate((af.transpose(params.elements),
-                                   af.transpose(params.elements +\
-                                                       params.element_size)))
-
-    params.element_mesh_nodes = utils.linspace(af.sum(params.x_nodes[0]),
-                                        af.sum(params.x_nodes[1]),\
-                                               params.N_Elements + 1)
-
-    params.element_array = af.transpose(af.np_to_af_array\
-                                       (params.np_element_array))
-    params.element_LGL   = mapping_xi_to_x(af.transpose\
-                                          (params.element_array), params.xi_LGL)
-
-    # The minimum distance between 2 mapped LGL points.
-    params.delta_x = af.min((params.element_LGL - af.shift(params.element_LGL, 1, 0))[1:, :])
-
-    # dx_dxi for elements of equal size.
-    params. dx_dxi = af.mean(dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
-                                   params.xi_LGL))
-
-
-    # The value of time-step.
-    params.delta_t = params.delta_x / (4 * params.c)
-
-    # Array of timesteps seperated by delta_t.
-    params.time    = utils.linspace(0, int(params.total_time / params.delta_t) * params.delta_t,
-                                                        int(params.total_time / params.delta_t))
-
-    # Initializing the amplitudes. Change u_init to required initial conditions.
-    if (wave=='sin'):
-        params.u_init     = af.sin(2 * np.pi * params.element_LGL)
-
-    if (wave=='gaussian'):
-        params.u_init = np.e ** (-(params.element_LGL) ** 2 / 0.4 ** 2)
-
-    params.u          = af.constant(0, params.N_LGL, params.N_Elements, params.time.shape[0],\
-                                     dtype = af.Dtype.f64)
-    params.u[:, :, 0] = params.u_init
-
-    return
-=======
->>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599

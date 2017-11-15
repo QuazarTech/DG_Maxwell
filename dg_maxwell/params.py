@@ -20,7 +20,7 @@ from dg_maxwell import wave_equation
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 11
+N_LGL      = 8
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
@@ -33,11 +33,7 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-<<<<<<< HEAD
-N_quad     = N_LGL
-=======
-N_quad     = 9
->>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599
+N_quad     = 10
 
 # Wave speed.
 c          = 1
@@ -70,10 +66,8 @@ lobatto_weights_quadrature = lagrange.lobatto_weights\
 # An array containing the coefficients of the lagrange basis polynomials.
 lagrange_coeffs            = lagrange.lagrange_polynomial_coeffs(xi_LGL)
 
-# Refer corresponding functions.
+
 lagrange_basis_value = lagrange.lagrange_function_value(lagrange_coeffs)
-
-
 # While evaluating the volume integral using N_LGL
 # lobatto quadrature points, The integration can be vectorized
 # and in this case the coefficients of the differential of the
@@ -117,7 +111,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
 
 # The wave to be advected is either a sin or a Gaussian wave.
 # This parameter can take values 'sin' or 'gaussian'.
-wave = 'sin'
+wave = 'gaussian'
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 if (wave=='sin'):
@@ -125,8 +119,6 @@ if (wave=='sin'):
 
 if (wave=='gaussian'):
     u_init = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
-
-
 
 c_x = 1
 

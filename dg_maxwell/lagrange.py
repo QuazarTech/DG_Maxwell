@@ -11,7 +11,6 @@ from dg_maxwell import params
 af.set_backend(params.backend)
 af.set_device(params.device)
 
-
 def LGL_points(N):
     '''
     Calculates : math: `N` Legendre-Gauss-Lobatto (LGL) points.
@@ -45,6 +44,7 @@ def LGL_points(N):
     lgl_points         = af.np_to_af_array(lgl_points)
 
     return lgl_points
+
 
 
 def lobatto_weights(n):
@@ -359,78 +359,18 @@ def integrate(integrand_coeffs):
 
     return integral
 
-
-def integrate_2D(f_coeffs, g_coeffs):
-    '''
-
-    Parameters
-    ----------
-    f_coeffs : arrayfire.Array [N M 1 1]
-               The coeffeicients of N polynomials of order M - 1 and
-               variable (say x)
-
-    g_coeffs : arrayfire.Array [N M 1 1]
-               The coeffecients of N polynomials of order M - 1 and
-               a different variable (say y)
-
-    Returns
-    -------
-    Integral : arrayfire.Array [ N 1 1 1]
-               The integral of the product of the two polynomials
-               over the two variables from -1 to 1.
-
-    '''
-
-    if (params.scheme == 'gauss_quadrature'):
-        #print('gauss_quad')
-
-        gaussian_nodes = params.gauss_points
-        Gauss_weights  = params.gauss_weights
-
-        nodes_tile   = af.transpose(af.tile(gaussian_nodes, 1, f_coeffs.shape[1]))
-        power        = af.flip(af.range(f_coeffs.shape[1]))
-        nodes_power  = af.broadcast(utils.power, nodes_tile, power)
-        weights_tile = af.transpose(af.tile(Gauss_weights, 1, f_coeffs.shape[1]))
-        nodes_weight = nodes_power * weights_tile
-
-        value_at_gauss_nodes_f = af.matmul(f_coeffs, nodes_weight)
-
-        nodes_tile   = af.transpose(af.tile(gaussian_nodes, 1, g_coeffs.shape[1]))
-        power        = af.flip(af.range(g_coeffs.shape[1]))
-        nodes_power  = af.broadcast(utils.power, nodes_tile, power)
-        weights_tile = af.transpose(af.tile(Gauss_weights, 1, g_coeffs.shape[1]))
-        nodes_weight = nodes_power * weights_tile
-
-        value_gauss_nodes_g = af.matmul(g_coeffs, nodes_weight)
-
-        value_gauss_nodes_f = af.reorder(value_at_gauss_nodes_f, 0, 2, 1)
-
-        integral = af.broadcast(utils.multiply, value_gauss_nodes_f, value_gauss_nodes_g)
-        integral = af.sum(integral, 2)
-        integral = af.sum(integral,1)
-
-
-    return integral
-
-
-
 def lagrange_interpolation_u(u):
     '''
     Calculates the coefficients of the Lagrange interpolation using
     the value of u at the mapped LGL points in the domain.
-
     The interpolation using the Lagrange basis polynomials is given by
-
     :math:`L_i(\\xi) u_i(\\xi)`
-
     Where L_i are the Lagrange basis polynomials and u_i is the value
     of u at the LGL points.
-
     Parameters
     ----------
     u : arrayfire.Array [N_LGL N_Elements 1 1]
         The value of u at the mapped LGL points.
-
     Returns
     -------
     lagrange_interpolated_coeffs : arrayfire.Array[1 N_LGL N_Elements 1]
@@ -438,14 +378,12 @@ def lagrange_interpolation_u(u):
                                    by Lagrange interpolation. Each polynomial
                                    is of order N_LGL - 1.
     '''
-    lagrange_coeffs_tile = af.tile(params.lagrange_coeffs, 1, 1,
-                                   params.N_Elements)
+    lagrange_coeffs_tile = af.tile(params.lagrange_coeffs, 1, 1,\
+                                               params.N_Elements)
     reordered_u          = af.reorder(u, 0, 2, 1)
 
-    lagrange_interpolated_coeffs = af.sum(af.broadcast(utils.multiply,
-                                                       reordered_u,
-                                                       lagrange_coeffs_tile),
-                                          0)
+    lagrange_interpolated_coeffs = af.sum(af.broadcast(utils.multiply,\
+                                             reordered_u, lagrange_coeffs_tile), 0)
 
     return lagrange_interpolated_coeffs
 
@@ -454,7 +392,6 @@ def L1_norm(u):
     '''
     A function to calculate the L1 norm of error using
     the polynomial obtained using Lagrange interpolation
-
     Parameters
     ----------
     u : arrayfire.Array [N_LGL N_Elements 1 1]

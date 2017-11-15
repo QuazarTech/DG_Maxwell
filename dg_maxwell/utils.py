@@ -479,21 +479,6 @@ def integrate_2d(poly_xi, poly_eta, order, scheme = 'gauss'):
 def polynomial_derivative(polynomial):
     '''
     '''
-<<<<<<< HEAD
-    derivtive_multiplier = af.tile(af.transpose(af.flip( af.range(polynomial.shape[1]))), d0 = polynomial.shape[0])
-    return (polynomial * derivtive_multiplier)[:, : -1] 
-
-
-def polynomial_product_coeffs(poly1_coeffs, poly2_coeffs):
-    '''
-    '''
-    poly1_coeffs_tile = af.transpose(af.tile(poly1_coeffs, 1, poly1_coeffs.shape[0]))
-    poly2_coeffs_tile = af.tile(poly2_coeffs, 1, poly2_coeffs.shape[0])
-
-    product_coeffs = poly1_coeffs_tile * poly2_coeffs_tile
-
-    return product_coeffs
-=======
     derivtive_multiplier = af.tile(af.transpose(af.flip(
         af.range(polynomial.shape[1]))),
                                    d0 = polynomial.shape[0])
@@ -650,4 +635,3 @@ def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
         return
 
     return
->>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599

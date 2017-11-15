@@ -6,11 +6,8 @@ import arrayfire as af
 af.set_backend('cpu')
 
 from dg_maxwell import params
-<<<<<<< HEAD
 from dg_maxwell import isoparam
-=======
 from dg_maxwell import msh_parser
->>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599
 from dg_maxwell import lagrange
 from dg_maxwell import utils
 
@@ -434,13 +431,9 @@ def Li_Lj_coeffs(N_LGL):
 
     Li_Lj_coeffs = utils.polynomial_product_coeffs(Li_xi, Lj_eta)
 
-<<<<<<< HEAD
-def Li_Lj_coeffs():
-=======
     return Li_Lj_coeffs
 
 def lag_interpolation_2d(u_e_ij, N_LGL):
->>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599
     '''
     Does the lagrange interpolation of a function.
     
@@ -464,32 +457,6 @@ def lag_interpolation_2d(u_e_ij, N_LGL):
     interpolated_f : af.Array [N_LGL N_LGL N_elements 1]
                      Interpolation polynomials for ``N_elements`` elements.
     '''
-<<<<<<< HEAD
-    Li_xi  = af.moddims(af.tile(af.reorder(params.lagrange_coeffs, 1, 2, 0), 1,\
-                                params.N_LGL), params.N_LGL, 1, params.N_LGL ** 2)
-    Lj_eta = af.tile(af.reorder(params.lagrange_coeffs, 1, 2, 0), 1, 1, params.N_LGL)
-
-    Li_Lj_coeffs = utils.polynomial_product_coeffs(Li_xi, Lj_eta)
-
-    return Li_Lj_coeffs
-
-def integrate_2d(product_coeff_tile, N_quad, scheme='Gaussian'):
-    '''
-    '''
-    if (scheme == 'Gaussian'):
-        xi_gaussian_nodes  = af.reorder(af.flat(af.transpose(\
-                                     af.tile(params.gauss_points, 1, N_quad))), 2, 1, 0)
-        eta_gaussian_nodes = af.reorder(\
-                                     af.flat(af.tile(params.gauss_points, 1, N_quad)), 2, 1, 0)
-
-        gauss_weights_xi  = af.reorder(af.flat(af.transpose(af.tile\
-                            (params.gauss_weights, 1, N_quad))), 2, 1, 0)
-        gauss_weights_eta = af.reorder(af.flat(af.tile(params.gauss_weights, 1, N_quad)), 2, 1, 0)
-
-        index = af.flip(af.range(params.product_coeff_tile.shape[0]))
-
-    return
-=======
     u_e_ij_shape = utils.shape(u_e_ij)
 
     Li_xi_Lj_eta_coeffs = af.tile(Li_Lj_coeffs(N_LGL), d0 = 1,
@@ -506,7 +473,6 @@ def integrate_2d(product_coeff_tile, N_quad, scheme='Gaussian'):
 def lax_friedrichs_flux(u):
     '''
     '''
-    params.N_LGL = 8
     u = af.reorder(af.moddims(u, params.N_LGL ** 2, 10, 10), 2, 1, 0)
 
     diff_u_boundary = af.np_to_af_array(np.zeros([10, 10, params.N_LGL ** 2]))
@@ -689,4 +655,3 @@ def time_evolution():
     for t_n in trange(0, 1):
         u += RK4_timestepping(A_inverse, u, delta_t)
         print(u)
->>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599

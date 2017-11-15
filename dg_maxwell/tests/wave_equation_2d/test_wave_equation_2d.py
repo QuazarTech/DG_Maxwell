@@ -226,9 +226,6 @@ def test_Li_Lj_coeffs():
     
     N_LGL = 8
     
-<<<<<<< HEAD
-    assert af.all_true(af.abs(A_matrix_test - A_matrix_ref) < threshold)
-=======
     numerical_L3_xi_L4_eta_coeffs = wave_equation_2d.Li_Lj_coeffs(N_LGL)[:, :, 28]
 
     analytical_L3_xi_L4_eta_coeffs = af.np_to_af_array(np.array([\
@@ -252,4 +249,3 @@ def test_Li_Lj_coeffs():
     af.display(numerical_L3_xi_L4_eta_coeffs - analytical_L3_xi_L4_eta_coeffs, 14)
     assert (af.max(af.abs(numerical_L3_xi_L4_eta_coeffs - analytical_L3_xi_L4_eta_coeffs)) <= threshold)
 
->>>>>>> 24ad7811eefdc05cb59c8676ce8659685e9a8599
