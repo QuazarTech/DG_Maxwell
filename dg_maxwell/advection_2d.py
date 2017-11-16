@@ -24,9 +24,9 @@ def volume_integral(u):
     '''
     [TODO] change 'elements'
     '''
-    dxi_dx   = 10
-    deta_dy  = 10
-    jacobian = 100
+    dxi_dx   = 1.
+    deta_dy  = 1.
+    jacobian = 1.
     
     vol_int_epq = af.np_to_af_array(np.zeros([params.N_LGL ** 2, 100]))
     
@@ -151,7 +151,7 @@ def surface_term(u):
             lag_interpolation_2 = af.reorder(\
                                   af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F), 0),\
                                              2, 1, 0)
-            surface_term_pq_eta_1 = -1.0 * af.sum(Lq_1) * lagrange.integrate(lag_interpolation_2)
+            surface_term_pq_eta_1 = 1.0 * af.sum(Lq_1) * lagrange.integrate(lag_interpolation_2)
 
             # xi = -1 boundary
             Lq_eta_F = af.broadcast(utils.multiply,\
@@ -161,7 +161,7 @@ def surface_term(u):
             lag_interpolation_3 = af.reorder(\
                                   af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lq_eta_F), 0),\
                                              2, 1, 0)
-            surface_term_pq_xi_minus1 = af.sum(Lp_minus1) * lagrange.integrate(lag_interpolation_3)
+            surface_term_pq_xi_minus1 = -1.0 * af.sum(Lp_minus1) * lagrange.integrate(lag_interpolation_3)
 
             # eta = -1 boundary
             Lp_xi_F = af.broadcast(utils.multiply,\
