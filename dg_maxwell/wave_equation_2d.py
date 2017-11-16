@@ -448,10 +448,10 @@ def lag_interpolation_2d(u_e_ij, N_LGL):
                        ... ..., \\xi_N]
              .. math:: \\eta_j = [\\eta_0, \\eta_1, ..., \\eta_N, \\
                        \\eta_0, ... ..., \\eta_N]
-    
+
     N_LGL : int
             Number of LGL points
-    
+
     Returns
     -------
     interpolated_f : af.Array [N_LGL N_LGL N_elements 1]

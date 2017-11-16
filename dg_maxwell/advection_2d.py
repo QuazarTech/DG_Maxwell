@@ -17,26 +17,63 @@ from dg_maxwell import utils
 def A_matrix():
     '''
     '''
+
     A_ij = wave_equation_2d.A_matrix(8) / 100
+
     return A_ij
+
+def volume_integral_vectorized(u):
+    '''
+    Vectorize, p, q, moddims.
+    '''
+    dxi_dx   = 10.
+    deta_dy  = 10.
+    jacobian = 100.
+
+    vol_int_epq = af.np_to_af_array(np.zeros([params.N_LGL ** 2, 100]))
+
+    xi_i  = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
+    eta_j = af.tile(params.xi_LGL, params.N_LGL)
+
+    dLp_xi_ij = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.dl_dxi_coeffs,\ 
+                xi_i), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
+    Lp_xi_ij  = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.lagrange_coeffs,\ 
+                xi_i), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
+
+    dLq_eta_ij = af.tile(af.reorder(utils.polyval_1d(params.dl_dxi_coeffs,\
+                 params.xi_LGL), 1, 2, 0), 1, 1, params.N_LGL ** 2)
+    Lq_eta_ij  = af.tile(af.reorder(utils.polyval_1d(params.lagrange_coeffs,\
+                 params.xi_LGL), 1, 2, 0), 1, 1, params.N_LGL ** 2)
+
+
+    volume_integrand_ij_1 = af.broadcast(utils.multiply,\
+                                    Lq_eta_ij * dLp_xi_ij * dxi_dx * params.c_x,\
+                                    u) / jacobian
+
+    volume_integrand_ij_2 = af.broadcast(utils.multiply,\
+                                    Lp_xi_ij * dLq_eta_ij * deta_dy * params.c_y,\
+                                    u) / jacobian
+
+    return vol_int_epq
+
 
 def volume_integral(u):
     '''
     [TODO] change 'elements'
     '''
-    dxi_dx   = 1.
-    deta_dy  = 1.
-    jacobian = 1.
-    
+
+    dxi_dx   = 10.
+    deta_dy  = 10.
+    jacobian = 100.
+
     vol_int_epq = af.np_to_af_array(np.zeros([params.N_LGL ** 2, 100]))
-    
+
     xi_i  = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
     eta_j = af.tile(params.xi_LGL, params.N_LGL)
     for p in range (params.N_LGL):
         dLp_xi_ij = af.transpose(utils.polyval_1d(params.dl_dxi_coeffs[p], xi_i))
         Lp_xi_ij  = af.transpose(utils.polyval_1d(params.lagrange_coeffs[p], xi_i))
 
-        
         for q in range (params.N_LGL):
             index = params.N_LGL * p + q
             dLq_eta_ij = af.transpose(utils.polyval_1d(params.dl_dxi_coeffs[q], eta_j))
@@ -54,6 +91,7 @@ def volume_integral(u):
             volume_integral_e_ij  = af.transpose(utils.integrate_2d_multivar_poly(\
                                            volume_integrand_interpolate, N_quad = 9, scheme = 'gauss'))
             vol_int_epq[index, :] = volume_integral_e_ij
+
     return vol_int_epq
 
 def lax_friedrichs_flux(u):
@@ -180,7 +218,7 @@ def surface_term(u):
             surface_term_e_ij[index] = surface_term_pq
 
             
-    return surface_term_e_ij
+    return surface_term_e_ij * 0.1
 
 
 def b_vector(u):
