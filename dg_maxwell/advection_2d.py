@@ -35,10 +35,10 @@ def volume_integral_vectorized(u):
     xi_i  = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
     eta_j = af.tile(params.xi_LGL, params.N_LGL)
 
-    dLp_xi_ij = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.dl_dxi_coeffs,\ 
-                xi_i), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
-    Lp_xi_ij  = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.lagrange_coeffs,\ 
-                xi_i), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
+    dLp_xi_ij = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.dl_dxi_coeffs,
+                            xi_i), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
+    Lp_xi_ij  = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.lagrange_coeffs, 
+                            xi_i), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
 
     dLq_eta_ij = af.tile(af.reorder(utils.polyval_1d(params.dl_dxi_coeffs,\
                  params.xi_LGL), 1, 2, 0), 1, 1, params.N_LGL ** 2)
@@ -53,6 +53,14 @@ def volume_integral_vectorized(u):
     volume_integrand_ij_2 = af.broadcast(utils.multiply,\
                                     Lp_xi_ij * dLq_eta_ij * deta_dy * params.c_y,\
                                     u) / jacobian
+
+    volume_integrand_ij = af.moddims(volume_integrand_ij_1 + volume_integrand_ij_2, params.N_LGL,\
+                                     params.N_LGL ** 100)
+
+    lagrange_interpolation = af.moddims(wave_equation_2d.lag_interpolation_2d(volume_integrand_ij),
+                                        params.N_LGL ** 2, 1, 1, params.N_LGL ** 2  * 100)
+    
+    volume_integranl_total =  utils.integrate_2d_multivar_poly(lagrange_interpolation, N_quad = 1,scheme = 'gauss')
 
     return vol_int_epq
 
