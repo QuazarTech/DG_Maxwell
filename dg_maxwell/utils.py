@@ -224,8 +224,8 @@ def af_meshgrid(arr_0, arr_1):
     tuple(af.Array[N_1 N_0 1 1], af.Array[N_1 N_0 1 1])
     '''
 
-    Arr_0 = af.data.tile(af.array.transpose(arr_0), d0 = arr_1.shape[0])
-    Arr_1 = af.data.tile(arr_1, d0 = 1, d1 = arr_0.shape[0])
+    Arr_0 = af.tile(af.transpose(arr_0), d0 = arr_1.shape[0])
+    Arr_1 = af.tile(arr_1, d0 = 1, d1 = arr_0.shape[0])
 
     return Arr_0, Arr_1
 
@@ -539,7 +539,7 @@ def polyval_2d(poly_2d, xi, eta):
 def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
     '''
     '''
-    shape_poly_2d = shape(poly_xi_eta)
+    shape_poly_2d = poly_xi_eta.shape
     xi_gauss  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
     eta_gauss = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
 
@@ -567,6 +567,7 @@ def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
     '''
     '''
     shape_poly_2d = shape(poly_xi_eta)
+    print(shape(poly_xi_eta), N_quad)
 
     xi_LGL  = lagrange.LGL_points(N_quad)
     eta_LGL = lagrange.LGL_points(N_quad)
@@ -594,11 +595,11 @@ def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
 def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
     '''
     Evaluates the integral
-    
+
     .. math:: \\iint P(\\xi, \\eta) \\partial \\xi \\partial \\eta
-    
+
     using 
-    
+
     Parameters
     ----------
     poly_xi_eta : multivar_poly
@@ -627,10 +628,10 @@ def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
     '''
     if scheme is 'gauss':
         return gauss_quad_multivar_poly(poly_xi_eta, N_quad)
-    
+
     elif scheme is 'lobatto':
         return lobatto_quad_multivar_poly(poly_xi_eta, N_quad)
-    
+
     else:
         return
 

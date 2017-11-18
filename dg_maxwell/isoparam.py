@@ -197,8 +197,8 @@ def u_pq_isoparam():
 		      os.path.abspath('./dg_maxwell/tests/mesh/Square_N_Elements_9.msh'))
 
     axes_handler = pl.axes()
-    xi_LGL       = np.array(lagrange.LGL_points(8))
-    eta_LGL      = np.array(lagrange.LGL_points(8))
+    xi_LGL       = np.array(lagrange.LGL_points(params.N_LGL))
+    eta_LGL      = np.array(lagrange.LGL_points(params.N_LGL))
     #msh_parser.plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL, axes_handler)
     pl.xlim(-3, 3)
     pl.ylim(-3, 3)

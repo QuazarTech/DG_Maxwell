@@ -18,89 +18,45 @@ def A_matrix():
     '''
     '''
 
-    A_ij = wave_equation_2d.A_matrix(8) / 100
+    A_ij = wave_equation_2d.A_matrix(params.N_LGL) / 100
 
     return A_ij
 
-def volume_integral_vectorized(u):
+def volume_integral(u):
     '''
     Vectorize, p, q, moddims.
     '''
     dxi_dx   = 10.
     deta_dy  = 10.
     jacobian = 100.
-
-    vol_int_epq = af.np_to_af_array(np.zeros([params.N_LGL ** 2, 100]))
-
-    xi_i  = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
-    eta_j = af.tile(params.xi_LGL, params.N_LGL)
-
-    dLp_xi_ij = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.dl_dxi_coeffs,
-                            xi_i), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
-    Lp_xi_ij  = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.lagrange_coeffs, 
-                            xi_i), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
-
-    dLq_eta_ij = af.tile(af.reorder(utils.polyval_1d(params.dl_dxi_coeffs,\
-                 params.xi_LGL), 1, 2, 0), 1, 1, params.N_LGL ** 2)
-    Lq_eta_ij  = af.tile(af.reorder(utils.polyval_1d(params.lagrange_coeffs,\
-                 params.xi_LGL), 1, 2, 0), 1, 1, params.N_LGL ** 2)
+    c_x = params.c_x
+    c_y = params.c_y
 
 
-    volume_integrand_ij_1 = af.broadcast(utils.multiply,\
-                                    Lq_eta_ij * dLp_xi_ij * dxi_dx * params.c_x,\
+    dLp_xi_ij_Lq_eta_ij  = params.dLp_xi_ij_Lq_eta_ij
+    dLq_eta_ij_Lp_xi_ij  = params.dLq_eta_ij_Lp_xi_ij
+
+
+    volume_integrand_ij_1 = c_x * dxi_dx * af.broadcast(utils.multiply,\
+                                    dLp_xi_ij_Lq_eta_ij,\
                                     u) / jacobian
 
-    volume_integrand_ij_2 = af.broadcast(utils.multiply,\
-                                    Lp_xi_ij * dLq_eta_ij * deta_dy * params.c_y,\
+    volume_integrand_ij_2 = c_y * deta_dy * af.broadcast(utils.multiply,\
+                                    dLq_eta_ij_Lp_xi_ij,\
                                     u) / jacobian
 
-    volume_integrand_ij = af.moddims(volume_integrand_ij_1 + volume_integrand_ij_2, params.N_LGL,\
-                                     params.N_LGL ** 100)
+    volume_integrand_ij = af.moddims(volume_integrand_ij_1 + volume_integrand_ij_2, params.N_LGL ** 2,\
+                                     (params.N_LGL ** 2) * 100)
 
-    lagrange_interpolation = af.moddims(wave_equation_2d.lag_interpolation_2d(volume_integrand_ij),
-                                        params.N_LGL ** 2, 1, 1, params.N_LGL ** 2  * 100)
-    
-    volume_integranl_total =  utils.integrate_2d_multivar_poly(lagrange_interpolation, N_quad = 1,scheme = 'gauss')
-
-    return vol_int_epq
+    lagrange_interpolation = af.moddims(wave_equation_2d.lag_interpolation_2d(volume_integrand_ij, params.N_LGL),
+                                        params.N_LGL, params.N_LGL, params.N_LGL ** 2  * 100)
 
 
-def volume_integral(u):
-    '''
-    [TODO] change 'elements'
-    '''
+    volume_integrand_total = utils.integrate_2d_multivar_poly(lagrange_interpolation[:, :, :], N_quad = 9, scheme = 'gauss')
+    volume_integral        = af.transpose(af.moddims(volume_integrand_total, 100, params.N_LGL ** 2))
 
-    dxi_dx   = 10.
-    deta_dy  = 10.
-    jacobian = 100.
+    return volume_integral
 
-    vol_int_epq = af.np_to_af_array(np.zeros([params.N_LGL ** 2, 100]))
-
-    xi_i  = af.flat(af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL)))
-    eta_j = af.tile(params.xi_LGL, params.N_LGL)
-    for p in range (params.N_LGL):
-        dLp_xi_ij = af.transpose(utils.polyval_1d(params.dl_dxi_coeffs[p], xi_i))
-        Lp_xi_ij  = af.transpose(utils.polyval_1d(params.lagrange_coeffs[p], xi_i))
-
-        for q in range (params.N_LGL):
-            index = params.N_LGL * p + q
-            dLq_eta_ij = af.transpose(utils.polyval_1d(params.dl_dxi_coeffs[q], eta_j))
-            Lq_eta_ij  = af.transpose(utils.polyval_1d(params.lagrange_coeffs[q], eta_j))
-
-            volume_integrand_ij_1 = af.broadcast(utils.multiply,\
-                                    Lq_eta_ij * dLp_xi_ij * dxi_dx * params.c_x,\
-                                    u) / jacobian
-            volume_integrand_ij_2 = af.broadcast(utils.multiply,\
-                                    Lp_xi_ij * dLq_eta_ij * deta_dy * params.c_y,\
-                                    u) / jacobian
-            volume_integrand_interpolate = wave_equation_2d.lag_interpolation_2d(volume_integrand_ij_1\
-                                                                                +volume_integrand_ij_2
-                                                                                , params.N_LGL)
-            volume_integral_e_ij  = af.transpose(utils.integrate_2d_multivar_poly(\
-                                           volume_integrand_interpolate, N_quad = 9, scheme = 'gauss'))
-            vol_int_epq[index, :] = volume_integral_e_ij
-
-    return vol_int_epq
 
 def lax_friedrichs_flux(u):
     '''
@@ -156,83 +112,104 @@ def lax_friedrichs_flux(u):
     return F_xi_e_ij, F_eta_e_ij
 
 
-def surface_term(u):
+def surface_term_vectorized(u):
     '''
     '''
-    N_LGL = 8
+    N_LGL = params.N_LGL
     lagrange_coeffs = params.lagrange_coeffs
-    xi_LGL = params.xi_LGL
+
+    xi_LGL  = params.xi_LGL
     eta_LGL = params.xi_LGL
-    surface_term_e_ij = af.constant(0., d0 = N_LGL * N_LGL, d1 = 100, dtype = af.Dtype.f64)
-    for p in range(params.N_LGL):
-        for q in range(params.N_LGL):
-            index = p * N_LGL + q
-            f_xi_surface_term  = lax_friedrichs_flux(u)[0]
-            f_eta_surface_term = lax_friedrichs_flux(u)[1]
 
-            Lp_coeffs = lagrange_coeffs[p]
-            Lq_coeffs = lagrange_coeffs[q]
-            Lq_eta    = af.transpose(utils.polyval_1d(Lq_coeffs, eta_LGL))
-            Lp_xi     = af.transpose(utils.polyval_1d(Lp_coeffs, xi_LGL))
-            Lp_1      = utils.polyval_1d(lagrange_coeffs[p], xi_LGL[-1])
-            Lq_1      = utils.polyval_1d(lagrange_coeffs[q], eta_LGL[-1])
-            Lp_minus1 = utils.polyval_1d(lagrange_coeffs[p], xi_LGL[0])
-            Lq_minus1 = utils.polyval_1d(lagrange_coeffs[q], eta_LGL[0])
+    f_xi_surface_term  = lax_friedrichs_flux(u)[0]
+    f_eta_surface_term = lax_friedrichs_flux(u)[1]
 
-            # xi = 1 boundary
-            Lq_eta_F = af.broadcast(utils.multiply, Lq_eta, f_xi_surface_term[-params.N_LGL:, :])
-            Lq_eta_F = af.reorder(Lq_eta_F, 0, 2, 1)
+    Lp_xi   = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.lagrange_coeffs,
+                            xi_LGL), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
 
-            lag_interpolation_1 = af.reorder(\
-                                             af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lq_eta_F), 0),\
-                                             2, 1, 0)
+    Lq_eta  = af.tile(af.reorder(utils.polyval_1d(params.lagrange_coeffs,\
+                         eta_LGL), 1, 2, 0), 1, 1, params.N_LGL)
 
-            surface_term_pq_xi_1 = af.sum(Lp_1) * lagrange.integrate(lag_interpolation_1)
+    Lp_xi_1      = af.moddims(af.reorder(af.tile(utils.polyval_1d(lagrange_coeffs, xi_LGL[-1]),\
+                           1, 1, params.N_LGL), 2, 1, 0), 1, 1, params.N_LGL ** 2)
+    Lp_xi_minus1 = af.moddims(af.reorder(af.tile(utils.polyval_1d(lagrange_coeffs, xi_LGL[0]),\
+                           1, 1, params.N_LGL), 2, 1, 0), 1, 1, params.N_LGL ** 2)
 
-            # eta = 1 boundary
-            Lp_xi_F = af.broadcast(utils.multiply,\
-                                  Lp_xi, f_eta_surface_term[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL])
-            Lp_xi_F = af.reorder(Lp_xi_F, 0, 2, 1)
+    Lq_eta_1      = af.moddims(af.tile(af.reorder(utils.polyval_1d(lagrange_coeffs,\
+                            eta_LGL[-1]), 0, 2, 1), 1, 1, params.N_LGL), 1, 1, params.N_LGL ** 2)
+    Lq_eta_minus1 = af.moddims(af.tile(af.reorder(utils.polyval_1d(lagrange_coeffs,\
+                             eta_LGL[0]), 0, 2, 1), 1, 1, params.N_LGL), 1, 1, params.N_LGL ** 2)
 
-            lag_interpolation_2 = af.reorder(\
-                                  af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F), 0),\
-                                             2, 1, 0)
-            surface_term_pq_eta_1 = 1.0 * af.sum(Lq_1) * lagrange.integrate(lag_interpolation_2)
 
-            # xi = -1 boundary
-            Lq_eta_F = af.broadcast(utils.multiply,\
-                                   Lq_eta, f_xi_surface_term[:params.N_LGL])
-            Lq_eta_F = af.reorder(Lq_eta_F, 0, 2, 1)
+    # xi = 1 boundary
+    Lq_eta_1_boundary   = af.broadcast(utils.multiply, Lq_eta, Lp_xi_1)
+    Lq_eta_F_1_boundary = af.broadcast(utils.multiply, Lq_eta_1_boundary, f_xi_surface_term[-params.N_LGL:, :])
+    Lq_eta_F_1_boundary = af.reorder(Lq_eta_F_1_boundary, 0, 3, 2, 1)
 
-            lag_interpolation_3 = af.reorder(\
-                                  af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lq_eta_F), 0),\
-                                             2, 1, 0)
-            surface_term_pq_xi_minus1 = -1.0 * af.sum(Lp_minus1) * lagrange.integrate(lag_interpolation_3)
 
-            # eta = -1 boundary
-            Lp_xi_F = af.broadcast(utils.multiply,\
-                                  Lp_xi, f_eta_surface_term[0:-params.N_LGL + 1:params.N_LGL])
-            Lp_xi_F = af.reorder(Lp_xi_F, 0, 2, 1)
+    lag_interpolation_1 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lq_eta_F_1_boundary), 0)
+    lag_interpolation_1 = af.reorder(lag_interpolation_1, 2, 1, 3, 0)
+    lag_interpolation_1 = af.transpose(af.moddims(af.transpose(lag_interpolation_1),\
+                                       params.N_LGL, params.N_LGL ** 2 * 100))
 
-            lag_interpolation_4 = af.reorder(\
-                                  af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F), 0),\
-                                             2, 1, 0)
-            surface_term_pq_eta_minus1 = -1.0 * af.sum(Lq_minus1) * lagrange.integrate(lag_interpolation_4)
+    surface_term_pq_xi_1 = lagrange.integrate(lag_interpolation_1)
+    surface_term_pq_xi_1 = af.moddims(surface_term_pq_xi_1, params.N_LGL ** 2, 100)
 
-           # print(surface_term_pq_xi_1, surface_term_pq_eta_1, surface_term_pq_eta_minus1, surface_term_pq_xi_minus1)
+    # xi = -1 boundary
+    Lq_eta_minus1_boundary   = af.broadcast(utils.multiply, Lq_eta, Lp_xi_minus1)
+    Lq_eta_F_minus1_boundary = af.broadcast(utils.multiply, Lq_eta_minus1_boundary, f_xi_surface_term[:params.N_LGL, :])
+    Lq_eta_F_minus1_boundary = af.reorder(Lq_eta_F_minus1_boundary, 0, 3, 2, 1)
 
-            surface_term_pq = af.transpose(surface_term_pq_xi_1 + surface_term_pq_eta_1
-                                                    + surface_term_pq_xi_minus1 + surface_term_pq_eta_minus1)
-            surface_term_e_ij[index] = surface_term_pq
+    lag_interpolation_2 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lq_eta_F_minus1_boundary), 0)
+    lag_interpolation_2 = af.reorder(lag_interpolation_2, 2, 1, 3, 0)
+    lag_interpolation_2 = af.transpose(af.moddims(af.transpose(lag_interpolation_2),\
+                                       params.N_LGL, params.N_LGL ** 2 * 100))
 
-            
-    return surface_term_e_ij * 0.1
+    surface_term_pq_xi_minus1 = lagrange.integrate(lag_interpolation_2)
+    surface_term_pq_xi_minus1 = af.moddims(surface_term_pq_xi_minus1, params.N_LGL ** 2, 100)
+
+
+    # eta = -1 boundary
+    Lp_xi_minus1_boundary   = af.broadcast(utils.multiply, Lp_xi, Lq_eta_minus1)
+    Lp_xi_F_minus1_boundary = af.broadcast(utils.multiply, Lp_xi_minus1_boundary,\
+                                           f_eta_surface_term[0:-params.N_LGL + 1:params.N_LGL])
+    Lp_xi_F_minus1_boundary = af.reorder(Lp_xi_F_minus1_boundary, 0, 3, 2, 1)
+
+    lag_interpolation_3 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F_minus1_boundary), 0)
+    lag_interpolation_3 = af.reorder(lag_interpolation_3, 2, 1, 3, 0)
+    lag_interpolation_3 = af.transpose(af.moddims(af.transpose(lag_interpolation_3),\
+                                       params.N_LGL, params.N_LGL ** 2 * 100))
+
+    surface_term_pq_eta_minus1 = lagrange.integrate(lag_interpolation_3)
+    surface_term_pq_eta_minus1 = af.moddims(surface_term_pq_eta_minus1, params.N_LGL ** 2, 100)
+
+
+    # eta = 1 boundary
+    Lp_xi_1_boundary   = af.broadcast(utils.multiply, Lp_xi, Lq_eta_1)
+    Lp_xi_F_1_boundary = af.broadcast(utils.multiply, Lp_xi_1_boundary,\
+                                           f_eta_surface_term[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL])
+    Lp_xi_F_1_boundary = af.reorder(Lp_xi_F_1_boundary, 0, 3, 2, 1)
+
+    lag_interpolation_4 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F_1_boundary), 0)
+    lag_interpolation_4 = af.reorder(lag_interpolation_4, 2, 1, 3, 0)
+    lag_interpolation_4 = af.transpose(af.moddims(af.transpose(lag_interpolation_4),\
+                                       params.N_LGL, params.N_LGL ** 2 * 100))
+
+    surface_term_pq_eta_1 = lagrange.integrate(lag_interpolation_4)
+    surface_term_pq_eta_1 = af.moddims(surface_term_pq_eta_1, params.N_LGL ** 2, 100)
+
+    surface_term_e_pq = surface_term_pq_xi_1\
+                      - surface_term_pq_xi_minus1\
+                      + surface_term_pq_eta_1\
+                      - surface_term_pq_eta_minus1
+
+    return surface_term_e_pq * 0.1
 
 
 def b_vector(u):
     '''
     '''
-    b = volume_integral(u) - surface_term(u)
+    b = volume_integral(u) - surface_term_vectorized(u)
 
     return b
 

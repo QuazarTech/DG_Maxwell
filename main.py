@@ -5,6 +5,7 @@ import numpy as np
 import arrayfire as af
 
 from matplotlib import pyplot as pl
+from tqdm import trange
 
 from dg_maxwell import wave_equation
 from dg_maxwell import msh_parser
@@ -18,7 +19,7 @@ from dg_maxwell import utils
 
 af.set_backend(params.backend)
 
-N_LGL = 8
+N_LGL = params.N_LGL
 #
 nodes, elements = msh_parser.read_order_2_msh('square_10_10.msh')
 #
@@ -37,5 +38,41 @@ for element_tag, element in enumerate(elements):
     y_e_ij[:, element_tag] = isoparam.isoparam_y_2D(nodes[element, 1], xi_i, eta_j)
 #
 u_e_ij = np.e ** (-(x_e_ij ** 2 + y_e_ij ** 2)/(0.4 ** 2))
-
-print(advection_2d.volume_integction_2d.volume_integral(u))
+print('start')
+for i in range(10):
+    print(advection_2d.volume_integral(u_e_ij).shape)
+print(advection_2d.volume_integral(u_e_ij).shape)
+print(advection_2d.surface_term_vectorized(u_e_ij).shape)
+#A_inverse = af.inverse(advection_2d.A_matrix())
+#u         = u_e_ij
+#delta_t   = params.delta_t_2d
+#print(delta_t)
+##
+#for i in trange(100):
+#    #u += advection_2d.RK4_timestepping(A_inverse, u, delta_t)
+#
+#    #Implementing second order time-stepping.
+#    u_n_plus_half =  u + af.matmul(A_inverse, advection_2d.b_vector(u))\
+#                          * delta_t / 2
+#
+#    u            +=  af.matmul(A_inverse, advection_2d.b_vector(u_n_plus_half))\
+#                      * delta_t
+#
+#
+#
+#color_levels = np.linspace(-0.1, 1.1, 100)
+#
+#L1_norm = af.mean(af.abs(u_e_ij - u))
+#print((L1_norm))
+#
+#for i in range(100):
+#    x_tile = af.moddims(x_e_ij[:, i], params.N_LGL, params.N_LGL)
+#    y_tile = af.moddims(y_e_ij[:, i], params.N_LGL, params.N_LGL)
+#    u_tile = af.moddims(u[:, i], params.N_LGL, params.N_LGL)
+#
+#    x_tile = np.array(x_tile)
+#    y_tile = np.array(y_tile)
+#    u_tile = np.array(u_tile)
+#    pl.contourf(x_tile, y_tile, u_tile, 200, levels = color_levels, cmap = 'jet')
+#pl.gca().set_aspect('equal')
+#pl.show()

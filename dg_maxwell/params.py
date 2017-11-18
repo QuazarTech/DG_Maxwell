@@ -15,6 +15,7 @@ from dg_maxwell import lagrange
 from dg_maxwell import utils
 from dg_maxwell import msh_parser
 from dg_maxwell import wave_equation
+from dg_maxwell import wave_equation_2d
 
 # The domain of the function.
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
@@ -136,3 +137,25 @@ test_array = af.np_to_af_array(np.array(u_init))
 
 c_x = 1.
 c_y = 1.
+
+xi_i  = af.flat(af.transpose(af.tile(xi_LGL, 1, N_LGL)))
+eta_j = af.tile(xi_LGL, N_LGL)
+
+dLp_xi_ij = af.moddims(af.reorder(af.tile(utils.polyval_1d(dl_dxi_coeffs,
+                        xi_i), 1, 1, N_LGL), 1, 2, 0), N_LGL ** 2, 1, N_LGL ** 2)
+Lp_xi_ij  = af.moddims(af.reorder(af.tile(utils.polyval_1d(lagrange_coeffs,
+                       xi_i), 1, 1, N_LGL), 1, 2, 0), N_LGL ** 2, 1, N_LGL ** 2)
+
+dLq_eta_ij = af.tile(af.reorder(utils.polyval_1d(dl_dxi_coeffs,\
+             eta_j), 1, 2, 0), 1, 1, N_LGL)
+
+Lq_eta_ij  = af.tile(af.reorder(utils.polyval_1d(lagrange_coeffs,\
+             eta_j), 1, 2, 0), 1, 1, N_LGL)
+
+dLp_xi_ij_Lq_eta_ij = Lq_eta_ij * dLp_xi_ij
+dLq_eta_ij_Lp_xi_ij = Lp_xi_ij  * dLq_eta_ij
+
+
+Li_Lj_coeffs = wave_equation_2d.Li_Lj_coeffs(N_LGL)
+
+delta_t_2d = delta_x / (10 * (c_x ** 2 + c_y ** 2))
