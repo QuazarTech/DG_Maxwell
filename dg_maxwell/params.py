@@ -136,7 +136,7 @@ test_array = af.np_to_af_array(np.array(u_init))
 ########################################################################
 
 c_x = 1.
-c_y = 0
+c_y = 1.
 
 xi_i  = af.flat(af.transpose(af.tile(xi_LGL, 1, N_LGL)))
 eta_j = af.tile(xi_LGL, N_LGL)

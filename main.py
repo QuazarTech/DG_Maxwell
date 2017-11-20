@@ -38,7 +38,7 @@ for element_tag, element in enumerate(elements):
     x_e_ij[:, element_tag] = isoparam.isoparam_x_2D(nodes[element, 0], xi_i, eta_j)
     y_e_ij[:, element_tag] = isoparam.isoparam_y_2D(nodes[element, 1], xi_i, eta_j)
 ##
-u_e_ij = np.e ** (-(x_e_ij ** 2)/(0.4 ** 2))
+u_e_ij = np.e ** (-(x_e_ij ** 2 + y_e_ij ** 2)/(0.4 ** 2))
 print('start')
 print(af.info())
 #for i in range(10):
@@ -50,7 +50,7 @@ u         = u_e_ij
 delta_t   = params.delta_t_2d
 print(delta_t)
 ##
-for i in trange(50):
+for i in trange(800):
 #    u += advection_2d.RK4_timestepping(A_inverse, u, delta_t)
 
     #Implementing second order time-stepping.

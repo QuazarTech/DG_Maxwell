@@ -75,7 +75,7 @@ def lax_friedrichs_flux(u):
     u_xi_1_boundary_right = af.shift(u[:, :, :params.N_LGL], d0=0, d1=-1)
     u[:, :, :params.N_LGL]     = (u_xi_minus1_boundary_left + u_xi_minus1_boundary_right) / 2
 
-    diff_u_boundary[:, :, -params.N_LGL:] = (u_xi_minus1_boundary_left - u_xi_minus1_boundary_right)
+    diff_u_boundary[:, :, -params.N_LGL:] = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
 
 
     u_eta_minus1_boundary_down = af.shift(u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL], d0=-1)
@@ -93,8 +93,8 @@ def lax_friedrichs_flux(u):
     u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
                                                               +u_eta_1_boundary_down) / 2
 
-    diff_u_boundary[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_down\
-                                                                             -u_eta_1_boundary_up)
+    diff_u_boundary[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
+                                                                             -u_eta_1_boundary_down)
 
 
 
@@ -114,6 +114,10 @@ def surface_term_vectorized(u):
 
     xi_LGL  = params.xi_LGL
     eta_LGL = params.xi_LGL
+
+    # Values for dx/dxi and dy/deta for the particular case.
+    dx_dxi = 0.1
+    dy_deta = 0.1
 
     f_xi_surface_term  = lax_friedrichs_flux(u)[0]
     f_eta_surface_term = lax_friedrichs_flux(u)[1]
@@ -146,7 +150,7 @@ def surface_term_vectorized(u):
     lag_interpolation_1 = af.transpose(af.moddims(af.transpose(lag_interpolation_1),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_xi_1 = lagrange.integrate(lag_interpolation_1)
+    surface_term_pq_xi_1 = lagrange.integrate(lag_interpolation_1) * dy_deta
     surface_term_pq_xi_1 = af.moddims(surface_term_pq_xi_1, params.N_LGL ** 2, 100)
 
     # xi = -1 boundary
@@ -159,7 +163,7 @@ def surface_term_vectorized(u):
     lag_interpolation_2 = af.transpose(af.moddims(af.transpose(lag_interpolation_2),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_xi_minus1 = lagrange.integrate(lag_interpolation_2)
+    surface_term_pq_xi_minus1 = lagrange.integrate(lag_interpolation_2) * dy_deta
     surface_term_pq_xi_minus1 = af.moddims(surface_term_pq_xi_minus1, params.N_LGL ** 2, 100)
 
 
@@ -174,7 +178,7 @@ def surface_term_vectorized(u):
     lag_interpolation_3 = af.transpose(af.moddims(af.transpose(lag_interpolation_3),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_eta_minus1 = lagrange.integrate(lag_interpolation_3)
+    surface_term_pq_eta_minus1 = lagrange.integrate(lag_interpolation_3) * dx_dxi
     surface_term_pq_eta_minus1 = af.moddims(surface_term_pq_eta_minus1, params.N_LGL ** 2, 100)
 
 
@@ -189,7 +193,7 @@ def surface_term_vectorized(u):
     lag_interpolation_4 = af.transpose(af.moddims(af.transpose(lag_interpolation_4),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_eta_1 = lagrange.integrate(lag_interpolation_4)
+    surface_term_pq_eta_1 = lagrange.integrate(lag_interpolation_4) * dx_dxi
     surface_term_pq_eta_1 = af.moddims(surface_term_pq_eta_1, params.N_LGL ** 2, 100)
 
     surface_term_e_pq = surface_term_pq_xi_1\
@@ -197,7 +201,7 @@ def surface_term_vectorized(u):
                       + surface_term_pq_eta_1\
                       - surface_term_pq_eta_minus1
 
-    return surface_term_e_pq * 0.1
+    return surface_term_e_pq
 
 
 def b_vector(u):
