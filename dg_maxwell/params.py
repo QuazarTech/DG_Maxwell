@@ -5,7 +5,7 @@ import numpy as np
 
 import arrayfire as af
 
-backend = 'cpu'
+backend = 'opencl'
 device = 0
 
 af.set_backend(backend)
@@ -136,7 +136,7 @@ test_array = af.np_to_af_array(np.array(u_init))
 ########################################################################
 
 c_x = 1.
-c_y = 1.
+c_y = 0
 
 xi_i  = af.flat(af.transpose(af.tile(xi_LGL, 1, N_LGL)))
 eta_j = af.tile(xi_LGL, N_LGL)
@@ -157,5 +157,8 @@ dLq_eta_ij_Lp_xi_ij = Lp_xi_ij  * dLq_eta_ij
 
 
 Li_Lj_coeffs = wave_equation_2d.Li_Lj_coeffs(N_LGL)
+c_lax_2d = 0.1
 
-delta_t_2d = delta_x / (10 * (c_x ** 2 + c_y ** 2))
+delta_y = delta_x
+
+delta_t_2d = c_lax_2d * delta_x * delta_y / (delta_x * c_x + delta_y * c_y)
