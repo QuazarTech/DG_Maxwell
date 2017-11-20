@@ -47,10 +47,10 @@ print(af.info())
 A_inverse = (np.linalg.inv(np.array(advection_2d.A_matrix())))
 A_inverse = af.np_to_af_array(A_inverse)
 u         = u_e_ij
-delta_t   = params.delta_t_2d
+delta_t   = 1e-3
 print(delta_t)
 ##
-for i in trange(800):
+for i in trange(1):
 #    u += advection_2d.RK4_timestepping(A_inverse, u, delta_t)
 
     #Implementing second order time-stepping.

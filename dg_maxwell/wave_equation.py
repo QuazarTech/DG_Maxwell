@@ -523,7 +523,7 @@ def time_evolution():
         os.makedirs(results_directory)
 
 
-    A_inverse   = af.inverse(A_matrix())
+    A_inverse   = af.np_to_af_array(np.linalg.inv(A_matrix()))
     delta_t     = params.delta_t
     u           = params.u_init
     time        = params.time
@@ -551,6 +551,8 @@ def time_evolution():
         #u += RK6_timestepping(A_inverse, u, delta_t)
 
     u_analytical = analytical_u_LGL(t_n + 1)
+
+    print(u)
 
     u_diff = af.abs(u - u_analytical)
 

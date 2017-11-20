@@ -112,7 +112,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
 
 # The wave to be advected is either a sin or a Gaussian wave.
 # This parameter can take values 'sin' or 'gaussian'.
-wave = 'gaussian'
+wave = 'sin'
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 if (wave=='sin'):
@@ -121,7 +121,7 @@ if (wave=='sin'):
 if (wave=='gaussian'):
     u_init = np.e ** (-(element_LGL) ** 2 / 0.4 ** 2)
 
-c_x = 1
+c_x = 1.
 
 test_array = af.np_to_af_array(np.array(u_init))
 
@@ -157,8 +157,8 @@ dLq_eta_ij_Lp_xi_ij = Lp_xi_ij  * dLq_eta_ij
 
 
 Li_Lj_coeffs = wave_equation_2d.Li_Lj_coeffs(N_LGL)
-c_lax_2d = 0.1
+courant = 0.1559
 
 delta_y = delta_x
 
-delta_t_2d = c_lax_2d * delta_x * delta_y / (delta_x * c_x + delta_y * c_y)
+delta_t_2d = courant * delta_x * delta_y / (delta_x * c_x + delta_y * c_y)

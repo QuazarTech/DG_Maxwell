@@ -508,8 +508,8 @@ def lax_friedrichs_flux(u):
 
     u = af.moddims(af.reorder(u, 2, 1, 0), params.N_LGL ** 2, 100)
     diff_u_boundary = af.moddims(af.reorder(diff_u_boundary, 2, 1, 0), params.N_LGL ** 2, 100)
-    F_xi_e_ij  = F_xi(u, dxi_dx, deta_dy) - params.c_lax * diff_u_boundary
-    F_eta_e_ij = F_eta(u, deta_dx, deta_dy) - params.c_lax * diff_u_boundary
+    F_xi_e_ij  = F_xi(u, dxi_dx, deta_dy) - params.c_lax_2d * diff_u_boundary
+    F_eta_e_ij = F_eta(u, deta_dx, deta_dy) - params.c_lax_2d * diff_u_boundary
 
     return F_xi_e_ij, F_eta_e_ij
 
