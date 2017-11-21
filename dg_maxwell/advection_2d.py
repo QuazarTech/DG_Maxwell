@@ -4,6 +4,8 @@
 import arrayfire as af
 import numpy as np
 import os
+import h5py
+from tqdm import trange
 from matplotlib import pyplot as pl
 
 from dg_maxwell import wave_equation
@@ -100,8 +102,8 @@ def lax_friedrichs_flux(u):
 
     u = af.moddims(af.reorder(u, 2, 1, 0), params.N_LGL ** 2, 100)
     diff_u_boundary = af.moddims(af.reorder(diff_u_boundary, 2, 1, 0), params.N_LGL ** 2, 100)
-    F_xi_e_ij  = params.c_x * u - params.c_lax * diff_u_boundary
-    F_eta_e_ij = params.c_y * u - params.c_lax * diff_u_boundary
+    F_xi_e_ij  = params.c_x * u - params.c_lax_2d_x * diff_u_boundary
+    F_eta_e_ij = params.c_y * u - params.c_lax_2d_x * diff_u_boundary
 
     return F_xi_e_ij, F_eta_e_ij
 
@@ -242,3 +244,78 @@ def RK4_timestepping(A_inverse, u, delta_t):
 
     return delta_u
 
+def time_evolution():
+    '''
+    '''
+    # Creating a folder to store hdf5 files. If it doesn't exist.
+    results_directory = 'results/2d_hdf5_%02d' %(int(params.N_LGL))
+    if not os.path.exists(results_directory):
+        os.makedirs(results_directory)
+
+    A_inverse = af.np_to_af_array(np.linalg.inv(np.array(A_matrix())))
+    u         = params.u_e_ij
+    delta_t   = params.delta_t_2d
+
+    for i in trange(2001):
+        #    u += RK4_timestepping(A_inverse, u, delta_t)
+    
+        #Implementing second order time-stepping.
+        u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u))\
+                              * delta_t / 2
+    
+        u            +=  af.matmul(A_inverse, b_vector(u_n_plus_half))\
+                          * delta_t
+    
+        L1_norm = af.mean(af.abs(params.u_e_ij - u))
+        if (L1_norm >= 100):
+            break
+        if (i % 10) == 0:
+            h5file = h5py.File('results/2d_hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(i)) + '.hdf5', 'w')
+            dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
+    
+            dset[:, :] = u[:, :]
+        
+        if (i > 1999):
+            print(L1_norm)
+        if (i == 1000):
+            print(L1_norm)
+        if (i == 1001):
+            print(L1_norm)
+    return L1_norm
+
+
+#def contour_2d(u, index):
+#    '''
+#    '''
+#    color_levels = np.linspace(-0.1, 1.1, 100)
+#    u_plot = af.flip(af.moddims(u, params.N_LGL, params.N_LGL, 10, 10), 0)
+#    x_plot = af.flip(af.moddims(params.x_e_ij, params.N_LGL, params.N_LGL, 10, 10), 0)
+#    y_plot = af.flip(af.moddims(params.y_e_ij, params.N_LGL, params.N_LGL, 10, 10), 0)
+#    
+#    
+#    x_contour = af.np_to_af_array(np.zeros([params.N_LGL * 10, params.N_LGL * 10]))
+#    y_contour = af.np_to_af_array(np.zeros([params.N_LGL * 10, params.N_LGL * 10]))
+#    u_contour = af.np_to_af_array(np.zeros([params.N_LGL * 10, params.N_LGL * 10]))
+#    fig = pl.figure()
+#    #
+#    for i in range(100):
+#        p = int(i / 10)
+#        q = i - p * 10
+#        x_contour[p * params.N_LGL:params.N_LGL * (p + 1),\
+#                  q * params.N_LGL:params.N_LGL * (q + 1)] = x_plot[:, :, q, p]
+#
+#        y_contour[p * params.N_LGL:params.N_LGL * (p + 1),\
+#                  q * params.N_LGL:params.N_LGL * (q + 1)] = y_plot[:, :, q, p]
+#
+#        u_contour[p * params.N_LGL:params.N_LGL * (p + 1),\
+#                  q * params.N_LGL:params.N_LGL * (q + 1)] = u_plot[:, :, q, p]
+#    
+#    x_contour = np.array(x_contour)
+#    y_contour = np.array(y_contour)
+#    u_contour = np.array(u_contour)
+#    pl.contourf(x_contour, y_contour, u_contour, 200, levels = color_levels, cmap = 'jet')
+#    pl.gca().set_aspect('equal')
+#    pl.colorbar()
+#    pl.title('Time = %f' % (index * 10 * 1e-3))
+#    fig.savefig('results/2D_Wave_images/%04d' %(index / 10) + '.png')
+#    return

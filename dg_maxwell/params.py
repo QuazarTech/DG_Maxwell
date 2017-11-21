@@ -12,6 +12,7 @@ af.set_backend(backend)
 af.set_device(device)
 
 from dg_maxwell import lagrange
+from dg_maxwell import isoparam
 from dg_maxwell import utils
 from dg_maxwell import msh_parser
 from dg_maxwell import wave_equation
@@ -162,3 +163,17 @@ courant = 0.1559
 delta_y = delta_x
 
 delta_t_2d = courant * delta_x * delta_y / (delta_x * c_x + delta_y * c_y)
+
+c_lax_2d_x = c_x
+c_lax_2d_y = c_y
+
+nodes, elements = msh_parser.read_order_2_msh('square_10_10.msh')
+
+x_e_ij  = af.np_to_af_array(np.zeros([N_LGL * N_LGL, len(elements)]))
+y_e_ij  = af.np_to_af_array(np.zeros([N_LGL * N_LGL, len(elements)]))
+
+for element_tag, element in enumerate(elements):
+    x_e_ij[:, element_tag] = isoparam.isoparam_x_2D(nodes[element, 0], xi_i, eta_j)
+    y_e_ij[:, element_tag] = isoparam.isoparam_y_2D(nodes[element, 1], xi_i, eta_j)
+
+u_e_ij = np.e ** (-(x_e_ij ** 2 + y_e_ij ** 2)/(0.4 ** 2))
