@@ -22,7 +22,7 @@ from dg_maxwell import wave_equation_2d
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8
+N_LGL      = 6
 
 # Number of elements the domain is to be divided into.
 N_Elements = 10
@@ -158,7 +158,7 @@ dLq_eta_ij_Lp_xi_ij = Lp_xi_ij  * dLq_eta_ij
 
 
 Li_Lj_coeffs = wave_equation_2d.Li_Lj_coeffs(N_LGL)
-courant = 0.1559
+courant = 0.1
 
 delta_y = delta_x
 
@@ -176,4 +176,11 @@ for element_tag, element in enumerate(elements):
     x_e_ij[:, element_tag] = isoparam.isoparam_x_2D(nodes[element, 0], xi_i, eta_j)
     y_e_ij[:, element_tag] = isoparam.isoparam_y_2D(nodes[element, 1], xi_i, eta_j)
 
-u_e_ij = np.e ** (-(x_e_ij ** 2 + y_e_ij ** 2)/(0.4 ** 2))
+#u_e_ij = np.e ** (-(x_e_ij ** 2 + y_e_ij ** 2)/(0.4 ** 2))
+u_e_ij = af.sin(x_e_ij * 2 * np.pi + y_e_ij * 4 * np.pi)
+
+total_time_2d = 0.5
+
+# Array of timesteps seperated by delta_t.
+time_2d  = utils.linspace(0, int(total_time_2d / delta_t_2d) * delta_t_2d,
+                                                    int(total_time_2d / delta_t_2d))
