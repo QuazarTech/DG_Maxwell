@@ -184,7 +184,7 @@ def change_parameters(LGL, Elements=10, wave='sin'):
     #u_e_ij = np.e ** (-(x_e_ij ** 2 + y_e_ij ** 2)/(0.4 ** 2))
     params.u_e_ij = af.sin(params.x_e_ij * 2 * np.pi + params.y_e_ij * 4 * np.pi)
     
-    params.total_time_2d = 0.1
+    params.total_time_2d = 2.0
     
     # Array of timesteps seperated by delta_t.
     params.time_2d  = utils.linspace(0, int(params.total_time_2d / params.delta_t_2d) * params.delta_t_2d,
@@ -192,7 +192,7 @@ def change_parameters(LGL, Elements=10, wave='sin'):
 
     return
 
-change_parameters(9)
+change_parameters(5)
 print(advection_2d.time_evolution())
 
 #L1_norm = np.zeros([5])
