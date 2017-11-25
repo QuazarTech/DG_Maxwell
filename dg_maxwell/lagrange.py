@@ -209,12 +209,14 @@ def lagrange_polynomials(x):
     
     .. math:: \\
         L_i = \\prod_{m = 0, m \\notin i}^{N - 1}\\frac{(x - x_m)}{(x_i - x_m)}
+        
     Parameters
     ----------
     
     x : numpy.array [N_LGL 1 1 1]
         Contains the :math: `x` nodes using which the
         lagrange basis functions need to be evaluated.
+        
     Returns
     -------
     
@@ -367,10 +369,12 @@ def lagrange_interpolation_u(u):
     :math:`L_i(\\xi) u_i(\\xi)`
     Where L_i are the Lagrange basis polynomials and u_i is the value
     of u at the LGL points.
+    
     Parameters
     ----------
     u : arrayfire.Array [N_LGL N_Elements 1 1]
         The value of u at the mapped LGL points.
+        
     Returns
     -------
     lagrange_interpolated_coeffs : arrayfire.Array[1 N_LGL N_Elements 1]
