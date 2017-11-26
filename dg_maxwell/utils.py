@@ -140,8 +140,9 @@ def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
     Parameters
     ----------
     points       : np.ndarray [N, 2]
-                   :math:`(x, y)` coordinates of :math:`N` points. First and second
-                   column stores :math:`x` and :math:`y` coordinates of an point.
+                   :math:`(x, y)` coordinates of :math:`N` points. First and
+                   second column stores :math:`x` and :math:`y` coordinates
+                   of an point.
 
     axes_handler : matplotlib.axes.Axes
                    The plot handler being used to plot the element grid.

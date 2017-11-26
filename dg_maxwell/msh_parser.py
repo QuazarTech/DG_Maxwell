@@ -6,7 +6,6 @@ import matplotlib.lines as lines
 import gmshtranslator.gmshtranslator as gmsh
 import arrayfire as af
 
-from dg_maxwell import msh_parser
 from dg_maxwell import isoparam
 from dg_maxwell import utils
 from dg_maxwell import params
@@ -185,7 +184,8 @@ def plot_element_grid(x_nodes, y_nodes, xi_LGL, eta_LGL, axes_handler,
 
 
 def plot_element_boundary(x_nodes, y_nodes, axes_handler,
-                          grid_width = 2., grid_color = 'blue'):
+                          grid_width = 2., grid_color = 'blue',
+                          print_node_tag = False, node_tag_fontsize = 12):
     '''
     Plots the boundary of a given :math:`2^{nd}` order element.
 
@@ -245,7 +245,8 @@ def plot_element_boundary(x_nodes, y_nodes, axes_handler,
 
 def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL,
                    axes_handler, print_element_tag = False,
-                   element_tag_fontsize = 12):
+                   element_tag_fontsize = 12,
+                   print_node_tag = False, node_tag_fontsize = 12):
     '''
     Plots the mesh grid.
 
@@ -271,12 +272,19 @@ def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL,
                    You may generate it by calling the function pyplot.axes()
 
     print_element_tag : bool
-                        If ``True``, the function prints the elements tag on
+                        If ``True``, the function prints the elements tag at
                         the mesh plot at the centroid of each element.
 
     element_tag_fontsize : int
                            Fontsize of the printed element tag on the meshgrid.
 
+    print_node_tag : bool
+                     If ``True``, the function prints the node tag at
+                     coordinates of the element nodes.
+
+    node_tag_fontsize : int
+                        Fontsize of the printed node tag on the meshgrid.
+                     
     Returns
     -------
 
@@ -284,14 +292,22 @@ def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL,
     '''
 
     for element_tag, element in enumerate(elements):
-        msh_parser.plot_element_grid(nodes[element, 0], nodes[element, 1],
-                                     xi_LGL, eta_LGL, axes_handler)
-        msh_parser.plot_element_boundary(nodes[element, 0], nodes[element, 1],
-                                        axes_handler)
+        plot_element_grid(nodes[element, 0], nodes[element, 1],
+                          xi_LGL, eta_LGL, axes_handler)
+        plot_element_boundary(nodes[element, 0], nodes[element, 1],
+                              axes_handler)
         if print_element_tag == True:
-            element_centroid = utils.centroid(nodes[element, 0], nodes[element, 1])
+            element_centroid = utils.centroid(nodes[element, 0],
+                                              nodes[element, 1])
             axes_handler.text(element_centroid[0], element_centroid[1],
-                            str(element_tag), fontsize = element_tag_fontsize)
+                              str(element_tag),
+                              fontsize = element_tag_fontsize, color = 'red')
+
+        if print_node_tag == True:
+            for node in element[:-1]:
+                axes_handler.text(nodes[node, 0], nodes[node, 1],
+                                  str(node),
+                                  fontsize = node_tag_fontsize)
 
     return
 
