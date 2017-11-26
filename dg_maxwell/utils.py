@@ -636,3 +636,23 @@ def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
         return
 
     return
+
+
+def centroid(x_nodes, y_nodes):
+    '''
+    Finds the centroid of a given :math:`2D` closed geometry.
+    
+    Parameters
+    ----------
+    x_nodes : np.array [N]
+              :math:`x` nodes of the vertices of the geometry
+
+    y_nodes : np.array [N]
+              :math:`y` nodes of the vertices of the geometry
+
+    Returns
+    -------
+        tuple(float, float)
+        :math:`(x, y)` coordinates of the centroid
+    '''
+    return (np.mean(x_nodes), np.mean(y_nodes))

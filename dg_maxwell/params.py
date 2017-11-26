@@ -168,7 +168,7 @@ c_lax_2d_x = c_x
 c_lax_2d_y = c_y
 
 nodes, elements = msh_parser.read_order_2_msh(
-    'examples/read_and_plot_mesh/mesh/square_10_10.msh')
+    '../../examples/read_and_plot_mesh/mesh/square_10_10.msh')
 
 x_e_ij  = af.np_to_af_array(np.zeros([N_LGL * N_LGL, len(elements)]))
 y_e_ij  = af.np_to_af_array(np.zeros([N_LGL * N_LGL, len(elements)]))

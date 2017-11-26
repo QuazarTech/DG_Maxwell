@@ -243,7 +243,9 @@ def plot_element_boundary(x_nodes, y_nodes, axes_handler,
 
 
 
-def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL, axes_handler):
+def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL,
+                   axes_handler, print_element_tag = False,
+                   element_tag_fontsize = 12):
     '''
     Plots the mesh grid.
 
@@ -268,16 +270,29 @@ def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL, axes_handler):
                    The plot handler being used to plot the element grid.
                    You may generate it by calling the function pyplot.axes()
 
+    print_element_tag : bool
+                        If ``True``, the function prints the elements tag on
+                        the mesh plot at the centroid of each element.
+
+    element_tag_fontsize : int
+                           Fontsize of the printed element tag on the meshgrid.
+
     Returns
     -------
 
     None
     '''
 
-    for element in elements:
+    for element_tag, element in enumerate(elements):
         msh_parser.plot_element_grid(nodes[element, 0], nodes[element, 1],
                                      xi_LGL, eta_LGL, axes_handler)
         msh_parser.plot_element_boundary(nodes[element, 0], nodes[element, 1],
                                         axes_handler)
+        if print_element_tag == True:
+            element_centroid = utils.centroid(nodes[element, 0], nodes[element, 1])
+            axes_handler.text(element_centroid[0], element_centroid[1],
+                            str(element_tag), fontsize = element_tag_fontsize)
 
     return
+
+
