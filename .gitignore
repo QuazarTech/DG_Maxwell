@@ -208,7 +208,7 @@ Thumbs.db
 examples/results
 !docs/quazar_logo.png
 !dg_maxwell/tests/wave_equation_2d/files/*
-
+!examples/interelement_relations/*
 *.kate-swp
 
 *.ipynb_checkpoints*
