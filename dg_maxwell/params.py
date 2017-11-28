@@ -35,7 +35,7 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-N_quad     = 10
+N_quad     = N_LGL
 
 # Wave speed.
 c          = 1
@@ -71,3 +71,4 @@ mesh_file = 'examples/read_and_plot_mesh/mesh/square_10_10.msh'
 
 total_time_2d = 2.0
 
+volume_integrand_scheme_2d = 'Lobatto'
