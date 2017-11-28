@@ -15,7 +15,7 @@ from dg_maxwell import isoparam
 af.set_backend(params.backend)
 af.set_device(params.device)
 
-class global_variables:
+class advection_variables:
     '''
     Stores and initializes such variables which are called repeatedly
     in different functions.
@@ -69,7 +69,7 @@ class global_variables:
         
         Returns
         -------
-            None
+        None
         '''
         self.xi_LGL = lagrange.LGL_points(N_LGL)
         
@@ -87,8 +87,8 @@ class global_variables:
 
         # An array containing the coefficients of the lagrange basis polynomials.
         self.lagrange_coeffs = lagrange.lagrange_polynomial_coeffs(self.xi_LGL)
-        
-        self.lagrange_basis_value = lagrange.lagrange_function_value(self.lagrange_coeffs)
+
+        self.lagrange_basis_value = lagrange.lagrange_function_value(self.lagrange_coeffs, self.xi_LGL)
 
         self.diff_pow = af.flip(af.transpose(af.range(N_LGL - 1) + 1), 1)
         self.dl_dxi_coeffs = af.broadcast(utils.multiply, self.lagrange_coeffs[:, :-1],
@@ -188,7 +188,7 @@ class global_variables:
                                                   len(self.elements)]))
         self.y_e_ij = af.np_to_af_array(np.zeros([N_LGL * N_LGL,
                                                   len(self.elements)]))
-        
+
         for element_tag, element in enumerate(self.elements):
             self.x_e_ij[:, element_tag] = isoparam.isoparam_x_2D(
                 self.nodes[element, 0], self.xi_i, self.eta_j)

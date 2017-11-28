@@ -258,7 +258,7 @@ def lagrange_polynomials(x):
     return lagrange_basis_poly, lagrange_basis_coeffs
 
 
-def lagrange_function_value(lagrange_coeff_array):
+def lagrange_function_value(lagrange_coeff_array, xi_LGL):
     '''
     Funtion to calculate the value of lagrange basis functions over LGL
     nodes.
@@ -291,7 +291,7 @@ def lagrange_function_value(lagrange_coeff_array):
 
     It follows then that lagrange_function_value returns an identity matrix.
     '''
-    xi_tile    = af.transpose(af.tile(params.xi_LGL, 1, params.N_LGL))
+    xi_tile    = af.transpose(af.tile(xi_LGL, 1, params.N_LGL))
     power      = af.flip(af.range(params.N_LGL))
     power_tile = af.tile(power, 1, params.N_LGL)
     xi_pow     = af.arith.pow(xi_tile, power_tile)
@@ -302,7 +302,7 @@ def lagrange_function_value(lagrange_coeff_array):
 
 
 
-def integrate(integrand_coeffs):
+def integrate(integrand_coeffs, gauss_points, gauss_weights):
     '''
     Performs integration according to the given quadrature method
     by taking in the coefficients of the polynomial and the number of
@@ -327,8 +327,8 @@ def integrate(integrand_coeffs):
 
     if (params.scheme == 'gauss_quadrature'):
 
-        gaussian_nodes = params.gauss_points
-        Gauss_weights  = params.gauss_weights
+        gaussian_nodes = gauss_points
+        Gauss_weights  = gauss_weights
 
         nodes_tile   = af.transpose(af.tile(gaussian_nodes,
                                             1, integrand.shape[1]))
@@ -344,8 +344,8 @@ def integrate(integrand_coeffs):
  
     if (params.scheme == 'lobatto_quadrature'):
 
-        lobatto_nodes   = params.lobatto_quadrature_nodes
-        Lobatto_weights = params.lobatto_weights_quadrature
+        lobatto_nodes   = lobatto_quadrature_nodes
+        Lobatto_weights = lobatto_weights_quadrature
 
         nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1,
                                             integrand.shape[1]))

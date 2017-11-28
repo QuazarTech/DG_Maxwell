@@ -251,7 +251,7 @@ def deta_dy (x_nodes, y_nodes, xi, eta):
     return dx_dxi_ / jacobian(x_nodes, y_nodes, xi, eta)
 
 
-def A_matrix(N_LGL):
+def A_matrix(N_LGL, gauss_points, gauss_weights):
     '''
     Calculates the tensor product for the given ``params.N_LGL``.
     A tensor product element is given by:
@@ -314,10 +314,8 @@ def A_matrix(N_LGL):
                                                                 d1 = 2,
                                                                 d2 = 0))
                                                      
-    A = utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp,
-                                         N_quad = N_LGL + 1,
-                                         scheme = 'gauss')
-    
+    A = utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp, params.N_quad, 'gauss', gauss_points, gauss_weights)
+
     A = af.moddims(A, d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
 
     return A
@@ -433,7 +431,7 @@ def Li_Lj_coeffs(N_LGL):
 
     return Li_Lj_coeffs
 
-def lag_interpolation_2d(u_e_ij, N_LGL):
+def lag_interpolation_2d(u_e_ij, Li_Lj_coeffs):
     '''
     Does the lagrange interpolation of a function.
     
@@ -457,7 +455,7 @@ def lag_interpolation_2d(u_e_ij, N_LGL):
     interpolated_f : af.Array [N_LGL N_LGL N_elements 1]
                      Interpolation polynomials for ``N_elements`` elements.
     '''
-    Li_xi_Lj_eta_coeffs = af.tile(params.Li_Lj_coeffs, d0 = 1,
+    Li_xi_Lj_eta_coeffs = af.tile(Li_Lj_coeffs, d0 = 1,
                                   d1 = 1, d2 = 1, d3 = params.N_LGL ** 2 * 100)
     u_e_ij = af.reorder(u_e_ij, 2, 3, 0, 1)
 
