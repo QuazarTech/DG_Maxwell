@@ -502,10 +502,11 @@ def polynomial_product_coeffs(poly1_coeffs, poly2_coeffs):
 def polyval_2d(poly_2d, xi, eta):
     '''
     '''
-    poly_2d_shape = shape(poly_2d)
+    poly_2d_shape = poly_2d.shape
     poly_xy = af.tile(poly_2d, d0 = 1, d1 = 1, d2 = 1, d3 = xi.shape[0])
-    poly_xy_shape = shape(poly_xy)
+    poly_xy_shape = poly_xy.shape
     # print(poly_xy)
+
     xi_power = af.flip(af.range(poly_xy_shape[1], dtype = af.Dtype.u32))
     xi_power = af.tile(af.transpose(xi_power), d0 = poly_xy_shape[0])
     xi_power = af.tile(xi_power, d0 = 1, d1 = 1, d2 = xi.shape[0])
@@ -516,55 +517,67 @@ def polyval_2d(poly_2d, xi, eta):
 
     Xi = af.reorder(xi, d0 = 2, d1 = 1, d2 = 0)
     Xi = af.tile(Xi, d0 = poly_xy_shape[0], d1 = poly_xy_shape[1])
-    Xi = Xi**xi_power
+    Xi = af.pow(Xi, xi_power)
     Xi = af.reorder(Xi, d0 = 0, d1 = 1, d2 = 3, d3 = 2)
-    Xi = af.tile(Xi, d0 = 1, d1 = 1, d2 = poly_2d_shape[2])
     # print(Xi)
 
     Eta = af.reorder(eta, d0 = 2, d1 = 1, d2 = 0)
     Eta = af.tile(Eta, d0 = poly_xy_shape[0], d1 = poly_xy_shape[1])
-    Eta = Eta**eta_power
+    Eta = af.pow(Eta, eta_power)
     Eta = af.reorder(Eta, d0 = 0, d1 = 1, d2 = 3, d3 = 2)
-    Eta = af.tile(Eta, d0 = 1, d1 = 1, d2 = poly_2d_shape[2])
     # print(Eta)
 
     Xi_Eta = Xi * Eta
 
-    poly_val = poly_xy * Xi_Eta
-    poly_val = af.sum(af.sum(poly_val, dim = 0), dim = 1)
+    poly_val = af.broadcast(multiply, poly_xy, Xi_Eta)
+    poly_val = af.sum(af.sum(poly_val, dim = 1), dim = 0)
     poly_val = af.reorder(poly_val, d0 = 2, d1 = 3, d2 = 0, d3 = 1)
 
     return poly_val
 
+def multivariable_poly_value(poly_2d, x, y):
+    '''
+    '''
+    polynomial_coeffs = af.transpose(af.moddims(poly_2d, poly_2d.shape[0] ** 2, poly_2d.shape[2]))
 
-def gauss_quad_multivar_poly(poly_xi_eta, N_quad = 9):
+    power_index     = af.flip(af.np_to_af_array(np.arange(poly_2d.shape[0])))
+    x_power_indices = af.flat(af.transpose(af.tile(power_index, 1, poly_2d.shape[0])))
+    y_power_indices = af.tile(power_index, poly_2d.shape[0])
+
+    x_power = af.broadcast(power, af.transpose(x), x_power_indices)
+    y_power = af.broadcast(power, af.transpose(y), y_power_indices)
+
+    polynomial_value = af.matmul(polynomial_coeffs, x_power * y_power)
+
+
+    return polynomial_value
+
+def gauss_quad_multivar_poly(poly_xi_eta, N_quad, gauss_points, gauss_weights):
     '''
     '''
     shape_poly_2d = poly_xi_eta.shape
-    xi_gauss  = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
-    eta_gauss = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
+    xi_gauss  = gauss_points
 
-    Xi, Eta = af_meshgrid(xi_gauss, eta_gauss)
+    Xi  = af.flat(af.transpose(af.tile(xi_gauss, 1, params.N_quad)))
+    Eta = af.tile(xi_gauss, params.N_quad)
 
-    Xi  = af.flat(Xi)
-    Eta = af.flat(Eta)
+    w_i = gauss_weights
 
-    w_i = lagrange.gaussian_weights(N_quad)
-    w_j = lagrange.gaussian_weights(N_quad)
+    test_W_i = af.flat(af.transpose(af.tile(w_i, 1, params.N_quad)))
+    test_W_j = af.tile(w_i, params.N_quad)
 
-    W_i, W_j = af_meshgrid(w_i, w_j)
+    W_i = af.tile(test_W_i, d0 = 1, d1 = shape_poly_2d[2])
+    W_j = af.tile(test_W_j, d0 = 1, d1 = shape_poly_2d[2])
 
-    W_i = af.tile(af.flat(W_i), d0 = 1, d1 = shape_poly_2d[2])
-    W_j = af.tile(af.flat(W_j), d0 = 1, d1 = shape_poly_2d[2])
-
-    P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
+    P_xi_eta_quad_val = af.transpose(multivariable_poly_value(poly_xi_eta, Xi, Eta))
+    #P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
 
     integral = af.sum(W_i * W_j * P_xi_eta_quad_val, dim = 0)
-    
+
     return af.transpose(integral)
 
 
-def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
+def lobatto_quad_multivar_poly(poly_xi_eta, N_quad, gv):
     '''
     '''
     shape_poly_2d = shape(poly_xi_eta)
@@ -593,7 +606,7 @@ def lobatto_quad_multivar_poly(poly_xi_eta, N_quad = 16):
     return af.transpose(integral)
 
 
-def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
+def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme, gauss_points, gauss_weights):
     '''
     Evaluates the integral
 
@@ -628,10 +641,10 @@ def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme):
 
     '''
     if scheme is 'gauss':
-        return gauss_quad_multivar_poly(poly_xi_eta, N_quad)
+        return gauss_quad_multivar_poly(poly_xi_eta, N_quad, gauss_points, gauss_weights)
 
     elif scheme is 'lobatto':
-        return lobatto_quad_multivar_poly(poly_xi_eta, N_quad)
+        return lobatto_quad_multivar_poly(poly_xi_eta, N_quad, gv)
 
     else:
         return

@@ -16,28 +16,25 @@ from dg_maxwell import lagrange
 from dg_maxwell import params
 from dg_maxwell import utils
 
-def A_matrix():
+def A_matrix(gauss_points, gauss_weights):
     '''
     '''
 
-    A_ij = wave_equation_2d.A_matrix(params.N_LGL) / 100
+    A_ij = wave_equation_2d.A_matrix(params.N_LGL, gauss_points, gauss_weights) / 100
 
     return A_ij
 
-def volume_integral(u):
+def volume_integral(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, Li_Lj_coeffs):
     '''
     Vectorize, p, q, moddims.
     '''
+    dLp_xi_ij_Lq_eta_ij = dLp_Lq
+    dLq_eta_ij_Lp_xi_ij = dLq_Lp
     dxi_dx   = 10.
     deta_dy  = 10.
     jacobian = 100.
     c_x = params.c_x
     c_y = params.c_y
-
-
-    dLp_xi_ij_Lq_eta_ij  = params.dLp_xi_ij_Lq_eta_ij
-    dLq_eta_ij_Lp_xi_ij  = params.dLq_eta_ij_Lp_xi_ij
-
 
     volume_integrand_ij_1 = c_x * dxi_dx * af.broadcast(utils.multiply,\
                                     dLp_xi_ij_Lq_eta_ij,\
@@ -50,11 +47,12 @@ def volume_integral(u):
     volume_integrand_ij = af.moddims(volume_integrand_ij_1 + volume_integrand_ij_2, params.N_LGL ** 2,\
                                      (params.N_LGL ** 2) * 100)
 
-    lagrange_interpolation = af.moddims(wave_equation_2d.lag_interpolation_2d(volume_integrand_ij, params.N_LGL),
+    lagrange_interpolation = af.moddims(wave_equation_2d.lag_interpolation_2d(volume_integrand_ij, Li_Lj_coeffs),
                                         params.N_LGL, params.N_LGL, params.N_LGL ** 2  * 100)
 
 
-    volume_integrand_total = utils.integrate_2d_multivar_poly(lagrange_interpolation[:, :, :], N_quad = 9, scheme = 'gauss')
+    volume_integrand_total = utils.integrate_2d_multivar_poly(lagrange_interpolation[:, :, :],\
+                                            params.N_quad,'gauss', gauss_points, gauss_weights)
     volume_integral        = af.transpose(af.moddims(volume_integrand_total, 100, params.N_LGL ** 2))
 
     return volume_integral
@@ -102,20 +100,18 @@ def lax_friedrichs_flux(u):
 
     u = af.moddims(af.reorder(u, 2, 1, 0), params.N_LGL ** 2, 100)
     diff_u_boundary = af.moddims(af.reorder(diff_u_boundary, 2, 1, 0), params.N_LGL ** 2, 100)
-    F_xi_e_ij  = params.c_x * u - params.c_lax_2d_x * diff_u_boundary
-    F_eta_e_ij = params.c_y * u - params.c_lax_2d_x * diff_u_boundary
+    F_xi_e_ij  = params.c_x * u - params.c_x * diff_u_boundary
+    F_eta_e_ij = params.c_y * u - params.c_y * diff_u_boundary
 
     return F_xi_e_ij, F_eta_e_ij
 
 
-def surface_term_vectorized(u):
+def surface_term_vectorized(u, xi_LGL, lagrange_coeffs, gauss_points, gauss_weights):
     '''
     '''
     N_LGL = params.N_LGL
-    lagrange_coeffs = params.lagrange_coeffs
 
-    xi_LGL  = params.xi_LGL
-    eta_LGL = params.xi_LGL
+    eta_LGL = xi_LGL
 
     # Values for dx/dxi and dy/deta for the particular case.
     dx_dxi = 0.1
@@ -124,10 +120,10 @@ def surface_term_vectorized(u):
     f_xi_surface_term  = lax_friedrichs_flux(u)[0]
     f_eta_surface_term = lax_friedrichs_flux(u)[1]
 
-    Lp_xi   = af.moddims(af.reorder(af.tile(utils.polyval_1d(params.lagrange_coeffs,
+    Lp_xi   = af.moddims(af.reorder(af.tile(utils.polyval_1d(lagrange_coeffs,
                             xi_LGL), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
 
-    Lq_eta  = af.tile(af.reorder(utils.polyval_1d(params.lagrange_coeffs,\
+    Lq_eta  = af.tile(af.reorder(utils.polyval_1d(lagrange_coeffs,\
                          eta_LGL), 1, 2, 0), 1, 1, params.N_LGL)
 
     Lp_xi_1      = af.moddims(af.reorder(af.tile(utils.polyval_1d(lagrange_coeffs, xi_LGL[-1]),\
@@ -152,7 +148,7 @@ def surface_term_vectorized(u):
     lag_interpolation_1 = af.transpose(af.moddims(af.transpose(lag_interpolation_1),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_xi_1 = lagrange.integrate(lag_interpolation_1) * dy_deta
+    surface_term_pq_xi_1 = lagrange.integrate(lag_interpolation_1, gauss_points, gauss_weights) * dy_deta
     surface_term_pq_xi_1 = af.moddims(surface_term_pq_xi_1, params.N_LGL ** 2, 100)
 
     # xi = -1 boundary
@@ -165,7 +161,7 @@ def surface_term_vectorized(u):
     lag_interpolation_2 = af.transpose(af.moddims(af.transpose(lag_interpolation_2),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_xi_minus1 = lagrange.integrate(lag_interpolation_2) * dy_deta
+    surface_term_pq_xi_minus1 = lagrange.integrate(lag_interpolation_2, gauss_points, gauss_weights) * dy_deta
     surface_term_pq_xi_minus1 = af.moddims(surface_term_pq_xi_minus1, params.N_LGL ** 2, 100)
 
 
@@ -180,7 +176,7 @@ def surface_term_vectorized(u):
     lag_interpolation_3 = af.transpose(af.moddims(af.transpose(lag_interpolation_3),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_eta_minus1 = lagrange.integrate(lag_interpolation_3) * dx_dxi
+    surface_term_pq_eta_minus1 = lagrange.integrate(lag_interpolation_3, gauss_points, gauss_weights) * dx_dxi
     surface_term_pq_eta_minus1 = af.moddims(surface_term_pq_eta_minus1, params.N_LGL ** 2, 100)
 
 
@@ -195,7 +191,7 @@ def surface_term_vectorized(u):
     lag_interpolation_4 = af.transpose(af.moddims(af.transpose(lag_interpolation_4),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_eta_1 = lagrange.integrate(lag_interpolation_4) * dx_dxi
+    surface_term_pq_eta_1 = lagrange.integrate(lag_interpolation_4, gauss_points, gauss_weights) * dx_dxi
     surface_term_pq_eta_1 = af.moddims(surface_term_pq_eta_1, params.N_LGL ** 2, 100)
 
     surface_term_e_pq = surface_term_pq_xi_1\
@@ -206,14 +202,15 @@ def surface_term_vectorized(u):
     return surface_term_e_pq
 
 
-def b_vector(u):
+def b_vector(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, xi_LGL, lagrange_coeffs, Li_Lj_coeffs):
     '''
     '''
-    b = volume_integral(u) - surface_term_vectorized(u)
+    b = volume_integral(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, Li_Lj_coeffs)\
+            - surface_term_vectorized(u, xi_LGL, lagrange_coeffs, gauss_points, gauss_weights)
 
     return b
 
-def RK4_timestepping(A_inverse, u, delta_t):
+def RK4_timestepping(A_inverse, u, delta_t, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, xi_LGL, lagrange_coeffs, Li_Lj_coeffs):
     '''
     Implementing the Runge-Kutta (RK4) method to evolve the wave.
 
@@ -235,16 +232,19 @@ def RK4_timestepping(A_inverse, u, delta_t):
               The change in u at the mapped LGL points.
     '''
 
-    k1 = af.matmul(A_inverse, b_vector(u))
-    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2))
-    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2))
-    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    ))
+    k1 = af.matmul(A_inverse, b_vector(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, xi_LGL, lagrange_coeffs, Li_Lj_coeffs))
+    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2,\
+            gauss_points, gauss_weights, dLp_Lq, dLq_Lp, xi_LGL, lagrange_coeffs, Li_Lj_coeffs))
+    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2,\
+            gauss_points, gauss_weights, dLp_Lq, dLq_Lp, xi_LGL, lagrange_coeffs, Li_Lj_coeffs))
+    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    ,\
+            gauss_points, gauss_weights, dLp_Lq, dLq_Lp, xi_LGL, lagrange_coeffs, Li_Lj_coeffs))
 
     delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
     return delta_u
 
-def time_evolution():
+def time_evolution(gv):
     '''
     '''
     # Creating a folder to store hdf5 files. If it doesn't exist.
@@ -252,14 +252,23 @@ def time_evolution():
     if not os.path.exists(results_directory):
         os.makedirs(results_directory)
 
-    A_inverse = af.np_to_af_array(np.linalg.inv(np.array(A_matrix())))
-    u         = params.u_e_ij
-    delta_t   = params.delta_t_2d
-    time      = params.time_2d
+    u         = gv.u_e_ij
+    delta_t   = gv.delta_t_2d
+    time      = gv.time_2d
+    u_init    = gv.u_e_ij
+
+    gauss_points    = gv.gauss_points
+    gauss_weights   = gv.gauss_weights
+    dLp_Lq          = gv.dLp_xi_ij_Lq_eta_ij
+    dLq_Lp          = gv.dLq_eta_ij_Lp_xi_ij
+    xi_LGL          = gv.xi_LGL
+    lagrange_coeffs = gv.lagrange_coeffs
+    Li_Lj_coeffs    = gv.Li_Lj_coeffs
+
+    A_inverse = af.np_to_af_array(np.linalg.inv(np.array(A_matrix(gauss_points, gauss_weights))))
 
     for i in trange(time.shape[0]):
-        analytical_u = u_analytical(i)
-        L1_norm = af.mean(af.abs(analytical_u -u))
+        L1_norm = af.mean(af.abs(u_init - u))
 
         if (L1_norm >= 100):
             break
@@ -270,7 +279,7 @@ def time_evolution():
             dset[:, :] = u[:, :]
 
 
-        u += RK4_timestepping(A_inverse, u, delta_t)
+        u += RK4_timestepping(A_inverse, u, delta_t, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, xi_LGL, lagrange_coeffs, Li_Lj_coeffs)
 
 
         #Implementing second order time-stepping.
@@ -282,11 +291,11 @@ def time_evolution():
 
     return L1_norm
 
-def u_analytical(t_n):
+def u_analytical(t_n, gv):
     '''
     '''
-    time = params.delta_t_2d * t_n
-    u_analytical_t_n = af.sin(2 * np.pi * (params.x_e_ij - params.c_x * time) +
-                              4 * np.pi * (params.y_e_ij - params.c_y * time))
+    time = gv.delta_t_2d * t_n
+    u_analytical_t_n = af.sin(2 * np.pi * (gv.x_e_ij - params.c_x * time) +
+                              4 * np.pi * (gv.y_e_ij - params.c_y * time))
 
     return u_analytical_t_n
