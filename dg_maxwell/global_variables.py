@@ -73,7 +73,7 @@ class advection_variables:
         '''
 
         self.xi_LGL = lagrange.LGL_points(N_LGL)
-        
+
         # N_Gauss number of Gauss nodes.
         self.gauss_points = af.np_to_af_array(lagrange.gauss_nodes(N_quad))
 
@@ -170,9 +170,9 @@ class advection_variables:
         self.Lq_eta_ij  = af.tile(af.reorder(utils.polyval_1d(
             self.lagrange_coeffs, self.eta_j), 1, 2, 0), 1, 1, N_LGL)
 
-        self.dLp_xi_ij_Lq_eta_ij = self.Lq_eta_ij * self.dLp_xi_ij
-        self.dLq_eta_ij_Lp_xi_ij = self.Lp_xi_ij  * self.dLq_eta_ij
-
+        self.dLp_Lq = self.Lq_eta_ij * self.dLp_xi_ij
+        self.dLq_Lp = self.Lp_xi_ij  * self.dLq_eta_ij
+        
         self.Li_Lj_coeffs = wave_equation_2d.Li_Lj_coeffs(N_LGL)
 
         self.delta_y = self.delta_x

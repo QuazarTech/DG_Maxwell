@@ -6,7 +6,6 @@ import matplotlib.lines as lines
 import gmshtranslator.gmshtranslator as gmsh
 import arrayfire as af
 
-from dg_maxwell import msh_parser
 from dg_maxwell import isoparam
 from dg_maxwell import utils
 from dg_maxwell import params
@@ -185,7 +184,8 @@ def plot_element_grid(x_nodes, y_nodes, xi_LGL, eta_LGL, axes_handler,
 
 
 def plot_element_boundary(x_nodes, y_nodes, axes_handler,
-                          grid_width = 2., grid_color = 'blue'):
+                          grid_width = 2., grid_color = 'blue',
+                          print_node_tag = False, node_tag_fontsize = 12):
     '''
     Plots the boundary of a given :math:`2^{nd}` order element.
 
@@ -243,7 +243,10 @@ def plot_element_boundary(x_nodes, y_nodes, axes_handler,
 
 
 
-def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL, axes_handler):
+def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL,
+                   axes_handler, print_element_tag = False,
+                   element_tag_fontsize = 12,
+                   print_node_tag = False, node_tag_fontsize = 12):
     '''
     Plots the mesh grid.
 
@@ -268,16 +271,137 @@ def plot_mesh_grid(nodes, elements, xi_LGL, eta_LGL, axes_handler):
                    The plot handler being used to plot the element grid.
                    You may generate it by calling the function pyplot.axes()
 
+    print_element_tag : bool
+                        If ``True``, the function prints the elements tag at
+                        the mesh plot at the centroid of each element.
+
+    element_tag_fontsize : int
+                           Fontsize of the printed element tag on the meshgrid.
+
+    print_node_tag : bool
+                     If ``True``, the function prints the node tag at
+                     coordinates of the element nodes.
+
+    node_tag_fontsize : int
+                        Fontsize of the printed node tag on the meshgrid.
+                     
     Returns
     -------
 
     None
     '''
 
-    for element in elements:
-        msh_parser.plot_element_grid(nodes[element, 0], nodes[element, 1],
-                                     xi_LGL, eta_LGL, axes_handler)
-        msh_parser.plot_element_boundary(nodes[element, 0], nodes[element, 1],
-                                        axes_handler)
+    for element_tag, element in enumerate(elements):
+        plot_element_grid(nodes[element, 0], nodes[element, 1],
+                          xi_LGL, eta_LGL, axes_handler)
+        plot_element_boundary(nodes[element, 0], nodes[element, 1],
+                              axes_handler)
+        if print_element_tag == True:
+            element_centroid = utils.centroid(nodes[element, 0],
+                                              nodes[element, 1])
+            axes_handler.text(element_centroid[0], element_centroid[1],
+                              str(element_tag),
+                              fontsize = element_tag_fontsize, color = 'red')
+
+        if print_node_tag == True:
+            for node in element[:-1]:
+                axes_handler.text(nodes[node, 0], nodes[node, 1],
+                                  str(node),
+                                  fontsize = node_tag_fontsize)
 
     return
+
+
+def edge_location(node_indices):
+    '''
+    Finds the edge id to which given nodes, of a :math:`2^{nd}` order
+    quadrangular mesh, belong.
+    
+    +-------------+-------------+
+    | **Edge**    | **Edge ID** |
+    +-------------+-------------+
+    | Left Edge   | :math:`0`   |
+    +-------------+-------------+
+    | Bottom Edge | :math:`1`   |
+    +-------------+-------------+
+    | Right Edge  | :math:`2`   |
+    +-------------+-------------+
+    | Top Edge    | :math:`3`   |
+    +-------------+-------------+
+
+    Parameters
+    ----------
+    node_indices : np.array [3]
+                   Node id of the nodes belong to an edge.
+
+    Returns
+    -------
+        int
+        The edge id corresponding to an edge. If it is not an edge,
+        then returns ``None``
+    '''
+    
+    left_edge = np.array([0, 1, 2])
+    bottom_edge = np.array([2, 3, 4])
+    right_edge = np.array([4, 5, 6])
+    top_edge = np.array([0, 6, 7])
+
+    if len(np.intersect1d(left_edge, node_indices)) == 3:
+        return 0
+
+    if len(np.intersect1d(bottom_edge, node_indices)) == 3:
+        return 1
+
+    if len(np.intersect1d(right_edge, node_indices)) == 3:
+        return 2
+
+    if len(np.intersect1d(top_edge, node_indices)) == 3:
+        return 3
+    
+    return None
+
+
+def interelement_relations(elements):
+    '''
+    Finds the neighbouring elements and the physical boundaries for each of
+    the elements.
+    
+    Parameters
+    ----------
+    elements : np.array [N_elements 9]
+               The elements of a :math:`2^{nd}` order quadrangular meshgrid.
+
+    Returns
+    -------
+    element_relations : np.array[N_elements 4]
+                        Each element tag has :math:`4` indices, one for each
+                        edge. If the element has an edge common with some
+                        element, then that edge id stores the tag of the
+                        element with which it has common edge. If an edge of
+                        an element is a physical boundary, then it's value is
+                        :math:`-1`. Example, if element :math:`0` has its
+                        bottom edge common with element :math:`4` and its right
+                        edge common with element :math:`1`, the for this
+                        element, then the elements relations array for this
+                        element will will be ``[-1, 4, 1, -1]``.
+                        
+                        To find what each edge id represents, see this
+                        :py:meth:`dg_maxwell.msh_parser.edge_location`.
+    '''
+    element_relations = np.ones([elements.shape[0], 4]) * -1
+
+
+    for element_0_tag in np.arange(elements.shape[0]):
+        element_0 = elements[element_0_tag]
+
+        for element_tag in np.delete(np.arange(elements.shape[0]),
+                                     element_0_tag, axis = 0):
+            common_node_indices = np.nonzero(np.in1d(element_0,
+                                                     elements[element_tag]))[0]
+            if len(common_node_indices) == 3:
+                element_relations[
+                    element_0_tag,
+                    edge_location(common_node_indices)] = element_tag
+    
+    return element_relations
+

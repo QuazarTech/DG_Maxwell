@@ -140,8 +140,9 @@ def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
     Parameters
     ----------
     points       : np.ndarray [N, 2]
-                   :math:`(x, y)` coordinates of :math:`N` points. First and second
-                   column stores :math:`x` and :math:`y` coordinates of an point.
+                   :math:`(x, y)` coordinates of :math:`N` points. First and
+                   second column stores :math:`x` and :math:`y` coordinates
+                   of an point.
 
     axes_handler : matplotlib.axes.Axes
                    The plot handler being used to plot the element grid.
@@ -551,16 +552,16 @@ def multivariable_poly_value(poly_2d, x, y):
 
     return polynomial_value
 
-def gauss_quad_multivar_poly(poly_xi_eta, N_quad, gauss_points, gauss_weights):
+def gauss_quad_multivar_poly(poly_xi_eta, N_quad, advec_var):
     '''
     '''
     shape_poly_2d = poly_xi_eta.shape
-    xi_gauss  = gauss_points
+    xi_gauss      = advec_var.gauss_points
 
     Xi  = af.flat(af.transpose(af.tile(xi_gauss, 1, params.N_quad)))
     Eta = af.tile(xi_gauss, params.N_quad)
 
-    w_i = gauss_weights
+    w_i = advec_var.gauss_weights
 
     test_W_i = af.flat(af.transpose(af.tile(w_i, 1, params.N_quad)))
     test_W_j = af.tile(w_i, params.N_quad)
@@ -568,7 +569,8 @@ def gauss_quad_multivar_poly(poly_xi_eta, N_quad, gauss_points, gauss_weights):
     W_i = af.tile(test_W_i, d0 = 1, d1 = shape_poly_2d[2])
     W_j = af.tile(test_W_j, d0 = 1, d1 = shape_poly_2d[2])
 
-    P_xi_eta_quad_val = af.transpose(multivariable_poly_value(poly_xi_eta, Xi, Eta))
+    P_xi_eta_quad_val = af.transpose(multivariable_poly_value(poly_xi_eta,
+                                                              Xi, Eta))
     #P_xi_eta_quad_val = af.transpose(polyval_2d(poly_xi_eta, Xi, Eta))
 
     integral = af.sum(W_i * W_j * P_xi_eta_quad_val, dim = 0)
@@ -576,11 +578,10 @@ def gauss_quad_multivar_poly(poly_xi_eta, N_quad, gauss_points, gauss_weights):
     return af.transpose(integral)
 
 
-def lobatto_quad_multivar_poly(poly_xi_eta, N_quad, gv):
+def lobatto_quad_multivar_poly(poly_xi_eta, N_quad, advec_var):
     '''
     '''
     shape_poly_2d = shape(poly_xi_eta)
-    print(shape(poly_xi_eta), N_quad)
 
     xi_LGL  = lagrange.LGL_points(N_quad)
     eta_LGL = lagrange.LGL_points(N_quad)
@@ -605,7 +606,7 @@ def lobatto_quad_multivar_poly(poly_xi_eta, N_quad, gv):
     return af.transpose(integral)
 
 
-def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme, gauss_points, gauss_weights):
+def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme, advec_var):
     '''
     Evaluates the integral
 
@@ -640,7 +641,7 @@ def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme, gauss_points, gauss_
 
     '''
     if scheme is 'gauss':
-        return gauss_quad_multivar_poly(poly_xi_eta, N_quad, gauss_points, gauss_weights)
+        return gauss_quad_multivar_poly(poly_xi_eta, N_quad, advec_var)
 
     elif scheme is 'lobatto':
         return lobatto_quad_multivar_poly(poly_xi_eta, N_quad, gv)
@@ -649,3 +650,23 @@ def integrate_2d_multivar_poly(poly_xi_eta, N_quad, scheme, gauss_points, gauss_
         return
 
     return
+
+
+def centroid(x_nodes, y_nodes):
+    '''
+    Finds the centroid of a given :math:`2D` closed geometry.
+    
+    Parameters
+    ----------
+    x_nodes : np.array [N]
+              :math:`x` nodes of the vertices of the geometry
+
+    y_nodes : np.array [N]
+              :math:`y` nodes of the vertices of the geometry
+
+    Returns
+    -------
+        tuple(float, float)
+        :math:`(x, y)` coordinates of the centroid
+    '''
+    return (np.mean(x_nodes), np.mean(y_nodes))

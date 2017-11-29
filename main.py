@@ -28,22 +28,7 @@ gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
 
-#print(advection_2d.time_evolution(gv))
-gauss_points    = gv.gauss_points
-gauss_weights   = gv.gauss_weights
-dLp_Lq          = gv.dLp_xi_ij_Lq_eta_ij
-dLq_Lp          = gv.dLq_eta_ij_Lp_xi_ij
-xi_LGL          = gv.xi_LGL
-lagrange_coeffs = gv.lagrange_coeffs
-Li_Lj_coeffs    = gv.Li_Lj_coeffs
-u               = gv.u_e_ij
-lobatto_weights = gv.lobatto_weights_quadrature
-print('ping')
-
-#print(af.max(wave_equation.time_evolution(gv)))
 advection_2d.time_evolution(gv)
-for i in range(1):
-    (advection_2d.volume_integral(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, Li_Lj_coeffs, lobatto_weights).shape)
 
 
 #change_parameters(5)
