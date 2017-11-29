@@ -16,33 +16,6 @@ from dg_maxwell import utils
 af.set_backend(params.backend)
 af.set_device(params.device)
 
-plt.rcParams['figure.figsize'  ] = 9.6, 6.
-plt.rcParams['figure.dpi'      ] = 100
-plt.rcParams['image.cmap'      ] = 'jet'
-plt.rcParams['lines.linewidth' ] = 1.5
-plt.rcParams['font.family'     ] = 'serif'
-plt.rcParams['font.weight'     ] = 'bold'
-plt.rcParams['font.size'       ] = 20
-plt.rcParams['font.sans-serif' ] = 'serif'
-plt.rcParams['text.usetex'     ] = True
-plt.rcParams['axes.linewidth'  ] = 1.5
-plt.rcParams['axes.titlesize'  ] = 'medium'
-plt.rcParams['axes.labelsize'  ] = 'medium'
-plt.rcParams['xtick.major.size'] = 8
-plt.rcParams['xtick.minor.size'] = 4
-plt.rcParams['xtick.major.pad' ] = 8
-plt.rcParams['xtick.minor.pad' ] = 8
-plt.rcParams['xtick.color'     ] = 'k'
-plt.rcParams['xtick.labelsize' ] = 'medium'
-plt.rcParams['xtick.direction' ] = 'in'
-plt.rcParams['ytick.major.size'] = 8
-plt.rcParams['ytick.minor.size'] = 4
-plt.rcParams['ytick.major.pad' ] = 8
-plt.rcParams['ytick.minor.pad' ] = 8
-plt.rcParams['ytick.color'     ] = 'k'
-plt.rcParams['ytick.labelsize' ] = 'medium'
-plt.rcParams['ytick.direction' ] = 'in'
-
 
 def mapping_xi_to_x(x_nodes, xi):
     '''
@@ -133,7 +106,7 @@ def dx_dxi_analytical(x_nodes, xi):
     return analytical_dx_dxi
 
 
-def A_matrix():
+def A_matrix(gv):
     '''
     Calculates A matrix whose elements :math:`A_{pi}` are given by
     :math:`A_{pi} = \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
@@ -150,7 +123,7 @@ def A_matrix():
 
     '''
 
-    lagrange_coeffs = af.transpose(params.lagrange_coeffs)
+    lagrange_coeffs = af.transpose(gv.lagrange_coeffs)
 
     L_i = af.tile(lagrange_coeffs, 1, 1, params.N_LGL)
     L_i = af.reorder(L_i, 0, 2, 1)
@@ -159,10 +132,10 @@ def A_matrix():
 
     Li_Lp_coeffs = af.transpose(af.convolve1(L_i, L_p, conv_mode=af.CONV_MODE.EXPAND))
 
-    int_Li_Lp = (lagrange.integrate(Li_Lp_coeffs))
+    int_Li_Lp = (lagrange.integrate(Li_Lp_coeffs, gv))
     int_Li_Lp = af.moddims(int_Li_Lp, params.N_LGL, params.N_LGL)
 
-    dx_dxi   = params.dx_dxi 
+    dx_dxi   = gv.dx_dxi 
     A_matrix = dx_dxi * int_Li_Lp
     
     return A_matrix
@@ -193,7 +166,7 @@ def flux_x(u):
     return flux
 
 
-def volume_integral_flux(u_n):
+def volume_integral_flux(u_n, gv):
     '''
     Calculates the volume integral of flux in the wave equation.
 
@@ -224,10 +197,10 @@ def volume_integral_flux(u_n):
 
     '''
     # The coefficients of dLp / d\xi
-    diff_lag_coeff  = params.dl_dxi_coeffs
+    diff_lag_coeff  = gv.dl_dxi_coeffs
 
-    lobatto_nodes   = params.lobatto_quadrature_nodes
-    Lobatto_weights = params.lobatto_weights_quadrature
+    lobatto_nodes   = gv.lobatto_quadrature_nodes
+    Lobatto_weights = gv.lobatto_weights_quadrature
 
     nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, diff_lag_coeff.shape[1]))
     power        = af.flip(af.range(diff_lag_coeff.shape[1]))
@@ -262,12 +235,12 @@ def volume_integral_flux(u_n):
     else:
         #print('option3')
         analytical_flux_coeffs = flux_x(lagrange.\
-                                        lagrange_interpolation_u(u_n))
+                                        lagrange_interpolation_u(u_n, gv))
 
         analytical_flux_coeffs = af.moddims(af.transpose(af.tile(analytical_flux_coeffs, params.N_LGL)),\
                                                          params.N_LGL, params.N_LGL * params.N_Elements)
 
-        dl_dxi_coefficients    = af.tile(af.reorder(params.dl_dxi_coeffs, 1, 0), 1, params.N_Elements)
+        dl_dxi_coefficients    = af.tile(af.reorder(gv.dl_dxi_coeffs, 1, 0), 1, params.N_Elements)
 
         # The product of polynomials is calculated using af.convolve1
         volume_int_coeffs = af.convolve1(dl_dxi_coefficients,\
@@ -276,7 +249,7 @@ def volume_integral_flux(u_n):
         #print(volume_int_coeffs)
         volume_int_coeffs = af.reorder(volume_int_coeffs, 1, 0)
 
-        flux_integral = lagrange.integrate(volume_int_coeffs)
+        flux_integral = lagrange.integrate(volume_int_coeffs, gv)
         flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
 
 
@@ -322,7 +295,7 @@ def lax_friedrichs_flux(u_n):
 
     return boundary_flux
 
-def analytical_u_LGL(t_n):
+def analytical_u_LGL(t_n, gv):
     '''
 
     Calculates the analytical u at the LGL points.
@@ -341,12 +314,12 @@ def analytical_u_LGL(t_n):
 
     '''
 
-    time  = t_n * params.delta_t
-    u_t_n = af.sin(2 * np.pi * (params.element_LGL - params.c * time))
+    time  = t_n * gv.delta_t
+    u_t_n = af.sin(2 * np.pi * (gv.element_LGL - params.c * time))
 
     return u_t_n
 
-def surface_term(u_n):
+def surface_term(u_n, gv):
     '''
 
     Calculates the surface term,
@@ -374,8 +347,8 @@ def surface_term(u_n):
 
     '''
 
-    L_p_minus1   = params.lagrange_basis_value[:, 0]
-    L_p_1        = params.lagrange_basis_value[:, -1]
+    L_p_minus1   = gv.lagrange_basis_value[:, 0]
+    L_p_1        = gv.lagrange_basis_value[:, -1]
     f_i          = lax_friedrichs_flux(u_n)
     f_iminus1    = af.shift(f_i, 0, 1)
     surface_term = af.blas.matmul(L_p_1, f_i) - af.blas.matmul(L_p_minus1,
@@ -384,7 +357,7 @@ def surface_term(u_n):
     return surface_term
 
 
-def b_vector(u_n):
+def b_vector(u_n, gv):
     '''
     Calculates the b vector for N_Elements number of elements.
 
@@ -405,13 +378,13 @@ def b_vector(u_n):
 
     .. _Report: https://goo.gl/sNsXXK
     '''
-    volume_integral = volume_integral_flux(u_n)
-    Surface_term    = surface_term(u_n)
+    volume_integral = volume_integral_flux(u_n, gv)
+    Surface_term    = surface_term(u_n, gv)
     b_vector_array  = (volume_integral - Surface_term)
 
     return b_vector_array
 
-def RK4_timestepping(A_inverse, u, delta_t):
+def RK4_timestepping(A_inverse, u, delta_t, gv):
     '''
     Implementing the Runge-Kutta (RK4) method to evolve the wave.
 
@@ -432,16 +405,16 @@ def RK4_timestepping(A_inverse, u, delta_t):
     delta_u : arrayfire.Array [N_LGL N_Elements 1 1]
               The change in u at the mapped LGL points.
     '''
-    k1 = af.matmul(A_inverse, b_vector(u))
-    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2))
-    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2))
-    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t))
+    k1 = af.matmul(A_inverse, b_vector(u, gv))
+    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2, gv))
+    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2, gv))
+    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t, gv))
 
     delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
     return delta_u
 
-def RK6_timestepping(A_inverse, u, delta_t):
+def RK6_timestepping(A_inverse, u, delta_t, gv):
     '''
     Implementing the Runge-Kutta (RK6) method to evolve the wave.
 
@@ -496,7 +469,7 @@ def RK6_timestepping(A_inverse, u, delta_t):
     return delta_u
 
 
-def time_evolution():
+def time_evolution(gv):
     '''
     Solves the wave equation
     :math: `u^{t_n + 1} = b(t_n) \\times A`
@@ -523,10 +496,10 @@ def time_evolution():
         os.makedirs(results_directory)
 
 
-    A_inverse   = af.np_to_af_array(np.linalg.inv(A_matrix()))
-    delta_t     = params.delta_t
-    u           = params.u_init
-    time        = params.time
+    A_inverse   = af.np_to_af_array(np.linalg.inv(A_matrix(gv)))
+    delta_t     = gv.delta_t
+    u           = gv.u_init
+    time        = gv.time
 
     for t_n in trange(0, time.shape[0]):
 
@@ -545,12 +518,12 @@ def time_evolution():
        #                  * delta_t
 
         # Implementing RK 4 scheme
-        u += RK4_timestepping(A_inverse, u, delta_t)
+        u += RK4_timestepping(A_inverse, u, delta_t, gv)
 
         # Implementing RK 6 scheme
         #u += RK6_timestepping(A_inverse, u, delta_t)
 
-    u_analytical = analytical_u_LGL(t_n + 1)
+    u_analytical = analytical_u_LGL(t_n + 1, gv)
 
     print(u)
 

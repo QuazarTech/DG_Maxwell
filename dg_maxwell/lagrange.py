@@ -302,7 +302,7 @@ def lagrange_function_value(lagrange_coeff_array, xi_LGL):
 
 
 
-def integrate(integrand_coeffs, gauss_points, gauss_weights):
+def integrate(integrand_coeffs, gv):
     '''
     Performs integration according to the given quadrature method
     by taking in the coefficients of the polynomial and the number of
@@ -327,8 +327,8 @@ def integrate(integrand_coeffs, gauss_points, gauss_weights):
 
     if (params.scheme == 'gauss_quadrature'):
 
-        gaussian_nodes = gauss_points
-        Gauss_weights  = gauss_weights
+        gaussian_nodes = gv.gauss_points
+        Gauss_weights  = gv.gauss_weights
 
         nodes_tile   = af.transpose(af.tile(gaussian_nodes,
                                             1, integrand.shape[1]))
@@ -344,8 +344,8 @@ def integrate(integrand_coeffs, gauss_points, gauss_weights):
  
     if (params.scheme == 'lobatto_quadrature'):
 
-        lobatto_nodes   = lobatto_quadrature_nodes
-        Lobatto_weights = lobatto_weights_quadrature
+        lobatto_nodes   = gv.lobatto_quadrature_nodes
+        Lobatto_weights = gv.lobatto_weights_quadrature
 
         nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1,
                                             integrand.shape[1]))
@@ -361,7 +361,7 @@ def integrate(integrand_coeffs, gauss_points, gauss_weights):
 
     return integral
 
-def lagrange_interpolation_u(u):
+def lagrange_interpolation_u(u, gv):
     '''
     Calculates the coefficients of the Lagrange interpolation using
     the value of u at the mapped LGL points in the domain.
@@ -382,7 +382,7 @@ def lagrange_interpolation_u(u):
                                    by Lagrange interpolation. Each polynomial
                                    is of order N_LGL - 1.
     '''
-    lagrange_coeffs_tile = af.tile(params.lagrange_coeffs, 1, 1,\
+    lagrange_coeffs_tile = af.tile(gv.lagrange_coeffs, 1, 1,\
                                                params.N_Elements)
     reordered_u          = af.reorder(u, 0, 2, 1)
 
