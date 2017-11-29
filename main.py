@@ -28,8 +28,28 @@ gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
 
-advection_2d.time_evolution(gv)
+#advection_2d.time_evolution(gv)
 
+def test_interpolation():
+    '''
+    '''
+    threshold = 8e-8
+
+
+    N_LGL = 8
+    xi_LGL = lagrange.LGL_points(N_LGL)
+    xi_i  = af.flat(af.transpose(af.tile(xi_LGL, 1, N_LGL)))
+    eta_j = af.tile(xi_LGL, N_LGL)
+    f_ij  = np.e ** (xi_i + eta_j)
+    print(f_ij.shape, gv.Li_Lj_coeffs.shape)
+    interpolated_f = wave_equation_2d.lag_interpolation_2d(f_ij, gv.Li_Lj_coeffs)
+    xi  = utils.linspace(-1, 1, 8)
+    eta = utils.linspace(-1, 1, 8)
+    print(af.transpose(utils.polyval_2d(interpolated_f, xi, eta)))
+
+    assert (af.mean(af.transpose(utils.polyval_2d(interpolated_f, xi, eta))
+                    - np.e**(xi+eta)) < threshold)
+test_interpolation()
 
 #change_parameters(5)
 #print(advection_2d.time_evolution())

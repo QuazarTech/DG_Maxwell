@@ -473,7 +473,7 @@ def lag_interpolation_2d(u_e_ij, Li_Lj_coeffs):
                      Interpolation polynomials for ``N_elements`` elements.
     '''
     Li_xi_Lj_eta_coeffs = af.tile(Li_Lj_coeffs, d0 = 1,
-                                  d1 = 1, d2 = 1, d3 = params.N_LGL ** 2 * 100)
+                                  d1 = 1, d2 = 1, d3 = utils.shape(u_e_ij)[1])
     u_e_ij = af.reorder(u_e_ij, 2, 3, 0, 1)
 
     f_ij_Li_Lj_coeffs = af.broadcast(utils.multiply, u_e_ij,

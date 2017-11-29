@@ -211,19 +211,28 @@ def test_A_matrix():
 def test_interpolation():
     '''
     '''
-    threshold = 8e-8
-    
+    threshold = 8e-9
+    params.N_LGL = 8
+
+    gv = gvar.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, params.wave,\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
+
     N_LGL = 8
     xi_LGL = lagrange.LGL_points(N_LGL)
     xi_i  = af.flat(af.transpose(af.tile(xi_LGL, 1, N_LGL)))
     eta_j = af.tile(xi_LGL, N_LGL)
     f_ij  = np.e ** (xi_i + eta_j)
-    interpolated_f = wave_equation_2d.lag_interpolation_2d(f_ij, N_LGL)
+    interpolated_f = wave_equation_2d.lag_interpolation_2d(f_ij, gv.Li_Lj_coeffs)
     xi  = utils.linspace(-1, 1, 8)
     eta = utils.linspace(-1, 1, 8)
-    
+
     assert (af.mean(af.transpose(utils.polyval_2d(interpolated_f, xi, eta))
                     - np.e**(xi+eta)) < threshold)
+
 
 
 def test_Li_Lj_coeffs():
