@@ -31,8 +31,8 @@ gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
 #print(advection_2d.time_evolution(gv))
 gauss_points    = gv.gauss_points
 gauss_weights   = gv.gauss_weights
-dLp_Lq          = gv.dLp_xi_ij_Lq_eta_ij
-dLq_Lp          = gv.dLq_eta_ij_Lp_xi_ij
+dLp_Lq          = gv.dLp_Lq
+dLq_Lp          = gv.dLq_Lp
 xi_LGL          = gv.xi_LGL
 lagrange_coeffs = gv.lagrange_coeffs
 Li_Lj_coeffs    = gv.Li_Lj_coeffs
@@ -42,7 +42,7 @@ print(wave_equation.lax_friedrichs_flux(gv.u_init))
 print('ping')
 test_waveEqn.test_lax_friedrichs_flux()
 
-print(af.max(wave_equation.time_evolution(gv)))
+#print(af.max(wave_equation.time_evolution(gv)))
 advection_2d.time_evolution(gv)
 for i in range(1):
     (advection_2d.volume_integral(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, Li_Lj_coeffs, lobatto_weights).shape)
