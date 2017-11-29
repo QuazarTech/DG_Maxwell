@@ -14,6 +14,7 @@ from dg_maxwell import utils
 from dg_maxwell import msh_parser
 from dg_maxwell import lagrange
 from dg_maxwell import wave_equation_2d
+from dg_maxwell import global_variables as gvar
 
 af.set_backend(params.backend)
 af.set_device(params.device)
@@ -195,8 +196,14 @@ def test_A_matrix():
         'dg_maxwell/tests/wave_equation_2d/files/A_matrix_ref.csv'))
     
     params.N_LGL = 4
+    advec_var = gvar.advection_variables(params.N_LGL, params.N_quad,
+                                         params.x_nodes, params.N_Elements,
+                                         params.c, params.total_time,
+                                         params.wave, params.c_x, params.c_y,
+                                         params.courant, params.mesh_file,
+                                         params.total_time_2d)
     
-    A_matrix_test = wave_equation_2d.A_matrix(params.N_LGL)
+    A_matrix_test = wave_equation_2d.A_matrix(params.N_LGL, advec_var)
     
     assert af.max(af.abs(A_matrix_test - A_matrix_ref)) < threshold
 

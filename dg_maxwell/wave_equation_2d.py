@@ -251,7 +251,7 @@ def deta_dy (x_nodes, y_nodes, xi, eta):
     return dx_dxi_ / jacobian(x_nodes, y_nodes, xi, eta)
 
 
-def A_matrix(N_LGL, gauss_points, gauss_weights):
+def A_matrix(N_LGL, advec_var):
     '''
     Calculates the tensor product for the given ``params.N_LGL``.
     A tensor product element is given by:
@@ -313,8 +313,9 @@ def A_matrix(N_LGL, gauss_points, gauss_weights):
                                                                 d0 = 1,
                                                                 d1 = 2,
                                                                 d2 = 0))
-                                                     
-    A = utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp, params.N_quad, 'gauss', gauss_points, gauss_weights)
+
+    A = utils.integrate_2d_multivar_poly(Lp_Li_Lq_Lj_tp, params.N_quad,
+                                         'gauss', advec_var)
 
     A = af.moddims(A, d0 = N_LGL * N_LGL, d1 = N_LGL * N_LGL)
 
