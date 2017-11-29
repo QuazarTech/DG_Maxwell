@@ -10,9 +10,10 @@ import numpy as np
 import arrayfire as af
 
 from dg_maxwell import params
+from dg_maxwell import global_variables
 
 pl.rcParams['figure.figsize'  ] = 9.6, 6.
-pl.rcParams['figure.dpi'      ] = 300
+pl.rcParams['figure.dpi'      ] = 100
 pl.rcParams['image.cmap'      ] = 'jet'
 pl.rcParams['lines.linewidth' ] = 1.5
 pl.rcParams['font.family'     ] = 'serif'
@@ -38,6 +39,24 @@ pl.rcParams['ytick.color'     ] = 'k'
 pl.rcParams['ytick.labelsize' ] = 'medium'
 pl.rcParams['ytick.direction' ] = 'in'
 
+gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, params.wave,\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
+#print(advection_2d.time_evolution(gv))
+gauss_points    = gv.gauss_points
+gauss_weights   = gv.gauss_weights
+dLp_Lq          = gv.dLp_xi_ij_Lq_eta_ij
+dLq_Lp          = gv.dLq_eta_ij_Lp_xi_ij
+xi_LGL          = gv.xi_LGL
+lagrange_coeffs = gv.lagrange_coeffs
+Li_Lj_coeffs    = gv.Li_Lj_coeffs
+u               = gv.u_e_ij
+lobatto_weights = gv.lobatto_weights_quadrature
+x_e_ij          = gv.x_e_ij
+y_e_ij          = gv.y_e_ij
 
 
 def contour_2d(u, index):
@@ -45,8 +64,8 @@ def contour_2d(u, index):
     '''
     color_levels = np.linspace(-1.1, 1.1, 100)
     u_plot = af.flip(af.moddims(u, params.N_LGL, params.N_LGL, 10, 10), 0)
-    x_plot = af.flip(af.moddims(params.x_e_ij, params.N_LGL, params.N_LGL, 10, 10), 0)
-    y_plot = af.flip(af.moddims(params.y_e_ij, params.N_LGL, params.N_LGL, 10, 10), 0)
+    x_plot = af.flip(af.moddims(x_e_ij, params.N_LGL, params.N_LGL, 10, 10), 0)
+    y_plot = af.flip(af.moddims(y_e_ij, params.N_LGL, params.N_LGL, 10, 10), 0)
 
 
     x_contour = af.np_to_af_array(np.zeros([params.N_LGL * 10, params.N_LGL * 10]))
@@ -92,29 +111,29 @@ if not os.path.exists(results_directory):
     os.makedirs(results_directory)
 
 # The directory where h5py files are stored.
-h5py_directory = 'results/hdf5_%02d' %int(params.N_LGL)
-
-path, dirs, files = os.walk(h5py_directory).__next__()
-file_count = len(files)
-print(file_count)
-
-
-for i in range(0, file_count):
-    fig = pl.figure()
-    h5py_data = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(20 * i)) + '.hdf5', 'r')
-    u_LGL     = (h5py_data['u_i'][:])
-    pl.plot(params.element_LGL, u_LGL)
-    pl.xlabel('x')
-    pl.ylabel('u')
-    pl.xlim(-1, 1)
-    pl.ylim(-2, 2)
-    pl.title('Time = %f' % (i * 20 * params.delta_t))
-    fig.savefig('results/1D_Wave_images/%04d' %(i) + '.png')
-    pl.close('all')
-
-# Creating a movie with the images created.
-os.system("cd results/1D_Wave_images && ffmpeg -f image2 -i %04d.png -vcodec mpeg4\
-	  -mbd rd -trellis 2 -cmp 2 -g 300 -pass 1 -r 25 -b 18000000 movie.mp4\
-	  && rm -f ffmpeg2pass-0.log\
-          && mv movie.mp4 1D_wave_advection.mp4\
-          && mv 1D_wave_advection.mp4 ~/git/DG_Maxwell/results && rm *")
+#h5py_directory = 'results/hdf5_%02d' %int(params.N_LGL)
+#
+#path, dirs, files = os.walk(h5py_directory).__next__()
+#file_count = len(files)
+#print(file_count)
+#
+#
+#for i in range(0, file_count):
+#    fig = pl.figure()
+#    h5py_data = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(20 * i)) + '.hdf5', 'r')
+#    u_LGL     = (h5py_data['u_i'][:])
+#    pl.plot(params.element_LGL, u_LGL)
+#    pl.xlabel('x')
+#    pl.ylabel('u')
+#    pl.xlim(-1, 1)
+#    pl.ylim(-2, 2)
+#    pl.title('Time = %f' % (i * 20 * params.delta_t))
+#    fig.savefig('results/1D_Wave_images/%04d' %(i) + '.png')
+#    pl.close('all')
+#
+## Creating a movie with the images created.
+#os.system("cd results/1D_Wave_images && ffmpeg -f image2 -i %04d.png -vcodec mpeg4\
+#	  -mbd rd -trellis 2 -cmp 2 -g 300 -pass 1 -r 25 -b 18000000 movie.mp4\
+#	  && rm -f ffmpeg2pass-0.log\
+#          && mv movie.mp4 1D_wave_advection.mp4\
+#          && mv 1D_wave_advection.mp4 ~/git/DG_Maxwell/results && rm *")

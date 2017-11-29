@@ -37,10 +37,11 @@ xi_LGL          = gv.xi_LGL
 lagrange_coeffs = gv.lagrange_coeffs
 Li_Lj_coeffs    = gv.Li_Lj_coeffs
 u               = gv.u_e_ij
+lobatto_weights = gv.lobatto_weights_quadrature
 
 advection_2d.time_evolution(gv)
-#for i in range(10):
-#    print(advection_2d.volume_integral(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, Li_Lj_coeffs).shape)
+for i in range(1):
+    (advection_2d.volume_integral(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, Li_Lj_coeffs, lobatto_weights).shape)
 
 
 #change_parameters(5)
