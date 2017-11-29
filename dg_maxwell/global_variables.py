@@ -71,21 +71,6 @@ class advection_variables:
         -------
         None
         '''
-        
-        params.N_LGL   = N_LGL
-        params.N_quad  = N_quad
-        params.x_nodes = x_nodes
-
-        params.N_Elements = N_elements
-        params.c          = c
-        params.total_time = total_time
-        params.wave       = wave
-        params.c_x        = c_x
-        params.c_y        = c_y
-        params.courant    = courant
-        params.mesh_file  = mesh_file
-
-        params.total_time_2d = total_time_2d
 
         self.xi_LGL = lagrange.LGL_points(N_LGL)
 

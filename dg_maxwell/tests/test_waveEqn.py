@@ -30,9 +30,14 @@ def test_A_matrix():
     threshold = 1e-8
 
 
-    gv = global_variables.advection_variables(8, 10,\
-                                          params.x_nodes, 10,\
-                                          params.c, params.total_time, 'gaussian',\
+    params.N_LGL      = 8
+    params.N_quad     = 10
+    params.N_Elements = 10
+    wave              = 'gaussian'
+
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, wave,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
 
@@ -155,12 +160,17 @@ def test_dx_dxi():
     '''
     threshold = 1e-8
 
+    params.N_LGL      = 8
+    params.N_quad     = 10
+    params.N_Elements = 10
+    wave              = 'gaussian'
 
-    gv = global_variables.advection_variables(8, 10,\
-                                          params.x_nodes, 10,\
-                                          params.c, params.total_time, params.wave,\
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, wave,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
+
 
 
     nodes = np.array([7, 10], dtype = np.float64)
@@ -216,9 +226,14 @@ def test_lagrange_coeffs():
     '''
     threshold = 1e-10
 
-    gv = global_variables.advection_variables(8, 10,\
-                                          params.x_nodes, 10,\
-                                          params.c, params.total_time, params.wave,\
+    params.N_LGL      = 8
+    params.N_quad     = 10
+    params.N_Elements = 10
+    wave              = 'gaussian'
+
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, wave,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
 
@@ -312,11 +327,17 @@ def test_volume_integral_flux():
     threshold = 4e-9
     params.c = 1
     
-    gv = global_variables.advection_variables(8, 10,\
-                                          params.x_nodes, 10,\
-                                          params.c, params.total_time, 'gaussian',\
+    params.N_LGL      = 8
+    params.N_quad     = 10
+    params.N_Elements = 10
+    wave              = 'gaussian'
+
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, wave,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
+
 
     reference_flux_integral = af.transpose(af.interop.np_to_af_array(np.array
         ([
@@ -364,9 +385,14 @@ def test_lax_friedrichs_flux():
     '''
     threshold = 1e-14
 
-    gv = global_variables.advection_variables(8, 10,\
-                                          params.x_nodes, 10,\
-                                          params.c, params.total_time, 'gaussian',\
+    params.N_LGL      = 8
+    params.N_quad     = 10
+    params.N_Elements = 10
+    wave              = 'gaussian'
+
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, wave,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
 
@@ -384,11 +410,17 @@ def test_surface_term():
     threshold = 1e-13
     params.c = 1
 
-    gv = global_variables.advection_variables(8, 10,\
-                                          params.x_nodes, 10,\
-                                          params.c, params.total_time, 'gaussian',\
+    params.N_LGL      = 8
+    params.N_quad     = 10
+    params.N_Elements = 10
+    wave              = 'gaussian'
+
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, wave,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
+
 
     analytical_f_i        = (gv.u_init[-1, :])
     analytical_f_i_minus1 = (af.shift(gv.u_init[-1, :], 0, 1))
@@ -416,11 +448,17 @@ def test_b_vector():
     threshold = 1e-13
     params.c = 1
     
-    gv = global_variables.advection_variables(8, 10,\
-                                          params.x_nodes, 10,\
-                                          params.c, params.total_time, 'gaussian',\
+    params.N_LGL      = 8
+    params.N_quad     = 10
+    params.N_Elements = 10
+    wave              = 'gaussian'
+
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, wave,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
+
 
     u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(gv),\
                                                   gv.u_init)
@@ -439,11 +477,17 @@ def test_integrate():
     '''
     threshold = 1e-14
 
-    gv = global_variables.advection_variables(8, 10,\
-                                          params.x_nodes, 10,\
-                                          params.c, params.total_time, 'gaussian',\
+    params.N_LGL      = 8
+    params.N_quad     = 10
+    params.N_Elements = 10
+    wave              = 'gaussian'
+
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, wave,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
+
 
     test_coeffs = af.np_to_af_array(np.array([7., 6, 4, 2, 1, 3, 9, 2]))
     # The coefficients of a test polynomial
