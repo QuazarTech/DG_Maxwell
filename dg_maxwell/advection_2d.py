@@ -37,7 +37,7 @@ def volume_integral(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, Li_Lj_coeffs
     c_x = params.c_x
     c_y = params.c_y
 
-    if (params.volume_integrand_scheme_2d == 'Lobatto'):
+    if (params.volume_integrand_scheme_2d == 'Lobatto' and params.N_LGL == params.N_quad):
         w_i = af.flat(af.transpose(af.tile(lobatto_weights, 1, params.N_LGL)))
         w_j = af.tile(lobatto_weights, params.N_LGL)
         wi_wj_dLp_xi = af.broadcast(utils.multiply, w_i * w_j, dLp_Lq)
