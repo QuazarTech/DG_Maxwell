@@ -22,10 +22,10 @@ from dg_maxwell import wave_equation_2d
 x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
 
 # The number of LGL points into which an element is split.
-N_LGL      = 8
+N_LGL      = 7
 
 # Number of elements the domain is to be divided into.
-N_Elements = 10
+N_Elements = 9
 
 # The scheme to be used for integration. Values are either
 # 'gauss_quadrature' or 'lobatto_quadrature'
@@ -35,7 +35,7 @@ scheme     = 'gauss_quadrature'
 volume_integral_scheme = 'lobatto_quadrature'
 
 # The number quadrature points to be used for integration.
-N_quad     = N_LGL
+N_quad     = 8
 
 # Wave speed.
 c          = 1

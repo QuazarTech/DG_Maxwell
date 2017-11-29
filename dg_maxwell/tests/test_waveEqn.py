@@ -14,6 +14,7 @@ from dg_maxwell import lagrange
 from dg_maxwell import wave_equation
 from dg_maxwell import wave_equation_2d
 from dg_maxwell import isoparam
+from dg_maxwell import global_variables
 from dg_maxwell import utils
 
 af.set_backend(params.backend)
@@ -21,127 +22,21 @@ af.set_device(params.device)
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
 
 
-
-def change_parameters(LGL, Elements, quad, wave='sin'):
-    '''
-
-    Changes the parameters of the simulation. Used only for convergence tests.
-
-    Parameters
-    ----------
-    LGL      : int
-               The new N_LGL.
-
-    Elements : int
-               The new N_Elements.
-
-    '''
-    # The domain of the function.
-    params.x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
-
-    # The number of LGL points into which an element is split.
-    params.N_LGL      = LGL
-
-    # Number of elements the domain is to be divided into.
-    params.N_Elements = Elements
-
-    # The number quadrature points to be used for integration.
-    params.N_quad     = quad
-
-    # Array containing the LGL points in xi space.
-    params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
-
-
-    # N_Gauss number of Gauss nodes.
-    params.gauss_points  = af.np_to_af_array(lagrange.gauss_nodes\
-                                                    (params.N_quad))
-    # The Gaussian weights.
-    params.gauss_weights = lagrange.gaussian_weights(params.N_quad)
-
-    # The lobatto nodes to be used for integration.
-    params.lobatto_quadrature_nodes   = lagrange.LGL_points(params.N_quad)
-
-    # The lobatto weights to be used for integration.
-    params.lobatto_weights_quadrature = lagrange.lobatto_weights\
-                                        (params.N_quad)
-
-    # A list of the Lagrange polynomials in poly1d form.
-    #params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
-
-    # An array containing the coefficients of the lagrange basis polynomials.
-    params.lagrange_coeffs  = lagrange.lagrange_polynomial_coeffs(params.xi_LGL)
-
-    # Refer corresponding functions.
-    params.lagrange_basis_value = lagrange.lagrange_function_value\
-                                           (params.lagrange_coeffs)
-
-
-    # While evaluating the volume integral using N_LGL
-    # lobatto quadrature points, The integration can be vectorized
-    # and in this case the coefficients of the differential of the
-    # Lagrange polynomials is required
-    params.diff_pow      = (af.flip(af.transpose(af.range(params.N_LGL - 1) + 1), 1))
-    params.dl_dxi_coeffs = (af.broadcast(utils.multiply, params.lagrange_coeffs[:, :-1], params.diff_pow))
-
-
-
-    # Obtaining an array consisting of the LGL points mapped onto the elements.
-
-    params.element_size    = af.sum((params.x_nodes[1] - params.x_nodes[0])\
-                                                        / params.N_Elements)
-    params.elements_xi_LGL = af.constant(0, params.N_Elements, params.N_LGL)
-    params.elements        = utils.linspace(af.sum(params.x_nodes[0]),
-                             af.sum(params.x_nodes[1] - params.element_size),\
-                                                            params.N_Elements)
-    params.np_element_array   = np.concatenate((af.transpose(params.elements),
-                                   af.transpose(params.elements +\
-                                                       params.element_size)))
-
-    params.element_mesh_nodes = utils.linspace(af.sum(params.x_nodes[0]),
-                                        af.sum(params.x_nodes[1]),\
-                                               params.N_Elements + 1)
-
-    params.element_array = af.transpose(af.np_to_af_array\
-                                       (params.np_element_array))
-    params.element_LGL   = wave_equation.mapping_xi_to_x(af.transpose\
-                                          (params.element_array), params.xi_LGL)
-
-    # The minimum distance between 2 mapped LGL points.
-    params.delta_x = af.min((params.element_LGL - af.shift(params.element_LGL, 1, 0))[1:, :])
-
-    # dx_dxi for elements of equal size.
-    params. dx_dxi = af.mean(wave_equation.dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
-                                   params.xi_LGL))
-
-
-    # The value of time-step.
-    params.delta_t = params.delta_x / (4 * params.c)
-
-    # Array of timesteps seperated by delta_t.
-    params.time    = utils.linspace(0, int(params.total_time / params.delta_t) * params.delta_t,
-                                                        int(params.total_time / params.delta_t))
-
-    # Initializing the amplitudes. Change u_init to required initial conditions.
-    if (wave=='sin'):
-        params.u_init     = af.sin(2 * np.pi * params.element_LGL)
-
-    if (wave=='gaussian'):
-        params.u_init = np.e ** (-(params.element_LGL) ** 2 / 0.4 ** 2)
-
-    params.u          = af.constant(0, params.N_LGL, params.N_Elements, params.time.shape[0],\
-                                     dtype = af.Dtype.f64)
-    params.u[:, :, 0] = params.u_init
-
-    return
-
 def test_A_matrix():
     '''
     Test function to check the A matrix obtained from wave_equation module with
     one obtained by numerical integral solvers.
     '''
     threshold = 1e-8
+
+
+    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
+                                          params.x_nodes, params.N_Elements,\
+                                          params.c, params.total_time, params.wave,\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
     
-    change_parameters(8, 10, 11, 'gaussian')
     
     reference_A_matrix = 0.1 * af.interop.np_to_af_array(np.array([\
 
@@ -179,7 +74,7 @@ def test_A_matrix():
 
     ]))
     
-    test_A_matrix = wave_equation.A_matrix()
+    test_A_matrix = wave_equation.A_matrix(gv)
     print(test_A_matrix, reference_A_matrix)
     error_array = af.abs(reference_A_matrix - test_A_matrix)
     
@@ -259,12 +154,20 @@ def test_dx_dxi():
     differential would be a constant. The check has a tolerance 1e-7.
     '''
     threshold = 1e-8
-    change_parameters(8, 10, 11, 'gaussian')
+
+
+    gv = global_variables.advection_variables(8, 10,\
+                                          params.x_nodes, 10,\
+                                          params.c, params.total_time, params.wave,\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
+
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
     check_dx_dxi = abs((af.mean(wave_equation.dx_dxi_numerical
-                    (test_nodes,params.xi_LGL)) - analytical_dx_dxi)) <= threshold
+                    (test_nodes,gv.xi_LGL)) - analytical_dx_dxi)) <= threshold
     
     assert check_dx_dxi
 
@@ -313,7 +216,12 @@ def test_lagrange_coeffs():
     '''
     threshold = 1e-10
 
-    change_parameters(8, 10, 11, 'gaussian')
+    gv = global_variables.advection_variables(8, 10,\
+                                          params.x_nodes, 10,\
+                                          params.c, params.total_time, params.wave,\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
     basis_array_analytical = np.zeros([8, 8])
     
     basis_array_analytical[0] = np.array([-3.351562500008004,\
@@ -386,9 +294,7 @@ def test_lagrange_coeffs():
                 
     basis_array_analytical = af.interop.np_to_af_array(basis_array_analytical)
     
-    print(af.max(af.abs(basis_array_analytical - params.lagrange_coeffs)))
-    
-    assert af.max(af.abs(basis_array_analytical - params.lagrange_coeffs)) \
+    assert af.max(af.abs(basis_array_analytical - gv.lagrange_coeffs)) \
             < threshold
 
 
@@ -405,9 +311,14 @@ def test_volume_integral_flux():
     '''
     threshold = 4e-9
     params.c = 1
-    change_parameters(8, 10, 11, 'gaussian')
     
-    referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array
+    gv = global_variables.advection_variables(8, 10,\
+                                          params.x_nodes, 10,\
+                                          params.c, params.total_time, 'gaussian',\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
+    reference_flux_integral = af.transpose(af.interop.np_to_af_array(np.array
         ([
         [-0.002016634876668093, -0.000588597708116113, -0.0013016773719126333,\
         -0.002368387579324652, -0.003620502047659841, -0.004320197094090966,
@@ -442,8 +353,9 @@ def test_volume_integral_flux():
 
          ])))
     
-    numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
-    assert (af.mean(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
+    numerical_flux = wave_equation.volume_integral_flux(gv.u_init[:, :], gv)
+    assert (af.mean(af.abs(numerical_flux - reference_flux_integral)) < threshold)
+    return numerical_flux
 
 def test_lax_friedrichs_flux():
     '''
@@ -451,11 +363,16 @@ def test_lax_friedrichs_flux():
     module.
     '''
     threshold = 1e-14
-    
-    params.c = 1
-    
-    f_i = wave_equation.lax_friedrichs_flux(params.u[:, :, 0])
-    analytical_lax_friedrichs_flux = params.u[-1, :, 0]
+
+    gv = global_variables.advection_variables(8, 10,\
+                                          params.x_nodes, 10,\
+                                          params.c, params.total_time, 'gaussian',\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
+    f_i = wave_equation.lax_friedrichs_flux(gv.u_init)
+    analytical_lax_friedrichs_flux = gv.u_init[-1, :]
+
     assert af.max(af.abs(analytical_lax_friedrichs_flux - f_i)) < threshold
 
 
@@ -466,11 +383,15 @@ def test_surface_term():
     '''
     threshold = 1e-13
     params.c = 1
-    
-    change_parameters(8, 10, 10, 'gaussian')
 
-    analytical_f_i        = (params.u[-1, :, 0])
-    analytical_f_i_minus1 = (af.shift(params.u[-1, :, 0], 0, 1))
+    gv = global_variables.advection_variables(8, 10,\
+                                          params.x_nodes, 10,\
+                                          params.c, params.total_time, 'gaussian',\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
+    analytical_f_i        = (gv.u_init[-1, :])
+    analytical_f_i_minus1 = (af.shift(gv.u_init[-1, :], 0, 1))
     
     L_p_1                 = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
     L_p_1[params.N_LGL - 1] = 1
@@ -481,7 +402,7 @@ def test_surface_term():
     analytical_surface_term = af.blas.matmul(L_p_1, analytical_f_i)\
         - af.blas.matmul(L_p_minus1, analytical_f_i_minus1)
     
-    numerical_surface_term = (wave_equation.surface_term(params.u[:, :, 0]))
+    numerical_surface_term = (wave_equation.surface_term(gv.u_init[:, :], gv))
     assert af.max(af.abs(analytical_surface_term - numerical_surface_term)) \
         < threshold
     return analytical_surface_term
@@ -495,15 +416,19 @@ def test_b_vector():
     threshold = 1e-13
     params.c = 1
     
-    change_parameters(8, 10, 10, 'gaussian')
+    gv = global_variables.advection_variables(8, 10,\
+                                          params.x_nodes, 10,\
+                                          params.c, params.total_time, 'gaussian',\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
 
-    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(),\
-                                                  params.u[:, :, 0])
-    volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
+    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(gv),\
+                                                  gv.u_init)
+    volume_integral_flux = test_volume_integral_flux()
     surface_term         = test_surface_term()
     b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\
-                                    (surface_term)) * params.delta_t
-    b_vector_array       = wave_equation.b_vector(params.u[:, :, 0])
+                                    (surface_term)) * gv.delta_t
+    b_vector_array       = wave_equation.b_vector(gv.u_init, gv)
     
     assert (b_vector_analytical - b_vector_array) < threshold
 
@@ -514,13 +439,19 @@ def test_integrate():
     '''
     threshold = 1e-14
 
+    gv = global_variables.advection_variables(8, 10,\
+                                          params.x_nodes, 10,\
+                                          params.c, params.total_time, 'gaussian',\
+                                          params.c_x, params.c_y, params.courant,\
+                                          params.mesh_file, params.total_time_2d)
+
     test_coeffs = af.np_to_af_array(np.array([7., 6, 4, 2, 1, 3, 9, 2]))
     # The coefficients of a test polynomial
     # `7x^7 + 6x^6 + 4x^5 + 2x^4 + x^3 + 3x^2 + 9x + 2`
 
     # Using integrate() function.
 
-    calculated_integral = lagrange.integrate(af.transpose(test_coeffs))
+    calculated_integral = lagrange.integrate(af.transpose(test_coeffs), gv)
 
     analytical_integral = 8.514285714285714
 

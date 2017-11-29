@@ -38,7 +38,11 @@ lagrange_coeffs = gv.lagrange_coeffs
 Li_Lj_coeffs    = gv.Li_Lj_coeffs
 u               = gv.u_e_ij
 lobatto_weights = gv.lobatto_weights_quadrature
+print(wave_equation.lax_friedrichs_flux(gv.u_init))
+print('ping')
+test_waveEqn.test_lax_friedrichs_flux()
 
+print(af.max(wave_equation.time_evolution(gv)))
 advection_2d.time_evolution(gv)
 for i in range(1):
     (advection_2d.volume_integral(u, gauss_points, gauss_weights, dLp_Lq, dLq_Lp, Li_Lj_coeffs, lobatto_weights).shape)
@@ -47,14 +51,14 @@ for i in range(1):
 #change_parameters(5)
 #print(advection_2d.time_evolution())
 #
-##L1_norm = np.zeros([5])
-##for LGL in range(3, 8):
-##    print(LGL)
-##    change_parameters(LGL)
-##    L1_norm[LGL - 3] = (advection_2d.time_evolution())
-##    print(L1_norm[LGL - 3])
-##
-##print(L1_norm)
+#L1_norm = np.zeros([5])
+#for LGL in range(3, 8):
+#    print(LGL)
+#    change_parameters(LGL)
+#    L1_norm[LGL - 3] = (advection_2d.time_evolution())
+#    print(L1_norm[LGL - 3])
+#
+#print(L1_norm)
 #
 #L1_norm = np.array([8.20284941e-02, 1.05582246e-02, 9.12125969e-04, 1.26001632e-04, 8.97007162e-06, 1.0576058855881385e-06])
 #LGL = (np.arange(6) + 3).astype(float)
