@@ -30,9 +30,9 @@ def test_A_matrix():
     threshold = 1e-8
 
 
-    gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
-                                          params.x_nodes, params.N_Elements,\
-                                          params.c, params.total_time, params.wave,\
+    gv = global_variables.advection_variables(8, 10,\
+                                          params.x_nodes, 10,\
+                                          params.c, params.total_time, 'gaussian',\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
 
