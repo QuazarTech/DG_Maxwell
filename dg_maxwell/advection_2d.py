@@ -79,7 +79,7 @@ def lax_friedrichs_flux(u):
 
     u_xi_minus1_boundary_right   = u[:, :, :params.N_LGL]
     u_xi_minus1_boundary_left    = af.shift(u[:, :, -params.N_LGL:], d0=0, d1 = 1)
-    u[:, :, :params.N_LGL] = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
+    u[:, :, :params.N_LGL]       = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
 
     diff_u_boundary[:, :, :params.N_LGL] = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
 
@@ -97,8 +97,6 @@ def lax_friedrichs_flux(u):
     diff_u_boundary[:, :, 0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_up\
                                                                -u_eta_minus1_boundary_down)
 
-
-
     u_eta_1_boundary_down = u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
     u_eta_1_boundary_up   = af.shift(u[:, :, 0:-params.N_LGL + 1:params.N_LGL], d0=1)
 
@@ -107,8 +105,6 @@ def lax_friedrichs_flux(u):
 
     diff_u_boundary[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
                                                                              -u_eta_1_boundary_down)
-
-
 
     u = af.moddims(af.reorder(u, 2, 1, 0), params.N_LGL ** 2, 100)
     diff_u_boundary = af.moddims(af.reorder(diff_u_boundary, 2, 1, 0), params.N_LGL ** 2, 100)
@@ -266,15 +262,6 @@ def time_evolution(gv):
     delta_t   = gv.delta_t_2d
     time      = gv.time_2d
     u_init    = gv.u_e_ij
-
-    gauss_points    = gv.gauss_points
-    gauss_weights   = gv.gauss_weights
-    dLp_Lq          = gv.dLp_Lq
-    dLq_Lp          = gv.dLq_Lp
-    xi_LGL          = gv.xi_LGL
-    lagrange_coeffs = gv.lagrange_coeffs
-    Li_Lj_coeffs    = gv.Li_Lj_coeffs
-    lobatto_weights = gv.lobatto_weights_quadrature
 
     A_inverse = af.np_to_af_array(np.linalg.inv(np.array(A_matrix(gv))))
 

@@ -13,7 +13,7 @@ from dg_maxwell import params
 from dg_maxwell import global_variables
 
 pl.rcParams['figure.figsize'  ] = 9.6, 6.
-pl.rcParams['figure.dpi'      ] = 100
+pl.rcParams['figure.dpi'      ] = 300
 pl.rcParams['image.cmap'      ] = 'jet'
 pl.rcParams['lines.linewidth' ] = 1.5
 pl.rcParams['font.family'     ] = 'serif'
@@ -48,8 +48,6 @@ gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
 #print(advection_2d.time_evolution(gv))
 gauss_points    = gv.gauss_points
 gauss_weights   = gv.gauss_weights
-dLp_Lq          = gv.dLp_xi_ij_Lq_eta_ij
-dLq_Lp          = gv.dLq_eta_ij_Lp_xi_ij
 xi_LGL          = gv.xi_LGL
 lagrange_coeffs = gv.lagrange_coeffs
 Li_Lj_coeffs    = gv.Li_Lj_coeffs
@@ -57,6 +55,7 @@ u               = gv.u_e_ij
 lobatto_weights = gv.lobatto_weights_quadrature
 x_e_ij          = gv.x_e_ij
 y_e_ij          = gv.y_e_ij
+delta_t_2d      = gv.delta_t_2d
 
 
 def contour_2d(u, index):
@@ -91,14 +90,14 @@ def contour_2d(u, index):
     pl.contourf(x_contour, y_contour, u_contour, 200, levels = color_levels, cmap = 'jet')
     pl.gca().set_aspect('equal')
     pl.colorbar()
-    pl.title('Time = %f' % (index * 10 * 1e-3))
+    pl.title('Time = %.2f' %(index * 10 * delta_t_2d))
     fig.savefig('results/2D_Wave_images/%04d' %(index) + '.png')
     pl.close('all')
     return
            
 
 for i in trange(201):
-    h5py_data = h5py.File('results/2d_hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(10 * i)) + '.hdf5', 'r')
+    h5py_data = h5py.File('results/xi_eta_2d_hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(10 * i)) + '.hdf5', 'r')
     u_LGL     = af.np_to_af_array(h5py_data['u_i'][:])
     contour_2d(u_LGL, i)
     if i > 199 :

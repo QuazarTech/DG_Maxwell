@@ -202,6 +202,7 @@ class advection_variables:
         self.time_2d = utils.linspace(0, int(total_time_2d / self.delta_t_2d)
                                       * self.delta_t_2d,
                                       int(total_time_2d / self.delta_t_2d))
+        self.sqrt_det_g = wave_equation_2d.sqrt_det_g(self.nodes[self.elements[0]][:, 0], \
+                        self.nodes[self.elements[0]][:, 1], np.array(self.xi_i), np.array(self.eta_j))
 
         return
-    

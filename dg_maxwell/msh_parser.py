@@ -404,4 +404,3 @@ def interelement_relations(elements):
                     edge_location(common_node_indices)] = element_tag
     
     return element_relations
-

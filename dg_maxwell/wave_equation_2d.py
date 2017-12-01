@@ -3,11 +3,14 @@
 
 import numpy as np
 import arrayfire as af
-af.set_backend('cpu')
+import os
+import h5py
+
 
 from dg_maxwell import params
 from dg_maxwell import isoparam
 from dg_maxwell import msh_parser
+from dg_maxwell import advection_2d
 from dg_maxwell import lagrange
 from dg_maxwell import utils
 
@@ -321,6 +324,13 @@ def A_matrix(N_LGL, advec_var):
 
     return A
 
+def A_matrix_xi_eta(N_LGL, advec_var):
+    '''
+    '''
+    A_xi_eta = A_matrix(N_LGL, advec_var) * np.mean(advec_var.sqrt_det_g)
+    return A_xi_eta
+
+
 
 def F_x(u):
     '''
@@ -363,16 +373,16 @@ def g_uu(x_nodes, y_nodes, xi, eta):
     b = gCov[0][1]
     c = gCov[1][0]
     d = gCov[1][1]
-    
+
     det = (a*d - b*c)
-    
+
     ans = [[d / det, -b / det],
            [-c / det, a / det]]
-    
+
     return ans
 
 
-def sqrtgDet(x_nodes, y_nodes, xi, eta):
+def sqrt_det_g(x_nodes, y_nodes, xi, eta):
     '''
     '''
     gCov = g_dd(x_nodes, y_nodes, xi, eta)
@@ -384,33 +394,35 @@ def sqrtgDet(x_nodes, y_nodes, xi, eta):
     
     return (a*d - b*c)**0.5
 
-def F_xi(u, nodes, elements):
+def F_xi(u, gv):
     '''
     '''
-    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+    nodes    = gv.nodes
+    elements = gv.elements
 
     xi_LGL = lagrange.LGL_points(params.N_LGL)
     xi_i   = af.flat(af.transpose(af.tile(xi_LGL, params.N_LGL)))
     eta_j  = af.tile(xi_LGL, params.N_LGL)
 
-    dxi_by_dx = dxi_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
-    dxi_by_dy = dxi_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
+    dxi_by_dx = af.mean(dxi_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j))
+    dxi_by_dy = af.mean(dxi_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j))
     F_xi_u = F_x(u) * dxi_by_dx + F_y(u) * dxi_by_dy
 
     return F_xi_u
 
 
-def F_eta(u, nodes, elements):
+def F_eta(u, gv):
     '''
     '''
-    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+    nodes    = gv.nodes
+    elements = gv.elements
 
     xi_LGL = lagrange.LGL_points(params.N_LGL)
     xi_i   = af.flat(af.transpose(af.tile(xi_LGL, params.N_LGL)))
     eta_j  = af.tile(xi_LGL, params.N_LGL)
 
-    deta_by_dx = deta_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
-    deta_by_dy = deta_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j)
+    deta_by_dx = af.mean(deta_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j))
+    deta_by_dy = af.mean(deta_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j))
     F_eta_u = F_x(u) * deta_by_dx + F_y(u) * deta_by_dy
 
     return F_eta_u
@@ -431,21 +443,6 @@ def Li_Lj_coeffs(N_LGL):
     Li_Lj_coeffs = utils.polynomial_product_coeffs(Li_xi, Lj_eta)
 
     return Li_Lj_coeffs
-
-
-def lag_interpolation_vol_int(f_e_ij, Li_Lj_coeffs):
-    '''
-    Trial function to optimize interpolation
-    '''
-    f_e_ij = af.reorder(f_e_ij, 3, 2, 0, 1)
-
-    f_ij_Li_Lj_coeffs = af.broadcast(utils.multiply, f_e_ij, Li_Lj_coeffs)
-    interpolated_f    = af.reorder(af.sum(f_ij_Li_Lj_coeffs, 2),
-                                   0, 1, 3, 2)
-
-    return interpolated_f
-
-
 
 
 def lag_interpolation_2d(u_e_ij, Li_Lj_coeffs):
@@ -483,7 +480,49 @@ def lag_interpolation_2d(u_e_ij, Li_Lj_coeffs):
 
     return interpolated_f
 
-def lax_friedrichs_flux(u):
+
+def volume_integral(u, gv):
+    '''
+    Vectorize, p, q, moddims.
+    '''
+    dLp_xi_ij_Lq_eta_ij = gv.dLp_Lq
+    dLq_eta_ij_Lp_xi_ij = gv.dLq_Lp
+
+    if (params.volume_integrand_scheme_2d == 'Lobatto' and params.N_LGL == params.N_quad):
+        w_i = af.flat(af.transpose(af.tile(gv.lobatto_weights_quadrature, 1, params.N_LGL)))
+        w_j = af.tile(gv.lobatto_weights_quadrature, params.N_LGL)
+        wi_wj_dLp_xi = af.broadcast(utils.multiply, w_i * w_j, gv.dLp_Lq)
+        volume_integrand_ij_1_sp = af.broadcast(utils.multiply,\
+                                               wi_wj_dLp_xi, F_xi(u, gv)) * np.mean(gv.sqrt_det_g)
+        wi_wj_dLq_eta = af.broadcast(utils.multiply, w_i * w_j, gv.dLq_Lp)
+        volume_integrand_ij_2_sp = af.broadcast(utils.multiply,\
+                                               wi_wj_dLq_eta, F_eta(u, gv)) * np.mean(gv.sqrt_det_g)
+
+        volume_integral = af.reorder(af.sum(volume_integrand_ij_1_sp + volume_integrand_ij_2_sp, 0), 2, 1, 0)
+
+    else:
+        volume_integrand_ij_1 = af.broadcast(utils.multiply,\
+                                        dLp_xi_ij_Lq_eta_ij,\
+                                        F_xi(u, gv))
+
+        volume_integrand_ij_2 = af.broadcast(utils.multiply,\
+                                             dLq_eta_ij_Lp_xi_ij,\
+                                             F_eta(u, gv))
+
+        volume_integrand_ij = af.moddims((volume_integrand_ij_1 + volume_integrand_ij_2)\
+                                        * np.mean(gv.sqrt_det_g), params.N_LGL ** 2,\
+                                         (params.N_LGL ** 2) * 100)
+
+        lagrange_interpolation = af.moddims(lag_interpolation_2d(volume_integrand_ij, gv.Li_Lj_coeffs),
+                                            params.N_LGL, params.N_LGL, params.N_LGL ** 2  * 100)
+
+        volume_integrand_total = utils.integrate_2d_multivar_poly(lagrange_interpolation[:, :, :],\
+                                                    params.N_quad,'gauss', gv)
+        volume_integral        = af.transpose(af.moddims(volume_integrand_total, 100, params.N_LGL ** 2))
+
+    return volume_integral
+
+def lax_friedrichs_flux(u, gv):
     '''
     '''
     u = af.reorder(af.moddims(u, params.N_LGL ** 2, 10, 10), 2, 1, 0)
@@ -492,134 +531,148 @@ def lax_friedrichs_flux(u):
 
     u_xi_minus1_boundary_right   = u[:, :, :params.N_LGL]
     u_xi_minus1_boundary_left    = af.shift(u[:, :, -params.N_LGL:], d0=0, d1 = 1)
-    u[:, :, :params.N_LGL] = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
-    
+    u[:, :, :params.N_LGL]       = (u_xi_minus1_boundary_right + u_xi_minus1_boundary_left) / 2
+
     diff_u_boundary[:, :, :params.N_LGL] = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
 
     u_xi_1_boundary_left  = u[:, :, -params.N_LGL:]
     u_xi_1_boundary_right = af.shift(u[:, :, :params.N_LGL], d0=0, d1=-1)
     u[:, :, :params.N_LGL]     = (u_xi_minus1_boundary_left + u_xi_minus1_boundary_right) / 2
-    
-    diff_u_boundary[:, :, -params.N_LGL:] = (u_xi_minus1_boundary_left - u_xi_minus1_boundary_right)
 
-    u_eta_1_boundary_down = u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
-    u_eta_1_boundary_up   = af.shift(u[:, :, 0:-params.N_LGL + 1:params.N_LGL], d0=1)
-    
-    u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
-                                                              +u_eta_1_boundary_down) / 2
-
-    diff_u_boundary[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
-                                                                             -u_eta_1_boundary_down)
+    diff_u_boundary[:, :, -params.N_LGL:] = (u_xi_minus1_boundary_right - u_xi_minus1_boundary_left)
 
 
     u_eta_minus1_boundary_down = af.shift(u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL], d0=-1)
     u_eta_minus1_boundary_up   = u[:, :, 0:-params.N_LGL + 1:params.N_LGL]
     u[:, :, 0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down\
                                                + u_eta_minus1_boundary_up) / 2
+    diff_u_boundary[:, :, 0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_up\
+                                                               -u_eta_minus1_boundary_down)
 
-    diff_u_boundary[:, :, 0:-params.N_LGL + 1:params.N_LGL] = (u_eta_minus1_boundary_down\
-                                                             - u_eta_minus1_boundary_up)
+    u_eta_1_boundary_down = u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+    u_eta_1_boundary_up   = af.shift(u[:, :, 0:-params.N_LGL + 1:params.N_LGL], d0=1)
 
+    u[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
+                                                              +u_eta_1_boundary_down) / 2
+
+    diff_u_boundary[:, :, params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL] = (u_eta_1_boundary_up\
+                                                                             -u_eta_1_boundary_down)
 
     u = af.moddims(af.reorder(u, 2, 1, 0), params.N_LGL ** 2, 100)
     diff_u_boundary = af.moddims(af.reorder(diff_u_boundary, 2, 1, 0), params.N_LGL ** 2, 100)
-    F_xi_e_ij  = F_xi(u, dxi_dx, deta_dy) - params.c_lax_2d * diff_u_boundary
-    F_eta_e_ij = F_eta(u, deta_dx, deta_dy) - params.c_lax_2d * diff_u_boundary
+    F_xi_e_ij  = F_xi(u, gv)  - params.c_x * diff_u_boundary
+    F_eta_e_ij = F_eta(u, gv) - params.c_y * diff_u_boundary
 
     return F_xi_e_ij, F_eta_e_ij
 
 
-
-def surface_term(u):
+def surface_term_vectorized(u, advec_var):
     '''
     '''
-    nodes, elements = msh_parser.read_order_2_msh('square_1.msh')
+    lagrange_coeffs = advec_var.lagrange_coeffs
+    N_LGL = params.N_LGL
 
-    xi_LGL  = lagrange.LGL_points(params.N_LGL)
-    eta_LGL = lagrange.LGL_points(params.N_LGL)
-    xi_i    = af.flat(af.transpose(af.tile(xi_LGL, 1, params.N_LGL)))
-    eta_j   = af.tile(xi_LGL, params.N_LGL)
-
-    lagrange_coeffs = af.np_to_af_array(lagrange.lagrange_polynomials(xi_LGL)[1])
+    eta_LGL = advec_var.xi_LGL
 
 
-    Lp_coeffs = af.moddims(af.tile(af.reorder(af.transpose(lagrange_coeffs), 2, 1, 0),\
-                              params.N_LGL), params.N_LGL ** 2, params.N_LGL)
-    Lp_1      = utils.polyval_1d(Lp_coeffs, xi_LGL[-1])
-    Lp_minus1 = utils.polyval_1d(Lp_coeffs, xi_LGL[0])
+    f_xi_surface_term  = lax_friedrichs_flux(u, advec_var)[0]
+    f_eta_surface_term = lax_friedrichs_flux(u, advec_var)[1]
+
+    Lp_xi   = af.moddims(af.reorder(af.tile(utils.polyval_1d(lagrange_coeffs,
+                            advec_var.xi_LGL), 1, 1, params.N_LGL), 1, 2, 0), params.N_LGL, 1, params.N_LGL ** 2)
+
+    Lq_eta  = af.tile(af.reorder(utils.polyval_1d(lagrange_coeffs,\
+                         eta_LGL), 1, 2, 0), 1, 1, params.N_LGL)
+
+    Lp_xi_1      = af.moddims(af.reorder(af.tile(utils.polyval_1d(lagrange_coeffs, advec_var.xi_LGL[-1]),\
+                           1, 1, params.N_LGL), 2, 1, 0), 1, 1, params.N_LGL ** 2)
+    Lp_xi_minus1 = af.moddims(af.reorder(af.tile(utils.polyval_1d(lagrange_coeffs, advec_var.xi_LGL[0]),\
+                           1, 1, params.N_LGL), 2, 1, 0), 1, 1, params.N_LGL ** 2)
+
+    Lq_eta_1      = af.moddims(af.tile(af.reorder(utils.polyval_1d(lagrange_coeffs,\
+                            eta_LGL[-1]), 0, 2, 1), 1, 1, params.N_LGL), 1, 1, params.N_LGL ** 2)
+    Lq_eta_minus1 = af.moddims(af.tile(af.reorder(utils.polyval_1d(lagrange_coeffs,\
+                             eta_LGL[0]), 0, 2, 1), 1, 1, params.N_LGL), 1, 1, params.N_LGL ** 2)
+
+    # xi = 1 boundary
+    Lq_eta_1_boundary   = af.broadcast(utils.multiply, Lq_eta, Lp_xi_1)
+    Lq_eta_F_1_boundary = af.broadcast(utils.multiply, Lq_eta_1_boundary, f_xi_surface_term[-params.N_LGL:, :])
+    Lq_eta_F_1_boundary = af.reorder(Lq_eta_F_1_boundary, 0, 3, 2, 1)
 
 
-#    Lq_coeffs = af.tile(lagrange_coeffs, params.N_LGL)
-#    Lq_1      = utils.polyval_1d(Lq_coeffs, xi_LGL[-1])
-#    Lq_minus1 = utils.polyval_1d(Lq_coeffs, xi_LGL[0])
+    lag_interpolation_1 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lq_eta_F_1_boundary), 0)
+    lag_interpolation_1 = af.reorder(lag_interpolation_1, 2, 1, 3, 0)
+    lag_interpolation_1 = af.transpose(af.moddims(af.transpose(lag_interpolation_1),\
+                                       params.N_LGL, params.N_LGL ** 2 * 100))
 
-    F_xi_surface_term = F_xi(u, nodes, elements)
+    surface_term_pq_xi_1 = lagrange.integrate(lag_interpolation_1, advec_var) * np.mean(advec_var.sqrt_det_g)
+    surface_term_pq_xi_1 = af.moddims(surface_term_pq_xi_1, params.N_LGL ** 2, 100)
 
-    g_ab = g_uu(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], np.array(xi_i), np.array(eta_j))
-    g_00 = (af.np_to_af_array(g_ab[0][0]))
-    g_01 = (af.np_to_af_array(g_ab[0][1]))
-    g_10 = (af.np_to_af_array(g_ab[1][0]))
-    g_11 = (af.np_to_af_array(g_ab[1][1]))
+    # xi = -1 boundary
+    Lq_eta_minus1_boundary   = af.broadcast(utils.multiply, Lq_eta, Lp_xi_minus1)
+    Lq_eta_F_minus1_boundary = af.broadcast(utils.multiply, Lq_eta_minus1_boundary, f_xi_surface_term[:params.N_LGL, :])
+    Lq_eta_F_minus1_boundary = af.reorder(Lq_eta_F_minus1_boundary, 0, 3, 2, 1)
 
-    F_xi_element  = lax_friedrichs_flux(u)[0]
-    nodes    = params.nodes
-    elements = params.elements
-    F_eta_element = lax_friedrichs_flux(u)[1]
-    surface_term_pq  = af.np_to_af_array(np.zeros([params.N_LGL ** 2]))
+    lag_interpolation_2 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lq_eta_F_minus1_boundary), 0)
+    lag_interpolation_2 = af.reorder(lag_interpolation_2, 2, 1, 3, 0)
+    lag_interpolation_2 = af.transpose(af.moddims(af.transpose(lag_interpolation_2),\
+                                       params.N_LGL, params.N_LGL ** 2 * 100))
 
-    for p in range(params.N_LGL):
-        Lp_1 = utils.polyval_1d(lagrange_coeffs[p], xi_LGL[-1])
-        Lp_minus1 = utils.polyval_1d(lagrange_coeffs[p], xi_LGL[0])
-        for q in range(params.N_LGL):
+    surface_term_pq_xi_minus1 = lagrange.integrate(lag_interpolation_2, advec_var) * np.mean(advec_var.sqrt_det_g)
 
-            Lq_1      = utils.polyval_1d(lagrange_coeffs[q], eta_LGL[-1])
-            Lq_minus1 = utils.polyval_1d(lagrange_coeffs[q], eta_LGL[0])
-            Lq_eta    = af.transpose(utils.polyval_1d(lagrange_coeffs[q], eta_LGL))
-            Lp_xi = af.transpose(utils.polyval_1d(lagrange_coeffs[p], xi_LGL))
+    surface_term_pq_xi_minus1 = af.moddims(surface_term_pq_xi_minus1, params.N_LGL ** 2, 100)
 
-            # The First integral
-            Lq_eta_F_xi_LGL      = Lq_eta * F_xi_element[-params.N_LGL:] * g_00[-params.N_LGL:]
-            lag_interpolation_1  = af.sum(af.broadcast(utils.multiply, Lq_eta_F_xi_LGL, lagrange_coeffs), 0)
-            surface_term_pq_xi_1 = af.sum(Lp_1) * lagrange.integrate((lag_interpolation_1))
+    # eta = -1 boundary
+    Lp_xi_minus1_boundary   = af.broadcast(utils.multiply, Lp_xi, Lq_eta_minus1)
+    Lp_xi_F_minus1_boundary = af.broadcast(utils.multiply, Lp_xi_minus1_boundary,\
+                                           f_eta_surface_term[0:-params.N_LGL + 1:params.N_LGL])
+    Lp_xi_F_minus1_boundary = af.reorder(Lp_xi_F_minus1_boundary, 0, 3, 2, 1)
 
+    lag_interpolation_3 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F_minus1_boundary), 0)
+    lag_interpolation_3 = af.reorder(lag_interpolation_3, 2, 1, 3, 0)
+    lag_interpolation_3 = af.transpose(af.moddims(af.transpose(lag_interpolation_3),\
+                                       params.N_LGL, params.N_LGL ** 2 * 100))
 
-            # The second integral
-            Lp_xi_F_xi_LGL = Lp_xi * F_xi_element[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]\
-                                   * g_01[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]
+    surface_term_pq_eta_minus1 = lagrange.integrate(lag_interpolation_3, advec_var) * np.mean(advec_var.sqrt_det_g)
 
-            lag_interpolation_2 = af.sum(af.broadcast(utils.multiply, Lp_xi_F_xi_LGL, lagrange_coeffs), 0)
-            surface_term_pq_eta_1    = af.sum(Lq_1) * lagrange.integrate(lag_interpolation_2)
-
-            # The third integral
-            Lq_eta_F_xi_LGL     = Lq_eta * F_xi_element[:params.N_LGL] * g_00[:params.N_LGL]
-            lag_interpolation_3 = af.sum(af.broadcast(utils.multiply, Lq_eta_F_xi_LGL, lagrange_coeffs), 0)
-            surface_term_pq_xi_minus1 = af.sum(Lp_minus1) * lagrange.integrate((lag_interpolation_3))
-
-            # The fourth integral
-            Lp_xi_F_xi_LGL = Lp_xi * F_xi_element[0:-params.N_LGL + 1:params.N_LGL]\
-                                   * g_01[0:-params.N_LGL + 1:params.N_LGL]
-
-            lag_interpolation_4 = af.sum(af.broadcast(utils.multiply, Lp_xi_F_xi_LGL, lagrange_coeffs), 0)
-            surface_term_pq_eta_1    = af.sum(Lq_1) * lagrange.integrate(lag_interpolation_2)
-
-            surface_term_pq[p * params.N_LGL + q]  =  surface_term_pq_eta_1\
-                                                    + surface_term_pq_xi_minus1\
-                                                    + surface_term_pq_xi_1
-
-    return surface_term_pq
+    surface_term_pq_eta_minus1 = af.moddims(surface_term_pq_eta_minus1, params.N_LGL ** 2, 100)
 
 
-def b_vector(u):
+    # eta = 1 boundary
+    Lp_xi_1_boundary   = af.broadcast(utils.multiply, Lp_xi, Lq_eta_1)
+    Lp_xi_F_1_boundary = af.broadcast(utils.multiply, Lp_xi_1_boundary,\
+                                           f_eta_surface_term[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL])
+    Lp_xi_F_1_boundary = af.reorder(Lp_xi_F_1_boundary, 0, 3, 2, 1)
+
+    lag_interpolation_4 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F_1_boundary), 0)
+    lag_interpolation_4 = af.reorder(lag_interpolation_4, 2, 1, 3, 0)
+    lag_interpolation_4 = af.transpose(af.moddims(af.transpose(lag_interpolation_4),\
+                                       params.N_LGL, params.N_LGL ** 2 * 100))
+
+    surface_term_pq_eta_1 = lagrange.integrate(lag_interpolation_4, advec_var) *  np.mean(advec_var.sqrt_det_g)
+
+    surface_term_pq_eta_1 = af.moddims(surface_term_pq_eta_1, params.N_LGL ** 2, 100)
+
+    surface_term_e_pq = surface_term_pq_xi_1\
+                      - surface_term_pq_xi_minus1\
+                      + surface_term_pq_eta_1\
+                      - surface_term_pq_eta_minus1
+
+    return surface_term_e_pq
+
+
+
+def b_vector(u, advec_var):
     '''
     '''
-    surface_term_u_pq    = surface_term(u)
-    volume_integral_pq   = volume_integral(u, params.N_LGL + 1, 'gauss')
-    b_vector_array       = surface_term_u_pq - volume_integral_pq
+    surface_term_u_pq    = surface_term_vectorized(u, advec_var)
+    volume_integral_pq   = volume_integral(u, advec_var)
+    b_vector_array       = volume_integral_pq - surface_term_u_pq
 
     return b_vector_array
 
 
-def RK4_timestepping(A_inverse, u, delta_t):
+def RK4_timestepping(A_inverse, u, delta_t, gv):
     '''
     Implementing the Runge-Kutta (RK4) method to evolve the wave.
 
@@ -641,30 +694,48 @@ def RK4_timestepping(A_inverse, u, delta_t):
               The change in u at the mapped LGL points.
     '''
 
-    k1 = af.matmul(A_inverse, b_vector(u))
-    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2))
-    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2))
-    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    ))
+    k1 = af.matmul(A_inverse, b_vector(u, gv))
+    k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2, gv))
+    k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2, gv))
+    k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t    , gv))
 
     delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
     return delta_u
 
-def time_evolution():
+def time_evolution(gv):
     '''
     '''
-    A_inverse = af.inverse(A_matrix(params.N_LGL))
+    # Creating a folder to store hdf5 files. If it doesn't exist.
+    results_directory = 'results/xi_eta_2d_hdf5_%02d' %(int(params.N_LGL))
+    if not os.path.exists(results_directory):
+        os.makedirs(results_directory)
+
+    A_inverse = af.np_to_af_array(np.linalg.inv(np.array(A_matrix_xi_eta(params.N_LGL, gv))))
     xi_LGL = lagrange.LGL_points(params.N_LGL)
     xi_i   = af.flat(af.transpose(af.tile(xi_LGL, 1, params.N_LGL)))
     eta_j  = af.tile(xi_LGL, params.N_LGL)
 
-    u_init_2d = np.e ** (- (xi_i ** 2) / (0.6 ** 2))
-    delta_t   = params.delta_t
-    time      = params.time
+    u_init_2d = gv.u_e_ij
+    delta_t   = gv.delta_t_2d
+    time      = gv.time
     u         = u_init_2d
-    print(A_inverse)
-    print(b_vector(u))
+    time      = gv.time_2d
     
-    for t_n in trange(0, 1):
-        u += RK4_timestepping(A_inverse, u, delta_t)
-        print(u)
+    for i in trange(0, time.shape[0]):
+        L1_norm = af.mean(af.abs(u_init_2d - u))
+
+        if (L1_norm >= 100):
+            print(L1_norm)
+            break
+        if (i % 10) == 0:
+            h5file = h5py.File('results/xi_eta_2d_hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(i)) + '.hdf5', 'w')
+            dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
+
+            dset[:, :] = u[:, :]
+
+        u += RK4_timestepping(A_inverse, u, delta_t, gv)
+
+    return L1_norm
+
+
