@@ -205,4 +205,9 @@ class advection_variables:
         self.sqrt_det_g = wave_equation_2d.sqrt_det_g(self.nodes[self.elements[0]][:, 0], \
                         self.nodes[self.elements[0]][:, 1], np.array(self.xi_i), np.array(self.eta_j))
 
+        self.elements_nodes = (af.reorder(af.transpose(af.np_to_af_array(self.nodes[self.elements[:]])), 0, 2, 1))
+
+        self.sqrt_g = af.reorder(wave_equation_2d.trial_sqrt_det_g(self.elements_nodes[:, 0, :],\
+                      self.elements_nodes[:, 1, :], self.xi_i, self.eta_j), 0, 2, 1)
+
         return

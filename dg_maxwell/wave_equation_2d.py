@@ -253,6 +253,115 @@ def deta_dy (x_nodes, y_nodes, xi, eta):
     
     return dx_dxi_ / jacobian(x_nodes, y_nodes, xi, eta)
 
+# Functions which perform the same function as the above ones
+# but can compute for different elements.
+
+def trial_dx_dxi(x_nodes, xi, eta):
+    '''
+    '''
+
+    dN_0_dxi = -0.25*eta**2 + (0.5*eta + 0.5)*xi - 0.25*eta
+    dN_1_dxi = 0.5*eta**2 - 0.5
+    dN_2_dxi = -0.25*eta**2 + (-0.5*eta + 0.5)*xi + 0.25*eta
+    dN_3_dxi = (eta - 1.0)*xi
+    dN_4_dxi = 0.25*eta**2 + (-0.5*eta + 0.5)*xi - 0.25*eta
+    dN_5_dxi = -0.5*eta**2 + 0.5
+    dN_6_dxi = 0.25*eta**2 + (0.5*eta + 0.5)*xi + 0.25*eta
+    dN_7_dxi = (-1.0*eta - 1.0)*xi
+
+    dx_dxi = af.broadcast(utils.multiply, dN_0_dxi, x_nodes[0]) \
+           + af.broadcast(utils.multiply, dN_1_dxi, x_nodes[1]) \
+           + af.broadcast(utils.multiply, dN_2_dxi, x_nodes[2]) \
+           + af.broadcast(utils.multiply, dN_3_dxi, x_nodes[3]) \
+           + af.broadcast(utils.multiply, dN_4_dxi, x_nodes[4]) \
+           + af.broadcast(utils.multiply, dN_5_dxi, x_nodes[5]) \
+           + af.broadcast(utils.multiply, dN_6_dxi, x_nodes[6]) \
+           + af.broadcast(utils.multiply, dN_7_dxi, x_nodes[7])
+
+    return dx_dxi
+
+def trial_dx_deta(x_nodes, xi, eta):
+    '''
+    '''
+
+    dN_0_deta = -(eta - xi - 1) * (0.25 * xi - 0.25) \
+                - (eta + 1) * (0.25 * xi - 0.25)
+    dN_1_deta = -2 * eta * (-0.5 * xi + 0.5)
+    dN_2_deta = -(eta + xi + 1) * (0.25 * xi - 0.25) \
+                - (eta - 1) * (0.25 * xi - 0.25)
+    dN_3_deta = 0.5 * xi**2 - 0.5
+    dN_4_deta = -(eta - xi + 1) * (-0.25 * xi - 0.25) \
+                - (eta - 1) * (-0.25 * xi - 0.25)
+    dN_5_deta = -2 * eta * (0.5 * xi + 0.5)
+    dN_6_deta = -(eta + xi - 1) * (-0.25 * xi - 0.25) \
+                - (eta + 1) * (-0.25 * xi - 0.25)
+    dN_7_deta = -0.5 * xi**2 + 0.5
+
+    dx_deta = af.broadcast(utils.multiply, dN_0_deta, x_nodes[0, :, :]) \
+            + af.broadcast(utils.multiply, dN_1_deta, x_nodes[1, :, :]) \
+            + af.broadcast(utils.multiply, dN_2_deta, x_nodes[2, :, :]) \
+            + af.broadcast(utils.multiply, dN_3_deta, x_nodes[3, :, :]) \
+            + af.broadcast(utils.multiply, dN_4_deta, x_nodes[4, :, :]) \
+            + af.broadcast(utils.multiply, dN_5_deta, x_nodes[5, :, :]) \
+            + af.broadcast(utils.multiply, dN_6_deta, x_nodes[6, :, :]) \
+            + af.broadcast(utils.multiply, dN_7_deta, x_nodes[7, :, :])
+
+    return dx_deta
+
+
+
+def trial_dy_dxi(y_nodes, xi, eta):
+    '''
+    '''
+    return trial_dx_dxi(y_nodes, xi, eta)
+
+
+def trial_dy_deta(y_nodes, xi, eta):
+    '''
+    '''
+    return trial_dx_deta(y_nodes, xi, eta)
+
+
+def trial_jacobian(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+
+    dx_dxi_  = trial_dx_dxi (x_nodes, xi, eta)
+    dy_deta_ = trial_dy_deta (y_nodes, xi, eta)
+    dx_deta_ = trial_dx_deta (x_nodes, xi, eta)
+    dy_dxi_  = trial_dy_dxi (y_nodes, xi, eta)
+    
+    return (dx_dxi_ * dy_deta_) - (dx_deta_ * dy_dxi_)
+
+def trial_dxi_dx(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    dy_deta_ = trial_dy_deta(y_nodes, xi, eta)
+    
+    return dy_deta_ / trial_jacobian(x_nodes, y_nodes, xi, eta)
+
+def trial_dxi_dy(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    dx_deta_ = trial_dx_deta(x_nodes, xi, eta)
+    
+    return -dx_deta_ / trial_jacobian(x_nodes, y_nodes, xi, eta)
+
+def trial_deta_dx(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    dy_dxi_ = trial_dy_dxi(y_nodes, xi, eta)
+    
+    return -dy_dxi_ / trial_jacobian(x_nodes, y_nodes, xi, eta)
+
+def trial_deta_dy (x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    dx_dxi_ = trial_dx_dxi(x_nodes, xi, eta)
+    
+    return dx_dxi_ / trial_jacobian(x_nodes, y_nodes, xi, eta)
+
+##############
 
 def A_matrix(N_LGL, advec_var):
     '''
@@ -394,18 +503,72 @@ def sqrt_det_g(x_nodes, y_nodes, xi, eta):
     
     return (a*d - b*c)**0.5
 
+# Trial functions which compute the metric tensor for multiple elements.
+
+def trial_g_dd(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    ans00  =   (trial_dx_dxi(x_nodes, xi, eta))**2 \
+             + (trial_dy_dxi(y_nodes, xi, eta))**2
+    ans11  =   (trial_dx_deta(x_nodes, xi, eta))**2 \
+             + (trial_dy_deta(y_nodes, xi, eta))**2
+    
+    ans01  =  (trial_dx_dxi(x_nodes, xi, eta))  \
+            * (trial_dx_deta(x_nodes, xi, eta)) \
+            + (trial_dy_dxi(y_nodes, xi, eta))  \
+            * (trial_dy_deta(y_nodes, xi, eta))
+
+
+    ans =  [[ans00, ans01],
+            [ans01, ans11]
+           ]
+
+    return (ans)
+
+
+def trial_g_uu(x_nodes, y_nodes, xi, eta):
+    gCov = trial_g_dd(x_nodes, y_nodes, xi, eta)
+
+
+    a = gCov[0][0]
+    b = gCov[0][1]
+    c = gCov[1][0]
+    d = gCov[1][1]
+
+    det = (a*d - b*c)
+
+    ans = [[d / det, -b / det],
+           [-c / det, a / det]]
+
+    return ans
+
+
+def trial_sqrt_det_g(x_nodes, y_nodes, xi, eta):
+    '''
+    '''
+    gCov = trial_g_dd(x_nodes, y_nodes, xi, eta)
+    
+    a = gCov[0][0]
+    b = gCov[0][1]
+    c = gCov[1][0]
+    d = gCov[1][1]
+
+    return (a*d - b*c)**0.5
+    
+############## 
+
 def F_xi(u, gv):
     '''
     '''
     nodes    = gv.nodes
     elements = gv.elements
 
-    xi_LGL = lagrange.LGL_points(params.N_LGL)
-    xi_i   = af.flat(af.transpose(af.tile(xi_LGL, params.N_LGL)))
-    eta_j  = af.tile(xi_LGL, params.N_LGL)
+    xi_LGL = gv.xi_LGL
+    xi_i   = gv.xi_i
+    eta_j  = gv.eta_j
 
-    dxi_by_dx = af.mean(dxi_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j))
-    dxi_by_dy = af.mean(dxi_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j))
+    dxi_by_dx = af.reorder(trial_dxi_dx(gv.elements_nodes[:, 0, :], gv.elements_nodes[:, 1, :], xi_i, eta_j), 0, 2, 1)
+    dxi_by_dy = af.reorder(trial_dxi_dy(gv.elements_nodes[:, 0, :], gv.elements_nodes[:, 1, :], xi_i, eta_j), 0, 2, 1)
     F_xi_u = F_x(u) * dxi_by_dx + F_y(u) * dxi_by_dy
 
     return F_xi_u
@@ -417,12 +580,14 @@ def F_eta(u, gv):
     nodes    = gv.nodes
     elements = gv.elements
 
-    xi_LGL = lagrange.LGL_points(params.N_LGL)
-    xi_i   = af.flat(af.transpose(af.tile(xi_LGL, params.N_LGL)))
-    eta_j  = af.tile(xi_LGL, params.N_LGL)
+    xi_LGL = gv.xi_LGL
+    xi_i   = gv.xi_i
+    eta_j  = gv.eta_j
 
-    deta_by_dx = af.mean(deta_dx(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j))
-    deta_by_dy = af.mean(deta_dy(nodes[elements[0]][:, 0], nodes[elements[0]][:, 1], xi_i, eta_j))
+
+    deta_by_dx = af.reorder(trial_deta_dx(gv.elements_nodes[:, 0, :], gv.elements_nodes[:, 1, :], xi_i, eta_j), 0, 2, 1)
+    deta_by_dy = af.reorder(trial_deta_dy(gv.elements_nodes[:, 0, :], gv.elements_nodes[:, 1, :], xi_i, eta_j), 0, 2, 1)
+
     F_eta_u = F_x(u) * deta_by_dx + F_y(u) * deta_by_dy
 
     return F_eta_u
@@ -493,14 +658,14 @@ def volume_integral(u, gv):
         w_j = af.tile(gv.lobatto_weights_quadrature, params.N_LGL)
         wi_wj_dLp_xi = af.broadcast(utils.multiply, w_i * w_j, gv.dLp_Lq)
         volume_integrand_ij_1_sp = af.broadcast(utils.multiply,\
-                                               wi_wj_dLp_xi, F_xi(u, gv)) * np.mean(gv.sqrt_det_g)
+                                               wi_wj_dLp_xi, F_xi(u, gv) * gv.sqrt_g)
         wi_wj_dLq_eta = af.broadcast(utils.multiply, w_i * w_j, gv.dLq_Lp)
         volume_integrand_ij_2_sp = af.broadcast(utils.multiply,\
-                                               wi_wj_dLq_eta, F_eta(u, gv)) * np.mean(gv.sqrt_det_g)
+                                               wi_wj_dLq_eta, F_eta(u, gv) * gv.sqrt_g)
 
         volume_integral = af.reorder(af.sum(volume_integrand_ij_1_sp + volume_integrand_ij_2_sp, 0), 2, 1, 0)
 
-    else:
+    else: # NEEDS TO BE CHANGED
         volume_integrand_ij_1 = af.broadcast(utils.multiply,\
                                         dLp_xi_ij_Lq_eta_ij,\
                                         F_xi(u, gv))
@@ -596,7 +761,8 @@ def surface_term_vectorized(u, advec_var):
 
     # xi = 1 boundary
     Lq_eta_1_boundary   = af.broadcast(utils.multiply, Lq_eta, Lp_xi_1)
-    Lq_eta_F_1_boundary = af.broadcast(utils.multiply, Lq_eta_1_boundary, f_xi_surface_term[-params.N_LGL:, :])
+    Lq_eta_F_1_boundary = af.broadcast(utils.multiply, Lq_eta_1_boundary,\
+                             f_xi_surface_term[-params.N_LGL:, :] * advec_var.sqrt_g[-params.N_LGL:, :])
     Lq_eta_F_1_boundary = af.reorder(Lq_eta_F_1_boundary, 0, 3, 2, 1)
 
 
@@ -610,7 +776,8 @@ def surface_term_vectorized(u, advec_var):
 
     # xi = -1 boundary
     Lq_eta_minus1_boundary   = af.broadcast(utils.multiply, Lq_eta, Lp_xi_minus1)
-    Lq_eta_F_minus1_boundary = af.broadcast(utils.multiply, Lq_eta_minus1_boundary, f_xi_surface_term[:params.N_LGL, :])
+    Lq_eta_F_minus1_boundary = af.broadcast(utils.multiply, Lq_eta_minus1_boundary,\
+                               f_xi_surface_term[:params.N_LGL, :] * advec_var.sqrt_g[:params.N_LGL, :])
     Lq_eta_F_minus1_boundary = af.reorder(Lq_eta_F_minus1_boundary, 0, 3, 2, 1)
 
     lag_interpolation_2 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lq_eta_F_minus1_boundary), 0)
@@ -618,14 +785,15 @@ def surface_term_vectorized(u, advec_var):
     lag_interpolation_2 = af.transpose(af.moddims(af.transpose(lag_interpolation_2),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_xi_minus1 = lagrange.integrate(lag_interpolation_2, advec_var) * np.mean(advec_var.sqrt_det_g)
+    surface_term_pq_xi_minus1 = lagrange.integrate(lag_interpolation_2, advec_var)
 
     surface_term_pq_xi_minus1 = af.moddims(surface_term_pq_xi_minus1, params.N_LGL ** 2, 100)
 
     # eta = -1 boundary
     Lp_xi_minus1_boundary   = af.broadcast(utils.multiply, Lp_xi, Lq_eta_minus1)
     Lp_xi_F_minus1_boundary = af.broadcast(utils.multiply, Lp_xi_minus1_boundary,\
-                                           f_eta_surface_term[0:-params.N_LGL + 1:params.N_LGL])
+                              f_eta_surface_term[0:-params.N_LGL + 1:params.N_LGL]\
+                              * advec_var.sqrt_g[0:-params.N_LGL + 1:params.N_LGL])
     Lp_xi_F_minus1_boundary = af.reorder(Lp_xi_F_minus1_boundary, 0, 3, 2, 1)
 
     lag_interpolation_3 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F_minus1_boundary), 0)
@@ -633,7 +801,7 @@ def surface_term_vectorized(u, advec_var):
     lag_interpolation_3 = af.transpose(af.moddims(af.transpose(lag_interpolation_3),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_eta_minus1 = lagrange.integrate(lag_interpolation_3, advec_var) * np.mean(advec_var.sqrt_det_g)
+    surface_term_pq_eta_minus1 = lagrange.integrate(lag_interpolation_3, advec_var)
 
     surface_term_pq_eta_minus1 = af.moddims(surface_term_pq_eta_minus1, params.N_LGL ** 2, 100)
 
@@ -641,7 +809,8 @@ def surface_term_vectorized(u, advec_var):
     # eta = 1 boundary
     Lp_xi_1_boundary   = af.broadcast(utils.multiply, Lp_xi, Lq_eta_1)
     Lp_xi_F_1_boundary = af.broadcast(utils.multiply, Lp_xi_1_boundary,\
-                                           f_eta_surface_term[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL])
+                         f_eta_surface_term[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL]\
+                         * advec_var.sqrt_g[params.N_LGL - 1:params.N_LGL ** 2:params.N_LGL])
     Lp_xi_F_1_boundary = af.reorder(Lp_xi_F_1_boundary, 0, 3, 2, 1)
 
     lag_interpolation_4 = af.sum(af.broadcast(utils.multiply, lagrange_coeffs, Lp_xi_F_1_boundary), 0)
@@ -649,7 +818,7 @@ def surface_term_vectorized(u, advec_var):
     lag_interpolation_4 = af.transpose(af.moddims(af.transpose(lag_interpolation_4),\
                                        params.N_LGL, params.N_LGL ** 2 * 100))
 
-    surface_term_pq_eta_1 = lagrange.integrate(lag_interpolation_4, advec_var) *  np.mean(advec_var.sqrt_det_g)
+    surface_term_pq_eta_1 = lagrange.integrate(lag_interpolation_4, advec_var)
 
     surface_term_pq_eta_1 = af.moddims(surface_term_pq_eta_1, params.N_LGL ** 2, 100)
 
@@ -737,5 +906,3 @@ def time_evolution(gv):
         u += RK4_timestepping(A_inverse, u, delta_t, gv)
 
     return L1_norm
-
-

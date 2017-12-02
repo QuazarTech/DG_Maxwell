@@ -21,6 +21,7 @@ from dg_maxwell import global_variables
 
 af.set_backend(params.backend)
 
+
 #print(af.mean(af.abs(advection_2d.u_analytical(0) - params.u_e_ij)))
 
 gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
@@ -29,8 +30,30 @@ gv = global_variables.advection_variables(params.N_LGL, params.N_quad,\
                                           params.c_x, params.c_y, params.courant,\
                                           params.mesh_file, params.total_time_2d)
 
+
+print('start')
+print(af.info())
+#print(wave_equation_2d.dx_deta(gv.nodes[gv.elements[0]][:, 1], gv.xi_i, gv.eta_j))
+#print(gv.nodes[gv.elements[1]][:, 1])
+#print(af.np_to_af_array(gv.nodes[gv.elements[1]]))#[:, 0])
+elements_nodes = (af.reorder(af.transpose(af.np_to_af_array(gv.nodes[gv.elements[:]])), 0, 2, 1))#[0, :, :])
+#print(elements_nodes)
+
+
+
+#dxi_dx_elements = (wave_equation_2d.trial_dxi_dx(elements_nodes[:, 0, :],\
+#                   elements_nodes[:, 1, :], gv.xi_i, gv.eta_j))
+#print(dxi_dx_elements.shape)
+#print((wave_equation_2d.trial_dxi_dx(elements_nodes[:, 0, :],
+#       elements_nodes[:, 1, :], gv.xi_i, gv.eta_j)).shape)
+#print(wave_equation_2d.F_xi(gv.u_e_ij, gv).shape)
+#print(wave_equation_2d.F_eta(gv.u_e_ij, gv).shape)
+#print(gv.sqrt_g.shape)
+#print(wave_equation_2d.volume_integral(gv.u_e_ij, gv).shape)
+#print(wave_equation_2d.surface_term_vectorized(gv.u_e_ij, gv).shape)
+
 #advection_2d.time_evolution(gv)
-wave_equation_2d.time_evolution(gv)
+#wave_equation_2d.time_evolution(gv)
 
 #L1_norm = np.zeros([5])
 #for LGL in range(3, 8):
