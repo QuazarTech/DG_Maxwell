@@ -54,6 +54,4 @@ install:
 
 script:
     - python -c "import dg_maxwell"
-    - pytest --verbose -r P --color=yes --cov dg_maxwell
-after_success:
-  - coveralls
+    - pytest --verbose -r P --color=yes

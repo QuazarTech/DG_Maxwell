@@ -46,12 +46,6 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-*.png
-*.jpg
-*.swp
-*~
-*.swo
-
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -97,8 +91,6 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-
-
 
 # pyenv
 .python-version
@@ -205,11 +197,4 @@ Thumbs.db
 !examples/read_and_plot_mesh/mesh/*
 !dg_maxwell/tests/mesh/*
 !dg_maxwell/tests/msh_parser/mesh/*
-examples/results
 !docs/quazar_logo.png
-!dg_maxwell/tests/wave_equation_2d/files/*
-!examples/interelement_relations/*
-*.kate-swp
-
-*.ipynb_checkpoints*
-
