@@ -31,13 +31,13 @@ volume_integral_scheme = 'lobatto_quadrature'
 N_quad     = 8
 
 # Wave speed.
-c          = 1
+c          = 1.
 
 # The total time for which the wave is to be evolved by the simulation. 
 total_time = 2.01
 
 # The c_lax to be used in the Lax-Friedrichs flux.
-c_lax      = c
+c_lax      = abs(c)
 
 # Array containing the LGL points in xi space.
 xi_LGL     = lagrange.LGL_points(N_LGL)
@@ -100,7 +100,7 @@ dx_dxi  = af.mean(wave_equation.dx_dxi_numerical((element_mesh_nodes[0 : 2]),\
 
 
 # The value of time-step.
-delta_t = delta_x / (4 * c)
+delta_t = delta_x / (4 * abs(c))
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
