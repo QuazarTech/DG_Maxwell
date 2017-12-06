@@ -7,13 +7,17 @@ python:
 
 # command to install dependencies
 before_install:
+    - ls -al
+    - pwd
     - cd ..
+    - ls -al
     - sudo apt-get update -qq
-    - sudo apt-get install -qq build-essential git cmake3 libfreeimage-dev cmake3-curses-gui
+    - sudo apt-get install -qq build-essential git cmake libfreeimage-dev cmake-curses-gui
     - sudo apt-get install -qq libopenblas-dev libfftw3-dev liblapacke-dev libboost-all-dev
     - sudo apt-get install -qq libfontconfig1-dev
-    - sudo apt-get install build-essential xorg-dev libglu1-mesa-dev libxinerama-dev libxcursor-dev
+    - sudo apt-get install build-essential cmake cmake-curses-gui xorg-dev libglu1-mesa-dev libxinerama-dev libxcursor-dev
     - grep MemTotal /proc/meminfo
+    - cat /proc/cpuinfo
     - wget https://github.com/glfw/glfw/archive/3.1.2.zip -O glfw-3.1.2.zip
     - unzip glfw-3.1.2.zip
     - cd glfw-3.1.2
@@ -37,15 +41,21 @@ before_install:
     - export AF_PATH=$PWD
     - cd lib
     - export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH
+    - echo $LD_LIBRARY_PATH
     - cd ../../../../
     - cd arrayfire/build
+#    - make test
     - cd ../../
     - git clone https://github.com/amanabt/gmshtranslator.git
     - cd gmshtranslator
     - sudo pip install -e .
     - cd ..
     - pip install virtualenv
+    - pwd
+    - ls -al
     - cd DG_Maxwell
+    - pwd
+    - ls -al
     - virtualenv venv 
     - source venv/bin/activate
 
@@ -55,3 +65,4 @@ install:
 script:
     - python -c "import dg_maxwell"
     - pytest --verbose -r P --color=yes
+

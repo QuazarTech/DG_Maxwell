@@ -13,124 +13,8 @@ from dg_maxwell import params
 from dg_maxwell import lagrange
 from dg_maxwell import wave_equation
 from dg_maxwell import isoparam
-from dg_maxwell import utils
 
 # This test uses the initial paramters N_LGL = 8, N_Elements = 10 and c = 1.
-
-
-
-def change_parameters(LGL, Elements, quad, wave='sin'):
-    '''
-
-    Changes the parameters of the simulation. Used only for convergence tests.
-
-    Parameters
-    ----------
-    LGL      : int
-               The new N_LGL.
-
-    Elements : int
-               The new N_Elements.
-
-    '''
-    # The domain of the function.
-    params.x_nodes    = af.np_to_af_array(np.array([-1., 1.]))
-
-    # The number of LGL points into which an element is split.
-    params.N_LGL      = LGL
-
-    # Number of elements the domain is to be divided into.
-    params.N_Elements = Elements
-
-    # The number quadrature points to be used for integration.
-    params.N_quad     = quad
-
-    # Array containing the LGL points in xi space.
-    params.xi_LGL     = lagrange.LGL_points(params.N_LGL)
-
-    # N_Gauss number of Gauss nodes.
-    params.gauss_points  = af.np_to_af_array(lagrange.gauss_nodes\
-                                                    (params.N_quad))
-    # The Gaussian weights.
-    params.gauss_weights = lagrange.gaussian_weights(params.N_quad)
-
-    # The lobatto nodes to be used for integration.
-    params.lobatto_quadrature_nodes   = lagrange.LGL_points(params.N_quad)
-
-    # The lobatto weights to be used for integration.
-    params.lobatto_weights_quadrature = lagrange.lobatto_weights\
-                                        (params.N_quad)
-
-    # A list of the Lagrange polynomials in poly1d form.
-    #params.lagrange_product = lagrange.product_lagrange_poly(params.xi_LGL)
-
-    # An array containing the coefficients of the lagrange basis polynomials.
-    params.lagrange_coeffs  = af.np_to_af_array(\
-                              lagrange.lagrange_polynomials(params.xi_LGL)[1])
-
-    # Refer corresponding functions.
-    params.lagrange_basis_value = lagrange.lagrange_function_value\
-                                           (params.lagrange_coeffs)
-
-
-    # While evaluating the volume integral using N_LGL
-    # lobatto quadrature points, The integration can be vectorized
-    # and in this case the coefficients of the differential of the
-    # Lagrange polynomials is required
-    params.diff_pow      = (af.flip(af.transpose(af.range(params.N_LGL - 1) + 1), 1))
-    params.dl_dxi_coeffs = (af.broadcast(utils.multiply, params.lagrange_coeffs[:, :-1], params.diff_pow))
-
-
-
-    # Obtaining an array consisting of the LGL points mapped onto the elements.
-
-    params.element_size    = af.sum((params.x_nodes[1] - params.x_nodes[0])\
-                                                        / params.N_Elements)
-    params.elements_xi_LGL = af.constant(0, params.N_Elements, params.N_LGL)
-    params.elements        = utils.linspace(af.sum(params.x_nodes[0]),
-                             af.sum(params.x_nodes[1] - params.element_size),\
-                                                            params.N_Elements)
-    params.np_element_array   = np.concatenate((af.transpose(params.elements),
-                                   af.transpose(params.elements +\
-                                                       params.element_size)))
-
-    params.element_mesh_nodes = utils.linspace(af.sum(params.x_nodes[0]),
-                                        af.sum(params.x_nodes[1]),\
-                                               params.N_Elements + 1)
-
-    params.element_array = af.transpose(af.np_to_af_array\
-                                       (params.np_element_array))
-    params.element_LGL   = wave_equation.mapping_xi_to_x(af.transpose\
-                                          (params.element_array), params.xi_LGL)
-
-    # The minimum distance between 2 mapped LGL points.
-    params.delta_x = af.min((params.element_LGL - af.shift(params.element_LGL, 1, 0))[1:, :])
-
-    # dx_dxi for elements of equal size.
-    params. dx_dxi = af.mean(wave_equation.dx_dxi_numerical((params.element_mesh_nodes[0 : 2]),\
-                                   params.xi_LGL))
-
-
-    # The value of time-step.
-    params.delta_t = params.delta_x / (4 * params.c)
-
-    # Array of timesteps seperated by delta_t.
-    params.time    = utils.linspace(0, int(params.total_time / params.delta_t) * params.delta_t,
-                                                        int(params.total_time / params.delta_t))
-
-    # Initializing the amplitudes. Change u_init to required initial conditions.
-    if (wave=='sin'):
-        params.u_init     = af.sin(2 * np.pi * params.element_LGL)
-
-    if (wave=='gaussian'):
-        params.u_init = np.e ** (-(params.element_LGL) ** 2 / 0.4 ** 2)
-
-    params.u          = af.constant(0, params.N_LGL, params.N_Elements, params.time.shape[0],\
-                                     dtype = af.Dtype.f64)
-    params.u[:, :, 0] = params.u_init
-
-    return
-
 
 
 def test_LGL_points():
@@ -205,7 +89,6 @@ def test_dx_dxi():
     differential would be a constant. The check has a tolerance 1e-7.
     '''
     threshold = 1e-9
-    change_parameters(8, 10, 11, 'gaussian')
     nodes = np.array([7, 10], dtype = np.float64)
     test_nodes = af.interop.np_to_af_array(nodes)
     analytical_dx_dxi = 1.5
@@ -242,8 +125,6 @@ def test_lagrange_coeffs():
     `https://goo.gl/6EFX5S`
     '''
     threshold = 6e-10
-
-    change_parameters(8, 10, 11, 'gaussian')
     basis_array_analytical = np.zeros([8, 8])
     
     basis_array_analytical[0] = np.array([-3.351562500008004,\
@@ -319,6 +200,54 @@ def test_lagrange_coeffs():
     assert af.sum(af.abs(basis_array_analytical - params.lagrange_coeffs))\
                                                                < threshold
 
+def test_A_matrix():
+    '''
+    Test function to check the A matrix obtained from wave_equation module with
+    one obtained by numerical integral solvers.
+    '''
+    threshold = 1e-8
+    
+    reference_A_matrix = 0.1 * af.interop.np_to_af_array(np.array([\
+
+    [0.03333333333332194, 0.005783175201965206, -0.007358427761753982, \
+    0.008091331778355441, -0.008091331778233877, 0.007358427761705623, \
+    -0.00578317520224949, 0.002380952380963754], \
+    
+    [0.005783175201965206, 0.19665727866729804, 0.017873132323192046,\
+    -0.01965330750343234, 0.019653307503020866, -0.017873132322725152,\
+    0.014046948476303067, -0.005783175202249493], \
+    
+    [-0.007358427761753982, 0.017873132323192046, 0.31838117965137114, \
+    0.025006581762566073, -0.025006581761945083, 0.022741512832051156,\
+    -0.017873132322725152, 0.007358427761705624], \
+    
+    [0.008091331778355441, -0.01965330750343234, 0.025006581762566073, \
+    0.3849615416814164, 0.027497252976343693, -0.025006581761945083, \
+    0.019653307503020863, -0.008091331778233875],
+    
+    [-0.008091331778233877, 0.019653307503020866, -0.025006581761945083, \
+    0.027497252976343693, 0.3849615416814164, 0.025006581762566073, \
+    -0.019653307503432346, 0.008091331778355443], \
+    
+    [0.007358427761705623, -0.017873132322725152, 0.022741512832051156, \
+    -0.025006581761945083, 0.025006581762566073, 0.31838117965137114, \
+    0.017873132323192046, -0.0073584277617539835], \
+    
+    [-0.005783175202249493, 0.014046948476303067, -0.017873132322725152, \
+    0.019653307503020863, -0.019653307503432346, 0.017873132323192046, \
+    0.19665727866729804, 0.0057831752019652065], \
+    
+    [0.002380952380963754, -0.005783175202249493, 0.007358427761705624, \
+    -0.008091331778233875, 0.008091331778355443, -0.0073584277617539835, \
+    0.0057831752019652065, 0.033333333333321946]
+
+    ]))
+    
+    test_A_matrix = wave_equation.A_matrix()
+    print(test_A_matrix.shape, reference_A_matrix.shape)
+    error_array = af.abs(reference_A_matrix - test_A_matrix)
+    
+    assert af.max(error_array) < threshold
 
 def test_volume_integral_flux():
     '''
@@ -331,9 +260,8 @@ def test_volume_integral_flux():
     given below.
     `https://goo.gl/5Mub8M`
     '''
-    threshold = 4e-9
+    threshold = 8e-9
     params.c = 1
-    change_parameters(8, 10, 11, 'gaussian')
     
     referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array
         ([
@@ -371,7 +299,7 @@ def test_volume_integral_flux():
          ])))
     
     numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
-    assert (af.mean(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
+    assert (af.max(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
 
 def test_lax_friedrichs_flux():
     '''
@@ -395,7 +323,6 @@ def test_surface_term():
     threshold = 1e-13
     params.c = 1
     
-    change_parameters(8, 10, 8, 'gaussian')
     
     analytical_f_i        = (params.u[-1, :, 0])
     analytical_f_i_minus1 = (af.shift(params.u[-1, :, 0], 0, 1))
@@ -423,8 +350,6 @@ def test_b_vector():
     threshold = 1e-13
     params.c = 1
     
-    change_parameters(8, 10, 8, 'gaussian')
-
     u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(),\
                                                   params.u[:, :, 0])
     volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
@@ -435,9 +360,9 @@ def test_b_vector():
     
     assert (b_vector_analytical - b_vector_array) < threshold
 
-def test_integrate():
+def test_Integrate():
     '''
-    Testing the integrate() function by passing coefficients
+    Testing the Integrate() function by passing coefficients
     of a polynomial and comparing it to the analytical result.
     '''
     threshold = 1e-14
@@ -446,12 +371,10 @@ def test_integrate():
     # The coefficients of a test polynomial
     # `7x^7 + 6x^6 + 4x^5 + 2x^4 + x^3 + 3x^2 + 9x + 2`
 
-    # Using integrate() function.
+    # Using Integrate() function.
 
-    calculated_integral = lagrange.integrate(af.transpose(test_coeffs))
+    calculated_integral = lagrange.Integrate(af.transpose(test_coeffs))
 
     analytical_integral = 8.514285714285714
 
     assert (calculated_integral - analytical_integral) <= threshold
-
-

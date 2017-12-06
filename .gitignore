@@ -24,7 +24,6 @@ __pycache__/
 *.jpg
 *.png
 *.svg
-*.hdf5
 # C extensions
 *.so
 
