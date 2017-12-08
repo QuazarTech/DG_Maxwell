@@ -4,7 +4,9 @@
 import os
 
 import arrayfire as af
-af.set_backend('cpu')
+af.set_backend('opencl')
+af.set_device(0)
+
 import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import trange
@@ -290,6 +292,98 @@ def volume_integral_flux(u_n):
 
     return flux_integral
 
+def volume_integral_flux_u_n_flux_n(u_n, flux_n):
+    '''
+
+    Calculates the volume integral of flux in the wave equation.
+
+    :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
+
+    This will give N values of flux integral as p varies from 0 to N - 1.
+    
+    This integral is carried out using the analytical form of the integrand
+    obtained as a linear combination of Lagrange basis polynomials.
+
+    This integrand is the used in the integrate() function.
+
+    Calculation of volume integral flux using N_LGL Lobatto quadrature points
+    can be vectorized and is much faster.
+    
+    Parameters
+    ----------
+
+    u : arrayfire.Array [N_LGL N_Elements 1 1]
+        Amplitude of the wave at the mapped LGL nodes of each element.
+
+    flux_n : arrayfire:Array [N_LGL N_Elements 1 1]
+             Flux of the wave at the mapped LGL nodes of each element.
+
+    Returns
+    -------
+
+    flux_integral : arrayfire.Array [N_LGL N_Elements 1 1]
+                    Value of the volume integral flux. It contains the integral
+                    of all N_LGL * N_Element integrands.
+
+    '''
+    # The coefficients of dLp / d\xi
+    diff_lag_coeff  = params.dl_dxi_coeffs
+
+    lobatto_nodes   = params.lobatto_quadrature_nodes
+    Lobatto_weights = params.lobatto_weights_quadrature
+
+    nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, diff_lag_coeff.shape[1]))
+    power        = af.flip(af.range(diff_lag_coeff.shape[1]))
+    power_tile   = af.tile(power, 1, params.N_quad)
+    nodes_power  = nodes_tile ** power_tile
+    weights_tile = af.transpose(af.tile(Lobatto_weights, 1, diff_lag_coeff.shape[1]))
+    nodes_weight = nodes_power * weights_tile
+
+    dLp_dxi      = af.matmul(diff_lag_coeff, nodes_weight)
+
+
+    # The first option to calculate the volume integral term, directly uses
+    # the Lobatto quadrature instead of using the integrate() function by
+    # passing the coefficients of the Lagrange interpolated polynomial.
+    if(params.volume_integral_scheme == 'lobatto_quadrature' \
+        and params.N_quad == params.N_LGL):
+
+        # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
+        F_u_n                  = af.reorder(flux_n, 2, 0, 1)
+
+        # Multiplying with dLp / d\xi
+        integral_expansion     = af.broadcast(utils.multiply,
+                                              dLp_dxi, F_u_n)
+
+        # Using the quadrature rule.
+        flux_integral = af.sum(integral_expansion, 1)
+        flux_integral = af.reorder(flux_integral, 0, 2, 1)
+
+    # Using the integrate() function to calculate the volume integral term
+    # by passing the Lagrange interpolated polynomial.
+    else:
+        #print('option3')
+        analytical_flux_coeffs = lagrange.lagrange_interpolation_u(flux_n)
+
+        analytical_flux_coeffs = af.reorder(analytical_flux_coeffs, 1, 0, 2)
+
+        dl_dxi_coefficients    = af.reorder(params.dl_dxi_coeffs, 1, 0)
+
+        # The product of polynomials is calculated using af.convolve1
+        volume_int_coeffs = af.convolve1(dl_dxi_coefficients,
+                                         analytical_flux_coeffs,
+                                         conv_mode=af.CONV_MODE.EXPAND)
+        volume_int_coeffs = af.reorder(volume_int_coeffs, 1, 2, 0)
+        volume_int_coeffs = af.moddims(volume_int_coeffs,
+                                       params.N_LGL * params.N_Elements,
+                                       2 * params.N_LGL - 2)
+
+        flux_integral = lagrange.integrate(volume_int_coeffs)
+        flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
+
+
+    return flux_integral
+
 
 def lax_friedrichs_flux(u_n):
     '''
@@ -416,6 +510,7 @@ def b_vector(u_n):
 
     '''
     volume_integral = volume_integral_flux(u_n)
+    #volume_integral = volume_integral_flux_u_n_flux_n(u_n, flux_x(u_n))
     Surface_term    = surface_term(u_n)
     b_vector_array  = (volume_integral - Surface_term)
     

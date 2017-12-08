@@ -7,7 +7,8 @@ sys.path.insert(0, os.path.abspath('./'))
 
 import numpy as np
 import arrayfire as af
-af.set_backend('cpu')
+af.set_backend('opencl')
+af.set_device(0)
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
@@ -372,6 +373,65 @@ def test_volume_integral_flux():
     
     numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
     assert (af.mean(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
+
+
+def test_volume_integral_flux_u_n_flux_n():
+    '''
+    A test function to check the volume_integral_flux function in wave_equation
+    module by analytically calculated Gauss-Lobatto quadrature.
+    
+    Reference
+    ---------
+    The link to the sage worksheet where the calculations were caried out is
+    given below.
+    `https://goo.gl/5Mub8M`
+    '''
+    threshold = 4e-9
+    params.c = 1
+    change_parameters(8, 10, 11, 'gaussian')
+    
+    referenceFluxIntegral = af.transpose(af.interop.np_to_af_array(np.array
+        ([
+        [-0.002016634876668093, -0.000588597708116113, -0.0013016773719126333,\
+        -0.002368387579324652, -0.003620502047659841, -0.004320197094090966,
+        -0.003445512010153811, 0.0176615086879261],\
+
+        [-0.018969769374, -0.00431252844519,-0.00882630935977,-0.0144355176966,\
+        -0.019612124119, -0.0209837936827, -0.0154359890788, 0.102576031756], \
+
+        [-0.108222418798, -0.0179274222595, -0.0337807018822, -0.0492589052599,\
+        -0.0588472807471, -0.0557970236273, -0.0374764132459, 0.361310165819],\
+
+        [-0.374448714304, -0.0399576371245, -0.0683852285846, -0.0869229749357,\
+        -0.0884322503841, -0.0714664112839, -0.0422339853622, 0.771847201979], \
+
+        [-0.785754362849, -0.0396035640187, -0.0579313769517, -0.0569022801117,\
+        -0.0392041960688, -0.0172295769141, -0.00337464521455, 1.00000000213],\
+
+        [-1.00000000213, 0.00337464521455, 0.0172295769141, 0.0392041960688,\
+        0.0569022801117, 0.0579313769517, 0.0396035640187, 0.785754362849],\
+
+        [-0.771847201979, 0.0422339853622, 0.0714664112839, 0.0884322503841, \
+        0.0869229749357, 0.0683852285846, 0.0399576371245, 0.374448714304],\
+
+        [-0.361310165819, 0.0374764132459, 0.0557970236273, 0.0588472807471,\
+        0.0492589052599, 0.0337807018822, 0.0179274222595, 0.108222418798], \
+
+        [-0.102576031756, 0.0154359890788, 0.0209837936827, 0.019612124119, \
+        0.0144355176966, 0.00882630935977, 0.00431252844519, 0.018969769374],\
+
+        [-0.0176615086879, 0.00344551201015 ,0.00432019709409, 0.00362050204766,\
+        0.00236838757932, 0.00130167737191, 0.000588597708116, 0.00201663487667]\
+
+         ])))
+    
+    numerical_flux = wave_equation.volume_integral_flux_u_n_flux_n(
+        params.u[:, :, 0],
+        wave_equation.flux_x(params.u[:, :, 0]))
+    
+    assert (af.mean(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
+
+
 
 def test_lax_friedrichs_flux():
     '''
