@@ -228,3 +228,34 @@ def poly1d_product(poly_a, poly_b):
     return af.transpose(af.convolve1(af.transpose(poly_a),
                                      af.transpose(poly_b),
                                      conv_mode = af.CONV_MODE.EXPAND))
+
+
+def matmul_3D(a, b):
+    '''
+    Finds the matrix multiplication of :math:`Q` pairs of matrices ``a`` and
+    ``b``.
+    Parameters
+    ----------
+    a : af.Array [M N Q 1]
+        First set of :math:`Q` 2D arrays :math:`N \\neq 1` and :math:`M \\neq 1`.
+    b : af.Array [N P Q 1]
+        Second set of :math:`Q` 2D arrays :math:`P \\neq 1`.
+    Returns
+    -------
+    matmul : af.Array [M P Q 1]
+             Matrix multiplication of :math:`Q` sets of 2D arrays.
+    '''
+    shape_a = shape(a)
+    shape_b = shape(b)
+
+    P = shape_b[1]
+
+    a = af.transpose(a)
+    a = af.reorder(a, d0 = 0, d1 = 3, d2 = 2, d3 = 1)
+    a = af.tile(a, d0 = 1, d1 = P)
+    b = af.tile(b, d0 = 1, d1 = 1, d2 = 1, d3 = a.shape[3])
+
+    matmul = af.sum(a * b, dim = 0)
+    matmul = af.reorder(matmul, d0 = 3, d1 = 1, d2 = 2, d3 = 0)
+
+    return matmul

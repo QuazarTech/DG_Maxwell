@@ -332,12 +332,12 @@ def volume_integral_flux_multiple_u_n(u_n):
 
     u : arrayfire.Array [N_LGL N_Elements M 1]
         Amplitude of the wave at the mapped LGL nodes of each element. This
-        function can computer flux for :math:`M` :math:`u` simultaneously.
+        function can computer flux for :math:`M` :math:`u`.
             
     Returns
     -------
 
-    flux_integral : arrayfire.Array [N_LGL N_Elements 1 1]
+    flux_integral : arrayfire.Array [N_LGL N_Elements M 1]
                     Value of the volume integral flux. It contains the integral
                     of all N_LGL * N_Element integrands.
 
@@ -444,8 +444,9 @@ def lax_friedrichs_flux(u_n):
     Parameters
     ----------
 
-    u_n : arrayfire.Array [N_LGL N_Elements 1 1]
+    u_n : arrayfire.Array [N_LGL N_Elements M 1]
           Amplitude of the wave at the mapped LGL nodes of each element.
+          This code will work for :math:`M` multiple ``u_n``.
     
     Returns
     -------
@@ -489,8 +490,24 @@ def analytical_u_LGL(t_n):
     '''
 
     time  = t_n * params.delta_t 
-    u_t_n = af.sin(2 * np.pi * (params.element_LGL - params.c * time)) 
+    
+    #u_t_n = af.sin(2 * np.pi * (params.element_LGL - params.c * time))
+    
+    # Multiple waves test
+    E_00 = 1.
+    E_01 = 1.
 
+    B_00 = 0.2
+    B_01 = 0.5
+
+    E_z_t_n = E_00 * af.sin(2 * np.pi * (params.element_LGL - params.c * time))\
+            + E_01 * af.cos(2 * np.pi * (params.element_LGL - params.c * time))
+
+    B_y_t_n = B_00 * af.sin(2 * np.pi * (params.element_LGL - params.c * time))\
+            + B_01 * af.cos(2 * np.pi * (params.element_LGL - params.c * time))
+
+    u_t_n = B_y_t_n
+    
     return u_t_n
 
 
@@ -534,6 +551,51 @@ def surface_term(u_n):
 
 
 
+def surface_term_multiple_u(u_n):
+    '''
+
+    Calculates the surface term,
+    :math:`L_p(1) f_i - L_p(-1) f_{i - 1}`
+    using the lax_friedrichs_flux function and lagrange_basis_value
+    from params module.
+    
+    Parameters
+    ----------
+    u_n : arrayfire.Array [N_LGL N_Elements M 1]
+          Amplitude of the wave at the mapped LGL nodes of each element.
+          This code will work for multiple :math:`M` ``u_n``
+          
+    Returns
+    -------
+    surface_term : arrayfire.Array [N_LGL N_Elements M 1]
+                   The surface term represented in the form of an array,
+                   :math:`L_p (1) f_i - L_p (-1) f_{i - 1}`, where p varies
+                   from zero to :math:`N_{LGL}` and i from zero to
+                   :math:`N_{Elements}`. p varies along the rows and i along
+                   columns.
+    
+    **See:** `PDF`_ describing the algorithm to obtain the surface term.
+    
+    .. _PDF: https://goo.gl/Nhhgzx
+
+    '''
+
+    shape_u_n = utils.shape(u_n)
+
+    L_p_minus1   = af.tile(params.lagrange_basis_value[:, 0],
+                        d0 = 1, d1 = 1, d2 = shape_u_n[2])
+    L_p_1        = af.tile(params.lagrange_basis_value[:, -1],
+                        d0 = 1, d1 = 1, d2 = shape_u_n[2])
+    f_i          = lax_friedrichs_flux(u_n)
+    f_iminus1    = af.shift(f_i, 0, 1)
+
+    surface_term = utils.matmul_3D(L_p_1, f_i) \
+                 - utils.matmul_3D(L_p_minus1, f_iminus1)
+    
+    return surface_term
+
+
+
 def b_vector(u_n):
     '''
 
@@ -558,7 +620,7 @@ def b_vector(u_n):
 
     '''
     volume_integral = volume_integral_flux_multiple_u_n(u_n)
-    Surface_term    = surface_term(u_n)    
+    Surface_term    = surface_term_multiple_u(u_n)    
     b_vector_array  = (volume_integral - Surface_term)
     
     return b_vector_array
@@ -599,6 +661,39 @@ def RK4_timestepping(A_inverse, u, delta_t):
 
     return delta_u
 
+
+
+def RK4_timestepping_multiple_u(A_inverse, u, delta_t):
+    '''
+
+    Implementing the Runge-Kutta (RK4) method to evolve the wave.
+
+    Parameters
+    ----------
+    A_inverse : arrayfire.Array[N_LGL N_LGL 1 1]
+                The inverse of the A matrix which was calculated
+                using A_matrix() function.
+
+    u         : arrayfire.Array[N_LGL N_Elements M 1]
+                u at the mapped LGL points
+
+    delta_t   : float64
+                The time-step by which u is to be evolved.
+
+    Returns
+    -------
+    delta_u : arrayfire.Array [N_LGL N_Elements 1 1]
+              The change in u at the mapped LGL points.
+    '''
+
+    k1 = utils.matmul_3D(A_inverse, b_vector(u))
+    k2 = utils.matmul_3D(A_inverse, b_vector(u + k1 * delta_t / 2))
+    k3 = utils.matmul_3D(A_inverse, b_vector(u + k2 * delta_t / 2))
+    k4 = utils.matmul_3D(A_inverse, b_vector(u + k3 * delta_t))
+
+    delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+    return delta_u
 
 
 def RK6_timestepping(A_inverse, u, delta_t):
@@ -660,7 +755,7 @@ def RK6_timestepping(A_inverse, u, delta_t):
 
 
 
-def time_evolution():
+def time_evolution(u = None):
     '''
 
     Solves the wave equation
@@ -690,22 +785,25 @@ def time_evolution():
         os.makedirs(results_directory)
 
 
-    A_inverse   = af.inverse(A_matrix())
     element_LGL = params.element_LGL
     delta_t     = params.delta_t
-    u           = params.u_init
+    #u           = params.u_init
+    shape_u_n = utils.shape(u)
     time        = params.time
+    A_inverse = af.tile(af.inverse(A_matrix()),
+                        d0 = 1, d1 = 1,
+                        d2 = shape_u_n[2])
 
     element_boundaries = af.np_to_af_array(params.np_element_array)
-
+    
     for t_n in trange(0, time.shape[0]):
 
         # Storing u at timesteps which are multiples of 100.
         if (t_n % 20) == 0:
             h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-            dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
+            dset   = h5file.create_dataset('u_i', data = u[:, :, 1], dtype = 'd')
 
-            dset[:, :] = u[:, :]
+            dset[:, :] = u[:, :, 1]
 
        # # Implementing second order time-stepping.
        # u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u))\
@@ -715,14 +813,14 @@ def time_evolution():
        #                  * delta_t
 
         # Implementing RK 4 scheme
-        u += RK4_timestepping(A_inverse, u, delta_t)
+        u += RK4_timestepping_multiple_u(A_inverse, u, delta_t)
 
         # Implementing RK 6 scheme
         #u += RK6_timestepping(A_inverse, u, delta_t)
 
     u_analytical = analytical_u_LGL(t_n + 1)
 
-    u_diff = af.abs(u - u_analytical)
+    u_diff = af.abs(u[:, :, 1] - u_analytical)
 
 
     return u_diff

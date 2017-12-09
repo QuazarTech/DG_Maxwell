@@ -32,7 +32,7 @@ volume_integral_scheme = 'lobatto_quadrature'
 N_quad     = 8
 
 # Wave speed.
-c          = 0.5
+c          = -1.
 
 # The total time for which the wave is to be evolved by the simulation. 
 total_time = 2.01
@@ -115,6 +115,22 @@ wave = 'sin'
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 if (wave=='sin'):
+    #E_00 = 1.
+    #E_01 = 1.
+
+    #B_00 = 0.2
+    #B_01 = 0.5
+
+    #E_z_init = E_00 * af.sin(2 * np.pi * element_LGL) \
+             #+ E_01 * af.cos(2 * np.pi * element_LGL)
+
+    #B_y_init = B_00 * af.sin(2 * np.pi * element_LGL) \
+             #+ B_01 * af.cos(2 * np.pi * element_LGL)
+
+    #u_init = af.constant(0., d0 = N_LGL, d1 = N_Elements,
+                         #d2 = 2, dtype = af.Dtype.f64)
+    #u_init[:, :, 0] = E_z_init
+    #u_init[:, :, 1] = B_y_init
     u_init = af.sin(2 * np.pi * element_LGL)
 
 if (wave=='gaussian'):
