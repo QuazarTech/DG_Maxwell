@@ -429,99 +429,6 @@ def volume_integral_flux_multiple_u_n(u_n):
 
 
 
-def volume_integral_flux_u_n_flux_n(u_n, flux_n):
-    '''
-    Calculates the volume integral of flux in the wave equation.
-
-    :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
-
-    This will give N values of flux integral as p varies from 0 to N - 1.
-    
-    This integral is carried out using the analytical form of the integrand
-    obtained as a linear combination of Lagrange basis polynomials.
-
-    This integrand is the used in the integrate() function.
-
-    Calculation of volume integral flux using N_LGL Lobatto quadrature points
-    can be vectorized and is much faster.
-    
-    Parameters
-    ----------
-
-    u : arrayfire.Array [N_LGL N_Elements 1 1]
-        Amplitude of the wave at the mapped LGL nodes of each element.
-
-    flux_n : arrayfire:Array [N_LGL N_Elements 1 1]
-             Flux of the wave at the mapped LGL nodes of each element.
-
-    Returns
-    -------
-
-    flux_integral : arrayfire.Array [N_LGL N_Elements 1 1]
-                    Value of the volume integral flux. It contains the integral
-                    of all N_LGL * N_Element integrands.
-
-    '''
-    # The coefficients of dLp / d\xi
-    diff_lag_coeff  = params.dl_dxi_coeffs
-
-    lobatto_nodes   = params.lobatto_quadrature_nodes
-    Lobatto_weights = params.lobatto_weights_quadrature
-
-    nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, diff_lag_coeff.shape[1]))
-    power        = af.flip(af.range(diff_lag_coeff.shape[1]))
-    power_tile   = af.tile(power, 1, params.N_quad)
-    nodes_power  = nodes_tile ** power_tile
-    weights_tile = af.transpose(af.tile(Lobatto_weights, 1, diff_lag_coeff.shape[1]))
-    nodes_weight = nodes_power * weights_tile
-
-    dLp_dxi      = af.matmul(diff_lag_coeff, nodes_weight)
-
-
-    # The first option to calculate the volume integral term, directly uses
-    # the Lobatto quadrature instead of using the integrate() function by
-    # passing the coefficients of the Lagrange interpolated polynomial.
-    if(params.volume_integral_scheme == 'lobatto_quadrature' \
-        and params.N_quad == params.N_LGL):
-
-        # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
-        F_u_n                  = af.reorder(flux_n, 2, 0, 1)
-
-        # Multiplying with dLp / d\xi
-        integral_expansion     = af.broadcast(utils.multiply,
-                                              dLp_dxi, F_u_n)
-
-        # Using the quadrature rule.
-        flux_integral = af.sum(integral_expansion, 1)
-        flux_integral = af.reorder(flux_integral, 0, 2, 1)
-
-    # Using the integrate() function to calculate the volume integral term
-    # by passing the Lagrange interpolated polynomial.
-    else:
-        #print('option3')
-        analytical_flux_coeffs = lagrange.lagrange_interpolation_u(flux_n)
-
-        analytical_flux_coeffs = af.reorder(analytical_flux_coeffs, 1, 0, 2)
-
-        dl_dxi_coefficients    = af.reorder(params.dl_dxi_coeffs, 1, 0)
-
-        # The product of polynomials is calculated using af.convolve1
-        volume_int_coeffs = af.convolve1(dl_dxi_coefficients,
-                                         analytical_flux_coeffs,
-                                         conv_mode=af.CONV_MODE.EXPAND)
-        volume_int_coeffs = af.reorder(volume_int_coeffs, 1, 2, 0)
-        volume_int_coeffs = af.moddims(volume_int_coeffs,
-                                       params.N_LGL * params.N_Elements,
-                                       2 * params.N_LGL - 2)
-
-        flux_integral = lagrange.integrate(volume_int_coeffs)
-        flux_integral = af.moddims(flux_integral, params.N_LGL, params.N_Elements)
-
-
-    return flux_integral
-
-
-
 def lax_friedrichs_flux(u_n):
     '''
     Calculates the lax-friedrichs_flux :math:`f_i` using.
@@ -551,54 +458,6 @@ def lax_friedrichs_flux(u_n):
     
     u_iplus1_0    = af.shift(u_n[0, :], 0, -1)
     u_i_N_LGL     = u_n[-1, :]
-    flux_iplus1_0 = flux_x(u_iplus1_0)
-    flux_i_N_LGL  = flux_x(u_i_N_LGL)
-    
-    boundary_flux = (flux_iplus1_0 + flux_i_N_LGL) / 2 \
-                        - params.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
-    
-    
-    return boundary_flux 
-
-
-
-def lax_friedrichs_flux_u_n_flux_n(u_n, flux_n):
-    '''
-
-    Calculates the lax-friedrichs_flux :math:`f_i` using.
-
-    :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \\frac
-                {\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
-
-    The algorithm used is explained in this `document`_
-
-    .. _document: `https://goo.gl/sNsXXK`
-
-
-    Parameters
-    ----------
-
-    u_n : arrayfire.Array [N_LGL N_Elements 1 1]
-          Amplitude of the wave at the mapped LGL nodes of each element.
-
-    f_n : arrayfire:Array [N_LGL N_Elements 1 1]
-          Flux of the wave at the mapped LGL nodes of each element.
-
-    Returns
-    -------
-
-    boundary_flux : arrayfire.Array [1 N_Elements 1 1]
-                    Contains the value of the flux at the boundary elements.
-                    Periodic boundary conditions are used.
-
-    '''
-    
-    u_iplus1_0    = af.shift(u_n[0, :], 0, -1)
-    flux_iplus1_0 = af.shift(u_n[0, :], 0, -1)
-
-    u_i_N_LGL    = u_n[-1, :]
-    flux_i_N_LGL = flux_n[-1, :]
-
     flux_iplus1_0 = flux_x(u_iplus1_0)
     flux_i_N_LGL  = flux_x(u_i_N_LGL)
     
@@ -674,46 +533,6 @@ def surface_term(u_n):
     return surface_term
 
 
-def surface_term_u_n_flux_n(u_n, LF_flux_i):
-    '''
-
-    Calculates the surface term,
-    :math:`L_p(1) f_i - L_p(-1) f_{i - 1}`
-    using the lax_friedrichs_flux function and lagrange_basis_value
-    from params module.
-    
-    Parameters
-    ----------
-    u_n : arrayfire.Array [N_LGL N_Elements 1 1]
-          Amplitude of the wave at the mapped LGL nodes of each element.
-
-    flux_n : af.Array [N_LGL N_Elements 1 1]
-             Lax Friedrichs flux of the wave at the mapped LGL nodes of each element.
-
-    Returns
-    -------
-    surface_term : arrayfire.Array [N_LGL N_Elements 1 1]
-                   The surface term represented in the form of an array,
-                   :math:`L_p (1) f_i - L_p (-1) f_{i - 1}`, where p varies
-                   from zero to :math:`N_{LGL}` and i from zero to
-                   :math:`N_{Elements}`. p varies along the rows and i along
-                   columns.
-    
-    **See:** `PDF`_ describing the algorithm to obtain the surface term.
-    
-    .. _PDF: https://goo.gl/Nhhgzx
-
-    '''
-
-    L_p_minus1   = params.lagrange_basis_value[:,  0]
-    L_p_1        = params.lagrange_basis_value[:, -1]
-    LF_flus_iminus1 = af.shift(LF_flux_i, 0, 1)
-    surface_term = af.blas.matmul(L_p_1, LF_flux_i) \
-                 - af.blas.matmul(L_p_minus1, LF_flus_iminus1)
-    
-    return surface_term
-
-
 
 def b_vector(u_n):
     '''
@@ -746,44 +565,6 @@ def b_vector(u_n):
 
 
 
-# 5. Modify the b vector to accept the flux as an argument
-
-def b_vector_u_n_flux_n(u_n, flux_n):
-    '''
-
-    Calculates the b vector for N_Elements number of elements.
-    
-    Parameters
-    ----------
-
-    u_n : arrayfire.Array [N_LGL N_Elements 1 1]
-          Amplitude of the wave at the mapped LGL nodes of each element.
-
-    flux_n : af.Array [N_LGL N_Elements 1 1]
-             Flux of the wave at the mapped LGL nodes of each element.
-
-    Returns
-    -------
-
-    b_vector_array : arrayfire.Array [N_LGL N_Elements 1 1]
-                     Contains the b vector(of shape [N_LGL 1 1 1])
-                     for each element.
-
-    **See:** `Report`_ for the b-vector can be found here
-
-    .. _Report: https://goo.gl/sNsXXK
-
-    '''
-    volume_integral = volume_integral_flux_u_n_flux_n(u_n, flux_n)
-    Surface_term    = surface_term_u_n_flux_n(
-        u_n,
-        lax_friedrichs_flux_u_n_flux_n(u_n, flux_n))
-    
-    b_vector_array  = (volume_integral - Surface_term)
-    
-    return b_vector_array
-
-
 
 def RK4_timestepping(A_inverse, u, delta_t):
     '''
@@ -813,47 +594,6 @@ def RK4_timestepping(A_inverse, u, delta_t):
     k2 = af.matmul(A_inverse, b_vector(u + k1 * delta_t / 2))
     k3 = af.matmul(A_inverse, b_vector(u + k2 * delta_t / 2))
     k4 = af.matmul(A_inverse, b_vector(u + k3 * delta_t))
-
-    delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
-
-    return delta_u
-
-
-
-def RK4_timestepping_u_n_flux_n(A_inverse, u, flux, delta_t):
-    '''
-
-    Implementing the Runge-Kutta (RK4) method to evolve the wave.
-
-    Parameters
-    ----------
-    A_inverse : arrayfire.Array[N_LGL N_LGL 1 1]
-                The inverse of the A matrix which was calculated
-                using A_matrix() function.
-
-    u         : arrayfire.Array[N_LGL N_Elements 1 1]
-                u at the mapped LGL points
-
-    flux      : af.Array [N_LGL N_Elements 1 1]
-                Flux of the wave at the mapped LGL nodes of each element.
-
-    delta_t   : float64
-                The time-step by which u is to be evolved.
-
-    Returns
-    -------
-    delta_u : arrayfire.Array [N_LGL N_Elements 1 1]
-              The change in u at the mapped LGL points.
-
-    '''
-
-    k1 = af.matmul(A_inverse, b_vector_u_n_flux_n(u, flux_x(u)))
-    k2 = af.matmul(A_inverse, b_vector_u_n_flux_n(u + k1 * delta_t / 2,
-                                                  flux_x(u + k1 * delta_t / 2)))
-    k3 = af.matmul(A_inverse, b_vector_u_n_flux_n(u + k2 * delta_t / 2,
-                                                  flux_x(u + k2 * delta_t / 2)))
-    k4 = af.matmul(A_inverse, b_vector_u_n_flux_n(u + k3 * delta_t,
-                                                  flux_x(u + k3 * delta_t)))
 
     delta_u = delta_t * (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
