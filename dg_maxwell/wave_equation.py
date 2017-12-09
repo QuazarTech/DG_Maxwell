@@ -201,6 +201,22 @@ def flux_x(u):
     return flux
 
 
+def flux_maxwell(cons_var):
+    '''
+    Fluxes for the :math:`(E_z, B_y)` mode in :math:`1D` Maxwell's equations.
+    
+    Parameters
+    ----------
+    
+    cons_var : af.Array [N_Elements 2]
+    '''
+    
+    E_z = cons_var[0]
+    B_y = cons_var[1]
+    
+    return (-B_y, E_z)
+
+
 def volume_integral_flux(u_n):
     '''
 
@@ -294,9 +310,127 @@ def volume_integral_flux(u_n):
 
 
 
-def volume_integral_flux_u_n_flux_n(u_n, flux_n):
+def volume_integral_flux_multiple_u_n(u_n):
     '''
 
+    Calculates the volume integral of flux in the wave equation.
+
+    :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
+
+    This will give N values of flux integral as p varies from 0 to N - 1.
+    
+    This integral is carried out using the analytical form of the integrand
+    obtained as a linear combination of Lagrange basis polynomials.
+
+    This integrand is the used in the integrate() function.
+
+    Calculation of volume integral flux using N_LGL Lobatto quadrature points
+    can be vectorized and is much faster.
+    
+    Parameters
+    ----------
+
+    u : arrayfire.Array [N_LGL N_Elements M 1]
+        Amplitude of the wave at the mapped LGL nodes of each element. This
+        function can computer flux for :math:`M` :math:`u` simultaneously.
+            
+    Returns
+    -------
+
+    flux_integral : arrayfire.Array [N_LGL N_Elements 1 1]
+                    Value of the volume integral flux. It contains the integral
+                    of all N_LGL * N_Element integrands.
+
+    '''
+    shape_u_n = utils.shape(u_n)
+    
+    # The coefficients of dLp / d\xi
+    diff_lag_coeff  = params.dl_dxi_coeffs
+
+    lobatto_nodes   = params.lobatto_quadrature_nodes
+    Lobatto_weights = params.lobatto_weights_quadrature
+
+    nodes_tile   = af.transpose(af.tile(lobatto_nodes, 1, diff_lag_coeff.shape[1]))
+    power        = af.flip(af.range(diff_lag_coeff.shape[1]))
+    power_tile   = af.tile(power, 1, params.N_quad)
+    nodes_power  = nodes_tile ** power_tile
+    weights_tile = af.transpose(af.tile(Lobatto_weights, 1, diff_lag_coeff.shape[1]))
+    nodes_weight = nodes_power * weights_tile
+
+    dLp_dxi      = af.matmul(diff_lag_coeff, nodes_weight)
+
+
+    # The first option to calculate the volume integral term, directly uses
+    # the Lobatto quadrature instead of using the integrate() function by
+    # passing the coefficients of the Lagrange interpolated polynomial.
+    if(params.volume_integral_scheme == 'lobatto_quadrature' \
+        and params.N_quad == params.N_LGL):
+
+        # Flux using u_n, reordered to 1 X N_LGL X N_Elements array.
+        F_u_n                  = af.reorder(flux_x(u_n), 3, 0, 1, 2)
+        F_u_n = af.tile(F_u_n, d0 = params.N_LGL)
+
+        # Multiplying with dLp / d\xi
+        integral_expansion     = af.broadcast(utils.multiply,
+                                            dLp_dxi, F_u_n)
+
+    #     # Using the quadrature rule.
+        flux_integral = af.sum(integral_expansion, 1)
+
+        flux_integral = af.reorder(flux_integral, 0, 2, 3, 1)
+
+    # Using the integrate() function to calculate the volume integral term
+    # by passing the Lagrange interpolated polynomial.
+    else:
+        #print('option3')
+        analytical_flux_coeffs = af.transpose(af.moddims(u_n,
+                                                        d0 = params.N_LGL,
+                                                        d1 = params.N_Elements \
+                                                            * shape_u_n[2]))
+        
+        analytical_flux_coeffs = flux_x(
+            lagrange.lagrange_interpolation(analytical_flux_coeffs))
+        analytical_flux_coeffs = af.transpose(
+            af.moddims(af.transpose(analytical_flux_coeffs),
+                       d0 = params.N_LGL, d1 = params.N_Elements,
+                       d2 = shape_u_n[2]))
+        
+        analytical_flux_coeffs = af.reorder(analytical_flux_coeffs,
+                                            d0 = 3, d1 = 1, d2 = 0, d3 = 2)
+        analytical_flux_coeffs = af.tile(analytical_flux_coeffs,
+                                         d0 = params.N_LGL)
+        analytical_flux_coeffs = af.moddims(
+            af.transpose(analytical_flux_coeffs),
+            d0 = params.N_LGL,
+            d1 = params.N_LGL * params.N_Elements, d2 = 1,
+            d3 = shape_u_n[2])
+        
+        analytical_flux_coeffs = af.moddims(
+            analytical_flux_coeffs, d0 = params.N_LGL,
+            d1 = params.N_LGL * params.N_Elements * shape_u_n[2],
+            d2 = 1, d3 = 1)
+        
+        analytical_flux_coeffs = af.transpose(analytical_flux_coeffs)
+
+        dl_dxi_coefficients    = af.tile(af.tile(params.dl_dxi_coeffs,
+                                                 d0 = params.N_Elements), \
+                                         d0 = shape_u_n[2])
+
+        volume_int_coeffs = utils.poly1d_product(dl_dxi_coefficients,
+                                                analytical_flux_coeffs)
+        
+        flux_integral = lagrange.integrate(volume_int_coeffs)
+        flux_integral = af.moddims(af.transpose(flux_integral),
+                                   d0 = params.N_LGL,
+                                   d1 = params.N_Elements,
+                                   d2 = shape_u_n[2])
+
+    return flux_integral
+
+
+
+def volume_integral_flux_u_n_flux_n(u_n, flux_n):
+    '''
     Calculates the volume integral of flux in the wave equation.
 
     :math:`\\int_{-1}^1 f(u) \\frac{d L_p}{d\\xi} d\\xi`
@@ -390,7 +524,6 @@ def volume_integral_flux_u_n_flux_n(u_n, flux_n):
 
 def lax_friedrichs_flux(u_n):
     '''
-
     Calculates the lax-friedrichs_flux :math:`f_i` using.
 
     :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \\frac
@@ -605,7 +738,7 @@ def b_vector(u_n):
     .. _Report: https://goo.gl/sNsXXK
 
     '''
-    volume_integral = volume_integral_flux(u_n)
+    volume_integral = volume_integral_flux_multiple_u_n(u_n)
     Surface_term    = surface_term(u_n)    
     b_vector_array  = (volume_integral - Surface_term)
     
@@ -842,7 +975,7 @@ def time_evolution():
        #                  * delta_t
 
         # Implementing RK 4 scheme
-        u += RK4_timestepping_u_n_flux_n(A_inverse, u, flux_x(u), delta_t)
+        u += RK4_timestepping(A_inverse, u, delta_t)
 
         # Implementing RK 6 scheme
         #u += RK6_timestepping(A_inverse, u, delta_t)

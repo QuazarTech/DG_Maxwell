@@ -168,3 +168,63 @@ def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
         axes_handler.add_line(lines.Line2D(line1_xs, line1_ys, linewidth=grid_width, color=grid_color))
         
     return
+
+
+def shape(array):
+    '''
+    '''
+    af_shape = array.shape
+
+    shape = [1, 1, 1, 1]
+
+    for dim in np.arange(array.numdims()):
+        shape[dim] = af_shape[dim]
+
+    return shape
+
+
+
+def polyval_1d(polynomials, xi):
+    '''
+    Finds the value of the polynomials at the given :math:`\\xi` coordinates.
+    Parameters
+    ----------
+    polynomials : af.Array [number_of_polynomials N 1 1]
+                 ``number_of_polynomials`` :math:`2D` polynomials of degree
+                 :math:`N - 1` of the form
+                 .. math:: P(x) = a_0x^0 + a_1x^1 + ... \\
+                           a_{N - 1}x^{N - 1} + a_Nx^N
+    xi      : af.Array [N 1 1 1]
+              :math:`\\xi` coordinates at which the :math:`i^{th}` Lagrange
+              basis polynomial is to be evaluated.
+    Returns
+    -------
+    af.Array [i.shape[0] xi.shape[0] 1 1]
+        Evaluated polynomials at given :math:`\\xi` coordinates
+    '''
+
+    N     = int(polynomials.shape[1])
+    xi_   = af.tile(af.transpose(xi), d0 = N)
+    power = af.tile(af.flip(af.range(N), dim = 0),
+                    d0 = 1, d1 = xi.shape[0])
+
+    xi_power = xi_**power
+
+    return af.matmul(polynomials, xi_power)
+
+
+
+def poly1d_product(poly_a, poly_b):
+    '''
+    Finds the product of two polynomials using the arrayfire convolve1
+    function.
+    Parameters
+    ----------
+    poly_a : af.Array[N degree_a 1 1]
+             :math:`N` polynomials of degree :math:`degree`
+    poly_b : af.Array[N degree_b 1 1]
+             :math:`N` polynomials of degree :math:`degree_b`
+    '''
+    return af.transpose(af.convolve1(af.transpose(poly_a),
+                                     af.transpose(poly_b),
+                                     conv_mode = af.CONV_MODE.EXPAND))
