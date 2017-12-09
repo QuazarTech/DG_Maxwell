@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath('./'))
 
 import arrayfire as af
 af.set_backend('opencl')
-af.set_device(0)
+af.set_device(1)
 
 import numpy as np
 

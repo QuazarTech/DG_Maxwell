@@ -4,7 +4,7 @@
 import numpy as np
 import arrayfire as af
 af.set_backend('opencl')
-af.set_device(0)
+af.set_device(1)
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils
@@ -32,7 +32,7 @@ volume_integral_scheme = 'lobatto_quadrature'
 N_quad     = 8
 
 # Wave speed.
-c          = 1.
+c          = 0.5
 
 # The total time for which the wave is to be evolved by the simulation. 
 total_time = 2.01

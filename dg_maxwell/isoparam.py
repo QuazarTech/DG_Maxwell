@@ -3,7 +3,7 @@
 
 import arrayfire as af
 af.set_backend('opencl')
-af.set_device(0)
+af.set_device(1)
 
 from dg_maxwell import utils
 

@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath('./'))
 import numpy as np
 import arrayfire as af
 af.set_backend('opencl')
-af.set_device(0)
+af.set_device(1)
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
@@ -447,6 +447,23 @@ def test_lax_friedrichs_flux():
     assert af.max(af.abs(analytical_lax_friedrichs_flux - f_i)) < threshold
 
 
+
+def test_lax_friedrichs_flux_u_n_flux_n():
+    '''
+    A test function to test the lax_friedrichs_flux function in wave_equation
+    module.
+    '''
+    threshold = 1e-14
+    
+    params.c = 1
+    
+    f_i = wave_equation.lax_friedrichs_flux_u_n_flux_n(params.u[:, :, 0],
+                                                       wave_equation.flux_x(
+                                                           params.u[:, :, 0]))
+    analytical_lax_friedrichs_flux = params.u[-1, :, 0]
+    assert af.max(af.abs(analytical_lax_friedrichs_flux - f_i)) < threshold
+
+
 def test_surface_term():
     '''
     A test function to test the surface_term function in the wave_equation
@@ -475,6 +492,39 @@ def test_surface_term():
     return analytical_surface_term
 
 
+
+def test_surface_term_u_n_flux_n():
+    '''
+    A test function to test the surface_term function in the wave_equation
+    module using analytical Lax-Friedrichs flux.
+    '''
+    threshold = 1e-13
+    params.c = 1
+    
+    change_parameters(8, 10, 8, 'gaussian')
+    
+    analytical_f_i        = (params.u[-1, :, 0])
+    analytical_f_i_minus1 = (af.shift(params.u[-1, :, 0], 0, 1))
+    
+    L_p_1                 = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
+    L_p_1[params.N_LGL - 1] = 1
+    
+    L_p_minus1    = af.constant(0, params.N_LGL, dtype = af.Dtype.f64)
+    L_p_minus1[0] = 1
+    
+    analytical_surface_term = af.blas.matmul(L_p_1, analytical_f_i)\
+        - af.blas.matmul(L_p_minus1, analytical_f_i_minus1)
+    
+    numerical_surface_term = wave_equation.surface_term_u_n_flux_n(
+        params.u[:, :, 0],
+        wave_equation.lax_friedrichs_flux(params.u[:, :, 0]))
+
+    assert af.max(af.abs(analytical_surface_term - numerical_surface_term)) \
+        < threshold
+    return analytical_surface_term
+
+
+
 def test_b_vector():
     '''
     A test function to check the b vector obtained analytically and compare it
@@ -494,6 +544,35 @@ def test_b_vector():
     b_vector_array       = wave_equation.b_vector(params.u[:, :, 0])
     
     assert (b_vector_analytical - b_vector_array) < threshold
+
+
+def test_b_vector_u_n_flux_n():
+    '''
+    A test function to check the b vector obtained analytically and compare it
+    with the one returned by b_vector function in wave_equation module.
+    '''
+    threshold = 1e-13
+    params.c = 1
+    
+    change_parameters(8, 10, 8, 'gaussian')
+
+    u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(),
+                                          params.u[:, :, 0])
+    volume_integral_flux = wave_equation.volume_integral_flux_u_n_flux_n(
+        params.u[:, :, 0], wave_equation.flux_x(params.u[:, :, 0]))
+    
+    surface_term         = test_surface_term_u_n_flux_n()
+    
+    b_vector_analytical  = u_n_A_matrix \
+                         + (volume_integral_flux - surface_term) \
+                         * params.delta_t
+    
+    b_vector_array       = wave_equation.b_vector_u_n_flux_n(
+        params.u[:, :, 0], wave_equation.flux_x(params.u[:, :, 0]))
+    
+    assert (b_vector_analytical - b_vector_array) < threshold
+
+
 
 def test_integrate():
     '''

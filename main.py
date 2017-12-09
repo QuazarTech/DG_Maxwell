@@ -2,7 +2,7 @@
 
 import arrayfire as af
 af.set_backend('opencl')
-af.set_device(0)
+af.set_device(1)
 af.info()
 
 from dg_maxwell import wave_equation
