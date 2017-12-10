@@ -517,18 +517,24 @@ def time_evolution(u = None):
     element_boundaries = af.np_to_af_array(params.np_element_array)
     
     for t_n in trange(0, time.shape[0]):
+        if (t_n % 20) == 0:
+            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
+            dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
 
-        # Storing u at timesteps which are multiples of 100.
-        if (t_n % 5) == 0:
-            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' \
-                %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-            Ez_dset   = h5file.create_dataset('E_z', data = u[:, :, 0],
-                                              dtype = 'd')
-            By_dset   = h5file.create_dataset('B_y', data = u[:, :, 1],
-                                              dtype = 'd')
+            dset[:, :] = u[:, :]
 
-            Ez_dset[:, :] = u[:, :, 0]
-            By_dset[:, :] = u[:, :, 1]
+        # Code for solving 1D Maxwell's Equations
+        ## Storing u at timesteps which are multiples of 100.
+        #if (t_n % 5) == 0:
+            #h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' \
+                #%(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
+            #Ez_dset   = h5file.create_dataset('E_z', data = u[:, :, 0],
+                                              #dtype = 'd')
+            #By_dset   = h5file.create_dataset('B_y', data = u[:, :, 1],
+                                              #dtype = 'd')
+
+            #Ez_dset[:, :] = u[:, :, 0]
+            #By_dset[:, :] = u[:, :, 1]
 
 
         # Implementing RK 4 scheme
