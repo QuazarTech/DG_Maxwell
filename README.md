@@ -101,6 +101,6 @@ $ pytest
   The movie will be created automatically and stored in `results` folder.
 
 ## Maintainers
-- Aman Abhishek Tiwari - ![aman@quazartech.com](aman@quazartech.com)
-- Balavarun P - ![f2013462@pilani.bits-pilani.ac.in](f2013462@pilani.bits-pilani.ac.in)
-- Manichandra Morumpudi - ![mani@quazartech.com](mani@quazartech.com)
+- Aman Abhishek Tiwari - [aman@quazartech.com](aman@quazartech.com)
+- Balavarun P - [f2013462@pilani.bits-pilani.ac.in](f2013462@pilani.bits-pilani.ac.in)
+- Manichandra Morumpudi - [mani@quazartech.com](mani@quazartech.com)
