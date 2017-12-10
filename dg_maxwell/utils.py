@@ -4,7 +4,9 @@
 import numpy as np
 import matplotlib.lines as lines
 import arrayfire as af
+
 af.set_backend('cpu')
+af.set_device(0)
 
 def add(a, b):
     '''
@@ -167,3 +169,99 @@ def plot_line(points, axes_handler, grid_width = 2., grid_color = 'blue'):
         axes_handler.add_line(lines.Line2D(line1_xs, line1_ys, linewidth=grid_width, color=grid_color))
         
     return
+
+
+def shape(array):
+    '''
+    '''
+    af_shape = array.shape
+
+    shape = [1, 1, 1, 1]
+
+    for dim in np.arange(array.numdims()):
+        shape[dim] = af_shape[dim]
+
+    return shape
+
+
+
+def polyval_1d(polynomials, xi):
+    '''
+    Finds the value of the polynomials at the given :math:`\\xi` coordinates.
+
+    Parameters
+    ----------
+    polynomials : af.Array [number_of_polynomials N 1 1]
+                 ``number_of_polynomials`` :math:`2D` polynomials of degree
+                 :math:`N - 1` of the form
+                 .. math:: P(x) = a_0x^0 + a_1x^1 + ... \\
+                           a_{N - 1}x^{N - 1} + a_Nx^N
+    xi      : af.Array [N 1 1 1]
+              :math:`\\xi` coordinates at which the :math:`i^{th}` Lagrange
+              basis polynomial is to be evaluated.
+
+    Returns
+    -------
+    af.Array [i.shape[0] xi.shape[0] 1 1]
+        Evaluated polynomials at given :math:`\\xi` coordinates
+    '''
+
+    N     = int(polynomials.shape[1])
+    xi_   = af.tile(af.transpose(xi), d0 = N)
+    power = af.tile(af.flip(af.range(N), dim = 0),
+                    d0 = 1, d1 = xi.shape[0])
+
+    xi_power = xi_**power
+
+    return af.matmul(polynomials, xi_power)
+
+
+
+def poly1d_product(poly_a, poly_b):
+    '''
+    Finds the product of two polynomials using the arrayfire convolve1
+    function.
+
+    Parameters
+    ----------
+    poly_a : af.Array[N degree_a 1 1]
+             :math:`N` polynomials of degree :math:`degree`
+    poly_b : af.Array[N degree_b 1 1]
+             :math:`N` polynomials of degree :math:`degree_b`
+    '''
+    return af.transpose(af.convolve1(af.transpose(poly_a),
+                                     af.transpose(poly_b),
+                                     conv_mode = af.CONV_MODE.EXPAND))
+
+
+def matmul_3D(a, b):
+    '''
+    Finds the matrix multiplication of :math:`Q` pairs of matrices ``a`` and
+    ``b``.
+
+    Parameters
+    ----------
+    a : af.Array [M N Q 1]
+        First set of :math:`Q` 2D arrays :math:`N \\neq 1` and :math:`M \\neq 1`.
+    b : af.Array [N P Q 1]
+        Second set of :math:`Q` 2D arrays :math:`P \\neq 1`.
+
+    Returns
+    -------
+    matmul : af.Array [M P Q 1]
+             Matrix multiplication of :math:`Q` sets of 2D arrays.
+    '''
+    shape_a = shape(a)
+    shape_b = shape(b)
+
+    P = shape_b[1]
+
+    a = af.transpose(a)
+    a = af.reorder(a, d0 = 0, d1 = 3, d2 = 2, d3 = 1)
+    a = af.tile(a, d0 = 1, d1 = P)
+    b = af.tile(b, d0 = 1, d1 = 1, d2 = 1, d3 = a.shape[3])
+
+    matmul = af.sum(a * b, dim = 0)
+    matmul = af.reorder(matmul, d0 = 3, d1 = 1, d2 = 2, d3 = 0)
+
+    return matmul

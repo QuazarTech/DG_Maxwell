@@ -3,7 +3,9 @@
 
 import numpy as np
 import arrayfire as af
+
 af.set_backend('cpu')
+af.set_device(0)
 
 from dg_maxwell import lagrange
 from dg_maxwell import utils
@@ -31,7 +33,7 @@ volume_integral_scheme = 'lobatto_quadrature'
 N_quad     = 8
 
 # Wave speed.
-c          = 1.
+c          = 1.0
 
 # The total time for which the wave is to be evolved by the simulation. 
 total_time = 2.01
@@ -83,13 +85,14 @@ elements        = utils.linspace(af.sum(x_nodes[0]),
                   af.sum(x_nodes[1] - element_size), N_Elements)
 
 np_element_array   = np.concatenate((af.transpose(elements),
-                               af.transpose(elements + element_size)))
+                                     af.transpose(elements + element_size)))
 element_mesh_nodes = utils.linspace(af.sum(x_nodes[0]),
-                                    af.sum(x_nodes[1]), N_Elements + 1)
+                                    af.sum(x_nodes[1]),
+                                    N_Elements + 1)
 
 element_array = af.transpose(af.interop.np_to_af_array(np_element_array))
-element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),\
-                                                                   xi_LGL)
+element_LGL   = wave_equation.mapping_xi_to_x(af.transpose(element_array),
+                                              xi_LGL)
 
 # The minimum distance between 2 mapped LGL points.
 delta_x = af.min((element_LGL - af.shift(element_LGL, 1, 0))[1:, :])
@@ -104,7 +107,7 @@ delta_t = delta_x / (4 * abs(c))
 
 # Array of timesteps seperated by delta_t.
 time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
-                                                    int(total_time / delta_t))
+                         int(total_time / delta_t))
 
 
 # The wave to be advected is either a sin or a Gaussian wave.

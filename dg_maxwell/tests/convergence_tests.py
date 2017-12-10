@@ -1,7 +1,10 @@
 from dg_maxwell import params
 from dg_maxwell import wave_equation
 
+import arrayfire as af
 
+af.set_backend('cpu')
+af.set_device(0)
 
 def L1_norm(u):
     '''

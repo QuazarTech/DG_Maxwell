@@ -7,7 +7,9 @@ sys.path.insert(0, os.path.abspath('./'))
 
 import numpy as np
 import arrayfire as af
+
 af.set_backend('cpu')
+af.set_device(0)
 
 from dg_maxwell import params
 from dg_maxwell import lagrange
@@ -370,8 +372,11 @@ def test_volume_integral_flux():
 
          ])))
     
-    numerical_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
+    numerical_flux = wave_equation.volume_integral_flux(
+        params.u[:, :, 0])
     assert (af.mean(af.abs(numerical_flux - referenceFluxIntegral)) < threshold)
+
+
 
 def test_lax_friedrichs_flux():
     '''
@@ -385,6 +390,7 @@ def test_lax_friedrichs_flux():
     f_i = wave_equation.lax_friedrichs_flux(params.u[:, :, 0])
     analytical_lax_friedrichs_flux = params.u[-1, :, 0]
     assert af.max(af.abs(analytical_lax_friedrichs_flux - f_i)) < threshold
+
 
 
 def test_surface_term():
@@ -415,6 +421,7 @@ def test_surface_term():
     return analytical_surface_term
 
 
+
 def test_b_vector():
     '''
     A test function to check the b vector obtained analytically and compare it
@@ -427,13 +434,16 @@ def test_b_vector():
 
     u_n_A_matrix         = af.blas.matmul(wave_equation.A_matrix(),\
                                                   params.u[:, :, 0])
-    volume_integral_flux = wave_equation.volume_integral_flux(params.u[:, :, 0])
+    volume_integral_flux = wave_equation.volume_integral_flux(
+        params.u[:, :, 0])
     surface_term         = test_surface_term()
     b_vector_analytical  = u_n_A_matrix + (volume_integral_flux -\
                                     (surface_term)) * params.delta_t
     b_vector_array       = wave_equation.b_vector(params.u[:, :, 0])
     
     assert (b_vector_analytical - b_vector_array) < threshold
+
+
 
 def test_integrate():
     '''

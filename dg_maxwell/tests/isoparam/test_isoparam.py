@@ -6,7 +6,10 @@ import sys
 sys.path.insert(0, os.path.abspath('./'))
 
 import arrayfire as af
+
 af.set_backend('cpu')
+af.set_device(0)
+
 import numpy as np
 
 from dg_maxwell import isoparam

@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/QuazarTech/DG_Maxwell.svg?branch=master)](https://travis-ci.org/QuazarTech/DG_Maxwell)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/e8733cdbf1454af0ac35ae5b2d017d9f)](https://www.codacy.com/app/aman2official/DG_Maxwell_2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=QuazarTech/DG_Maxwell&amp;utm_campaign=Badge_Grade)
 [![Documentation Status](http://readthedocs.org/projects/dg-maxwell/badge/?version=latest)](http://dg-maxwell.readthedocs.io/en/latest/?badge=latest)
-
+[![Coverage Status](https://coveralls.io/repos/github/QuazarTech/DG_Maxwell/badge.svg?branch=master)](https://coveralls.io/github/QuazarTech/DG_Maxwell?branch=master)
 ```
 _____   _____   __  __                          _ _ 
 |  __ \ / ____| |  \/  |                        | | |
@@ -67,6 +67,14 @@ solving the wave equation in a rectangular domain in the
 - [arrayfire](http://arrayfire.org)
 - [gmshtranslate](https://github.com/amanabt/gmshtranslator)
 - [texlive](https://www.tug.org/texlive/)
+- h5py
+- tqdm
+- scipy
+- pytest
+- pytest-cov
+- coveralls
+- python-coveralls
+
 
 ## Documentation
 The documenation for the project can be generated using `sphinx`
@@ -93,6 +101,6 @@ $ pytest
   The movie will be created automatically and stored in `results` folder.
 
 ## Maintainers
-- Aman Abhishek Tiwari - ![aman@quazartech.com](aman@quazartech.com)
-- Balavarun P - ![f2013462@pilani.bits-pilani.ac.in](f2013462@pilani.bits-pilani.ac.in)
-- Manichandra Morumpudi - ![mani@quazartech.com](mani@quazartech.com)
+- Aman Abhishek Tiwari - [aman@quazartech.com](aman@quazartech.com)
+- Balavarun P - [f2013462@pilani.bits-pilani.ac.in](f2013462@pilani.bits-pilani.ac.in)
+- Manichandra Morumpudi - [mani@quazartech.com](mani@quazartech.com)
