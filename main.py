@@ -30,4 +30,3 @@ if __name__ == '__main__':
     u_init[:, :, 1] = B_y_init
     
     u_diff = wave_equation.time_evolution(u_init)
-    print(lagrange.L1_norm(u_diff))

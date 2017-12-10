@@ -196,8 +196,12 @@ def flux_x(u):
            of numpy.poly1d polynomials.
 
     '''
-    flux = params.c * u
-
+    #flux = params.c * u
+    flux = u.copy()
+    
+    flux[:, :, 0] = -u[:, :, 1]
+    flux[:, :, 1] = -u[:, :, 0]
+    
     return flux
 
 
@@ -799,11 +803,15 @@ def time_evolution(u = None):
     for t_n in trange(0, time.shape[0]):
 
         # Storing u at timesteps which are multiples of 100.
-        if (t_n % 20) == 0:
+        if (t_n % 5) == 0:
             h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-            dset   = h5file.create_dataset('u_i', data = u[:, :, 1], dtype = 'd')
+            Ez_dset   = h5file.create_dataset('E_z', data = u[:, :, 0],
+                                              dtype = 'd')
+            By_dset   = h5file.create_dataset('B_y', data = u[:, :, 1],
+                                              dtype = 'd')
 
-            dset[:, :] = u[:, :, 1]
+            Ez_dset[:, :] = u[:, :, 0]
+            By_dset[:, :] = u[:, :, 1]
 
        # # Implementing second order time-stepping.
        # u_n_plus_half =  u + af.matmul(A_inverse, b_vector(u))\
@@ -820,8 +828,8 @@ def time_evolution(u = None):
 
     u_analytical = analytical_u_LGL(t_n + 1)
 
-    u_diff = af.abs(u[:, :, 1] - u_analytical)
+    #u_diff = af.abs(u[:, :, 1] - u_analytical)
 
 
-    return u_diff
+    #return u_diff
 
