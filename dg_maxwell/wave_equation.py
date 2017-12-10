@@ -197,14 +197,14 @@ def flux_x(u):
            of numpy.poly1d polynomials.
 
     '''
-    ## Normal flux
-    #flux = params.c * u
+    # Normal flux
+    flux = params.c * u
     
-    # Flux for solving 1D Maxwell's equations
-    flux = u.copy()
+    ## Flux for solving 1D Maxwell's equations
+    #flux = u.copy()
     
-    flux[:, :, 0] = -u[:, :, 1]
-    flux[:, :, 1] = -u[:, :, 0]
+    #flux[:, :, 0] = -u[:, :, 1]
+    #flux[:, :, 1] = -u[:, :, 0]
     
     return flux
 
