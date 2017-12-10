@@ -4,8 +4,9 @@
 import numpy as np
 import matplotlib.lines as lines
 import arrayfire as af
-af.set_backend('opencl')
-af.set_device(1)
+
+af.set_backend('cpu')
+af.set_device(0)
 
 def add(a, b):
     '''
@@ -187,6 +188,7 @@ def shape(array):
 def polyval_1d(polynomials, xi):
     '''
     Finds the value of the polynomials at the given :math:`\\xi` coordinates.
+
     Parameters
     ----------
     polynomials : af.Array [number_of_polynomials N 1 1]
@@ -197,6 +199,7 @@ def polyval_1d(polynomials, xi):
     xi      : af.Array [N 1 1 1]
               :math:`\\xi` coordinates at which the :math:`i^{th}` Lagrange
               basis polynomial is to be evaluated.
+
     Returns
     -------
     af.Array [i.shape[0] xi.shape[0] 1 1]
@@ -218,6 +221,7 @@ def poly1d_product(poly_a, poly_b):
     '''
     Finds the product of two polynomials using the arrayfire convolve1
     function.
+
     Parameters
     ----------
     poly_a : af.Array[N degree_a 1 1]
@@ -234,12 +238,14 @@ def matmul_3D(a, b):
     '''
     Finds the matrix multiplication of :math:`Q` pairs of matrices ``a`` and
     ``b``.
+
     Parameters
     ----------
     a : af.Array [M N Q 1]
         First set of :math:`Q` 2D arrays :math:`N \\neq 1` and :math:`M \\neq 1`.
     b : af.Array [N P Q 1]
         Second set of :math:`Q` 2D arrays :math:`P \\neq 1`.
+
     Returns
     -------
     matmul : af.Array [M P Q 1]

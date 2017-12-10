@@ -8,8 +8,8 @@ from dg_maxwell import params
 from dg_maxwell import utils
 from dg_maxwell import lagrange
 
-af.set_backend('opencl')
-af.set_device(1)
+af.set_backend('cpu')
+af.set_device(0)
 
 def test_matmul_3D():
     '''
