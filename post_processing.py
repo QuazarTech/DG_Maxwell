@@ -70,7 +70,7 @@ for i in trange(0, file_count):
     pl.xlim(-1, 1)
     pl.ylim(-2, 2)
     pl.suptitle(r'Time = %.2f' % (i * 5 * params.delta_t))
-    f.savefig('results/1D_Wave_images/%04d' %(i) + '.png', dpi = 50)
+    f.savefig('results/1D_Wave_images/%04d' %(i) + '.png', dpi = 200)
     pl.close('all')
 
 # Creating a movie with the images created.
