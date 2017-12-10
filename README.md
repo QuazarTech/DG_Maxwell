@@ -67,6 +67,14 @@ solving the wave equation in a rectangular domain in the
 - [arrayfire](http://arrayfire.org)
 - [gmshtranslate](https://github.com/amanabt/gmshtranslator)
 - [texlive](https://www.tug.org/texlive/)
+- h5py
+- tqdm
+- scipy
+- pytest
+- pytest-cov
+- coveralls
+- python-coveralls
+
 
 ## Documentation
 The documenation for the project can be generated using `sphinx`
