@@ -49,8 +49,8 @@ plt.rcParams['ytick.direction' ] = 'in'
 
 def mapping_xi_to_x(x_nodes, xi):
     '''
-    Maps points in :math: `\\xi` space to :math:`x` space using the formula
-    :math:  `x = \\frac{1 - \\xi}{2} x_0 + \\frac{1 + \\xi}{2} x_1`
+    Maps points in :math:`\\xi` space to :math:`x` space using the formula
+    :math:`x = \\frac{1 - \\xi}{2} x_0 + \\frac{1 + \\xi}{2} x_1`
     
     Parameters
     ----------
@@ -59,14 +59,14 @@ def mapping_xi_to_x(x_nodes, xi):
               Element nodes.
     
     xi      : arrayfire.Array [N 1 1 1]
-              Value of :math: `\\xi`coordinate for which the corresponding
-              :math: `x` coordinate is to be found.
+              Value of :math:`\\xi` coordinate for which the corresponding
+              :math:`x` coordinate is to be found.
     
     Returns
     -------
 
     x : arrayfire.Array
-        :math: `x` value in the element corresponding to :math:`\\xi`.
+        :math:`x` value in the element corresponding to :math:`\\xi`.
     '''
 
     N_0 = (1 - xi) / 2
@@ -83,7 +83,7 @@ def mapping_xi_to_x(x_nodes, xi):
 def dx_dxi_numerical(x_nodes, xi):
     '''
 
-    Differential :math: `\\frac{dx}{d \\xi}` calculated by central
+    Differential :math:`\\frac{dx}{d \\xi}` calculated by central
     differential method about xi using the mapping_xi_to_x function.
     
     Parameters
@@ -93,7 +93,7 @@ def dx_dxi_numerical(x_nodes, xi):
               Contains the nodes of elements.
     
     xi      : arrayfire.Array [N_LGL 1 1 1]
-              Values of :math: `\\xi`
+              Values of :math:`\\xi`
     
     Returns
     -------
@@ -115,7 +115,7 @@ def dx_dxi_analytical(x_nodes, xi):
     '''
 
     The analytical result for :math:`\\frac{dx}{d \\xi}` for a 1D element is
-    :math: `\\frac{x_1 - x_0}{2}`
+    :math:`\\frac{x_1 - x_0}{2}`
     
     Parameters
     ----------
@@ -124,14 +124,14 @@ def dx_dxi_analytical(x_nodes, xi):
               Contains the nodes of elements.
  
     xi      : arrayfire.Array [N_LGL 1 1 1]
-              Values of :math: `\\xi`.
+              Values of :math:`\\xi`.
 
     Returns
     -------
 
     analytical_dx_dxi : arrayfire.Array [N_Elements 1 1 1]
-                        The analytical solution of :math:
-                        `\\frac{dx}{d\\xi}` for an element.
+                        The analytical solution of
+                        :math:`\\frac{dx}{d\\xi}` for an element.
     
     '''
     analytical_dx_dxi = (x_nodes[1] - x_nodes[0]) / 2
@@ -143,10 +143,10 @@ def A_matrix():
     '''
 
     Calculates A matrix whose elements :math:`A_{p i}` are given by
-    :math: `A_{p i} &= \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
+    :math:`A_{pi} = \\int^1_{-1} L_p(\\xi)L_i(\\xi) \\frac{dx}{d\\xi}`
 
     The integrals are computed using the integrate() function.
-    Since elements are taken to be of equal size, :math: `\\frac {dx}{dxi}
+    Since elements are taken to be of equal size, :math:`\\frac {dx}{d\\xi}`
     is same everywhere
     
     Returns
@@ -333,8 +333,8 @@ def lax_friedrichs_flux(u_n):
     '''
     Calculates the lax-friedrichs_flux :math:`f_i` using.
 
-    :math:`f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \\frac
-                {\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})`
+    .. math:: f_i = \\frac{F(u^{i + 1}_0) + F(u^i_{N_{LGL} - 1})}{2} - \\
+              \\frac{\Delta x}{2\Delta t} (u^{i + 1}_0 - u^i_{N_{LGL} - 1})
 
     The algorithm used is explained in this `document`_
 
@@ -373,6 +373,18 @@ def lax_friedrichs_flux(u_n):
 def upwind_flux(u_n):
     '''
     Finds the upwind flux of all the element edges present inside a domain.
+
+    Parameters
+    ----------
+    u_n : arrayfire.Array [N_LGL N_Elements M 1]
+          Amplitude of the wave at the mapped LGL nodes of each element.
+          This code will work for :math:`M` multiple ``u_n``.
+    
+    Returns
+    -------
+    flux_x : arrayfire.Array [1 N_Elements 1 1]
+             Contains the value of the flux at the boundary elements.
+             Periodic boundary conditions are used.
     '''
     right_state    = af.shift(u_n[0, :], 0, -1)
     left_state     = u_n[-1, :]
@@ -388,10 +400,30 @@ def upwind_flux(u_n):
 
     return
 
+
+
 def upwind_flux_maxwell_eq(u_n):
     '''
-    Finds the upwind flux of all the element edges present inside a domain.
+    Finds the upwind flux of all the element edges present inside a domain
+    for Mode :math:`1` of Maxwell's equations.
+    Please refer to `maxwell_equation_pbc_1d.pdf`_ for the derivation
+    of the modes.
+
+    .. _maxwell_equation_pbc_1d.pdf: `https://goo.gl/8FS4mv`
+
+    Parameters
+    ----------
+    u_n : arrayfire.Array [N_LGL N_Elements M 1]
+          Amplitude of the wave at the mapped LGL nodes of each element.
+          This code will work for :math:`M` multiple ``u_n``.
+    
+    Returns
+    -------
+    flux_x : arrayfire.Array [1 N_Elements 1 1]
+             Contains the value of the flux at the boundary elements.
+             Periodic boundary conditions are used.
     '''
+
     right_state    = af.shift(u_n[0, :], 0, -1)
     
     flux = right_state.copy()
@@ -442,10 +474,10 @@ def surface_term(u_n):
     #f_i          = lax_friedrichs_flux(u_n)
     
     #[NOTE]: Uncomment to use upwind flux for uncoupled advection equations
-    #f_i          = upwind_flux(u_n)
+    f_i          = upwind_flux(u_n)
 
     #[NOTE]: Uncomment to use upwind flux for Maxwell's equations
-    f_i          = upwind_flux_maxwell_eq(u_n)
+    #f_i          = upwind_flux_maxwell_eq(u_n)
     
     f_iminus1    = af.shift(f_i, 0, 1)
 
@@ -524,7 +556,7 @@ def time_evolution(u = None):
     '''
     Solves the wave equation
     
-    ..math: u^{t_n + 1} = b(t_n) \\times A
+    .. math:: u^{t_n + 1} = b(t_n) \\times A
     
     iterated over time.shape[0] time steps t_n 
 
@@ -542,7 +574,7 @@ def time_evolution(u = None):
 
     # Creating a folder to store hdf5 files. If it doesn't exist.
     results_directory = 'results/hdf5_%02d' %(int(params.N_LGL))
-            
+
     if not os.path.exists(results_directory):
         os.makedirs(results_directory)
 
@@ -556,29 +588,27 @@ def time_evolution(u = None):
                         d2 = shape_u_n[2])
 
     element_boundaries = af.np_to_af_array(params.np_element_array)
-    
-    for t_n in trange(0, time.shape[0]):
-        #if (t_n % 20) == 0:
-            #h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-            #dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
 
-            #dset[:, :] = u[:, :]
+    for t_n in trange(0, time.shape[0]):
+        if (t_n % 20) == 0:
+            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
+            dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
+
+            dset[:, :] = u[:, :]
 
         # Code for solving 1D Maxwell's Equations
         # Storing u at timesteps which are multiples of 100.
-        if (t_n % 5) == 0:
-            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' \
-                %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-            Ez_dset   = h5file.create_dataset('E_z', data = u[:, :, 0],
-                                              dtype = 'd')
-            By_dset   = h5file.create_dataset('B_y', data = u[:, :, 1],
-                                              dtype = 'd')
+        #if (t_n % 5) == 0:
+            #h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' \
+                #%(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
+            #Ez_dset   = h5file.create_dataset('E_z', data = u[:, :, 0],
+                                              #dtype = 'd')
+            #By_dset   = h5file.create_dataset('B_y', data = u[:, :, 1],
+                                              #dtype = 'd')
 
-            Ez_dset[:, :] = u[:, :, 0]
-            By_dset[:, :] = u[:, :, 1]
+            #Ez_dset[:, :] = u[:, :, 0]
+            #By_dset[:, :] = u[:, :, 1]
 
-
-        # Implementing RK 4 scheme
         u += RK4_timestepping(A_inverse, u, delta_t)
 
 

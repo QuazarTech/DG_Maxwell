@@ -114,7 +114,7 @@ def change_parameters(LGL, Elements, quad, wave='sin'):
 
 
     # The value of time-step.
-    params.delta_t = params.delta_x / (4 * params.c)
+    params.delta_t = params.delta_x / (4 * abs(params.c))
 
     # Array of timesteps seperated by delta_t.
     params.time    = utils.linspace(0, int(params.total_time / params.delta_t) * params.delta_t,
