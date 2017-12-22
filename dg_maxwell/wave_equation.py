@@ -366,7 +366,40 @@ def lax_friedrichs_flux(u_n):
                         - params.c_lax * (u_iplus1_0 - u_i_N_LGL) / 2
     
     
-    return boundary_flux 
+    return boundary_flux
+
+
+
+def upwind_flux(u_n):
+    '''
+    Finds the upwind flux of all the element edges present inside a domain.
+    '''
+    right_state    = af.shift(u_n[0, :], 0, -1)
+    left_state     = u_n[-1, :]
+
+    if params.c > 0:
+        return flux_x(left_state)
+
+    if params.c == 0:
+        return flux_x((left_state + right_state) / 2)
+
+    if params.c < 0:
+        return flux_x(right_state)
+
+    return
+
+def upwind_flux_maxwell_eq(u_n):
+    '''
+    Finds the upwind flux of all the element edges present inside a domain.
+    '''
+    right_state    = af.shift(u_n[0, :], 0, -1)
+    
+    flux = right_state.copy()
+
+    flux[:, :, 0] = -right_state[:, :, 1]
+    flux[:, :, 1] = -right_state[:, :, 0]
+
+    return flux
 
 
 
@@ -405,7 +438,15 @@ def surface_term(u_n):
                         d0 = 1, d1 = 1, d2 = shape_u_n[2])
     L_p_1        = af.tile(params.lagrange_basis_value[:, -1],
                         d0 = 1, d1 = 1, d2 = shape_u_n[2])
-    f_i          = lax_friedrichs_flux(u_n)
+    #[NOTE]: Uncomment to use lax friedrichs flux
+    #f_i          = lax_friedrichs_flux(u_n)
+    
+    #[NOTE]: Uncomment to use upwind flux for uncoupled advection equations
+    #f_i          = upwind_flux(u_n)
+
+    #[NOTE]: Uncomment to use upwind flux for Maxwell's equations
+    f_i          = upwind_flux_maxwell_eq(u_n)
+    
     f_iminus1    = af.shift(f_i, 0, 1)
 
     surface_term = utils.matmul_3D(L_p_1, f_i) \
@@ -517,24 +558,24 @@ def time_evolution(u = None):
     element_boundaries = af.np_to_af_array(params.np_element_array)
     
     for t_n in trange(0, time.shape[0]):
-        if (t_n % 20) == 0:
-            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-            dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
+        #if (t_n % 20) == 0:
+            #h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
+            #dset   = h5file.create_dataset('u_i', data = u, dtype = 'd')
 
-            dset[:, :] = u[:, :]
+            #dset[:, :] = u[:, :]
 
         # Code for solving 1D Maxwell's Equations
-        ## Storing u at timesteps which are multiples of 100.
-        #if (t_n % 5) == 0:
-            #h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' \
-                #%(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
-            #Ez_dset   = h5file.create_dataset('E_z', data = u[:, :, 0],
-                                              #dtype = 'd')
-            #By_dset   = h5file.create_dataset('B_y', data = u[:, :, 1],
-                                              #dtype = 'd')
+        # Storing u at timesteps which are multiples of 100.
+        if (t_n % 5) == 0:
+            h5file = h5py.File('results/hdf5_%02d/dump_timestep_%06d' \
+                %(int(params.N_LGL), int(t_n)) + '.hdf5', 'w')
+            Ez_dset   = h5file.create_dataset('E_z', data = u[:, :, 0],
+                                              dtype = 'd')
+            By_dset   = h5file.create_dataset('B_y', data = u[:, :, 1],
+                                              dtype = 'd')
 
-            #Ez_dset[:, :] = u[:, :, 0]
-            #By_dset[:, :] = u[:, :, 1]
+            Ez_dset[:, :] = u[:, :, 0]
+            By_dset[:, :] = u[:, :, 1]
 
 
         # Implementing RK 4 scheme
