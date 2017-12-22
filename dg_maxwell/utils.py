@@ -194,6 +194,7 @@ def polyval_1d(polynomials, xi):
     polynomials : af.Array [number_of_polynomials N 1 1]
                  ``number_of_polynomials`` :math:`2D` polynomials of degree
                  :math:`N - 1` of the form
+
                  .. math:: P(x) = a_0x^0 + a_1x^1 + ... \\
                            a_{N - 1}x^{N - 1} + a_Nx^N
     xi      : af.Array [N 1 1 1]

@@ -112,7 +112,7 @@ time    = utils.linspace(0, int(total_time / delta_t) * delta_t,
 
 # The wave to be advected is either a sin or a Gaussian wave.
 # This parameter can take values 'sin' or 'gaussian'.
-wave = 'sin'
+wave = 'gaussian'
 
 # Initializing the amplitudes. Change u_init to required initial conditions.
 if (wave=='sin'):

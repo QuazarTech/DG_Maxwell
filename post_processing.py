@@ -53,7 +53,7 @@ path, dirs, files = os.walk(h5py_directory).__next__()
 file_count = len(files)
 print(file_count)
 
-# Example loop to run when solving for a single 1D wave equation.
+## Example loop to run when solving for a single 1D wave equation.
 for i in trange(0, file_count):
 
     fig = pl.figure()
@@ -63,12 +63,12 @@ for i in trange(0, file_count):
     pl.xlabel('x')
     pl.ylabel('u')
     pl.xlim(-1, 1)
-    pl.ylim(-2, 2)
+    pl.ylim(0, 1.1)
     pl.title('Time = %.2f' % (i * 20 * params.delta_t))
     fig.savefig('results/1D_Wave_images/%04d' %(i) + '.png', dpi = 100)
     pl.close('all')
 
-# Example loop to run when solving for 1D Maxwell's equations.
+#Example loop to run when solving for 1D Maxwell's equations.
 #for i in trange(0, file_count):
 
     #f, (ax1, ax2) = pl.subplots(2, sharex = True, sharey = True)
@@ -84,7 +84,7 @@ for i in trange(0, file_count):
     #ax1.set_ylabel(r'$E_z$')
     #ax2.set_ylabel(r'$B_y$')
     #pl.xlim(-1, 1)
-    #pl.ylim(-2, 2)
+    #pl.ylim(-0.01, 1.01)
     #pl.suptitle(r'Time = %.2f' % (i * 5 * params.delta_t))
     #f.savefig('results/1D_Wave_images/%04d' %(i) + '.png', dpi = 200)
     #pl.close('all')

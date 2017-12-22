@@ -13,12 +13,12 @@ from dg_maxwell import params
 
 def LGL_points(N):
     '''
-    Calculates : math: `N` Legendre-Gauss-Lobatto (LGL) points.
+    Calculates :math:`N` Legendre-Gauss-Lobatto (LGL) points.
     LGL points are the roots of the polynomial 
 
-    :math: `(1 - \\xi ** 2) P_{n - 1}'(\\xi) = 0`
+    .. math:: (1 - \\xi^2) P_{n - 1}'(\\xi) = 0
 
-    Where :math: `P_{n}(\\xi)` are the Legendre polynomials.
+    Where :math:`P_{n}(\\xi)` are the Legendre polynomials.
     This function finds the roots of the above polynomial.
 
     Parameters
@@ -85,11 +85,11 @@ def lobatto_weights(n):
 
 def gauss_nodes(n):
     '''
-    Calculates :math: `N` Gaussian nodes used for Integration by
+    Calculates :math:`N` Gaussian nodes used for Integration by
     Gaussia quadrature.
-    Gaussian node :math: `x_i` is the `i^{th}` root of
-    :math: `P_n(\\xi)`
-    Where :math: `P_{n}(\\xi)` are the Legendre polynomials.
+    Gaussian node :math:`x_i` is the :math:`i^{th}` root of
+    :math:`P_n(\\xi)`
+    Where :math:`P_{n}(\\xi)` are the Legendre polynomials.
 
     Parameters
     ----------
@@ -101,7 +101,7 @@ def gauss_nodes(n):
     -------
 
     gauss_nodes : numpy.ndarray
-                  The Gauss nodes :math: `x_i`.
+                  The Gauss nodes :math:`x_i`.
 
     **See:** A Wikipedia article about the Gauss-Legendre quadrature `here`_
     
@@ -163,21 +163,21 @@ def lagrange_polynomials(x):
     ----------
     
     x : numpy.array [N_LGL 1 1 1]
-        Contains the :math: `x` nodes using which the
+        Contains the :math:`x` nodes using which the
         lagrange basis functions need to be evaluated.
 
     Returns
     -------
     
     lagrange_basis_poly   : list
-                            A list of size `x.shape[0]` containing the
+                            A list of size ``x.shape[0]`` containing the
                             analytical form of the Lagrange basis polynomials
                             in numpy.poly1d form. This list is used in
                             integrate() function which requires the analytical
                             form of the integrand.
 
     lagrange_basis_coeffs : numpy.ndarray
-                            A :math: `N \\times N` matrix containing the
+                            A :math:`N \\times N` matrix containing the
                             coefficients of the Lagrange basis polynomials such
                             that :math:`i^{th}` lagrange polynomial will be the
                             :math:`i^{th}` row of the matrix.
@@ -187,7 +187,7 @@ def lagrange_polynomials(x):
     lagrange_polynomials(4)[0] gives the lagrange polynomials obtained using
     4 LGL points in poly1d form
 
-    lagrange_polynomials(4)[0][2] is :math: `L_2(\\xi)`
+    lagrange_polynomials(4)[0][2] is :math:`L_2(\\xi)`
     lagrange_polynomials(4)[1] gives the coefficients of the above mentioned
     lagrange basis polynomials in a 2D array.
 
